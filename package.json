@@ -1,8 +1,11 @@
 {
-	"name": "cleverflow",
+	"name": "@cleverflow/entire",
 	"private": true,
 	"version": "0.0.1",
 	"type": "module",
+	"workspaces": [
+		"extensions/*"
+	],
 	"scripts": {
 		"dev": "vite dev",
 		"build": "vite build",
