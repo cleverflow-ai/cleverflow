@@ -1,6 +1,10 @@
 <script>
-    import * as m from '$lib/paraglide/messages.js'
-    import '@cleverflow/cleverflow.core';
+    import { onMount } from 'svelte';
+    import * as m from '$lib/paraglide/messages.js';
+
+    onMount(async () => {
+        await import('@cleverflow/cleverflow.core/webcomponents/markdoc-editor.js');
+    });
 </script>
 
 <h1>{m.welcome_to_cleverflow()}</h1>

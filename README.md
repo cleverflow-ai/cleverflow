@@ -22,9 +22,9 @@ See also: https://inlang.com/m/dxnzrydw/paraglide-sveltekit-i18n/getting-started
 ```ts
 build: {
     lib: {
-        entry: 'src/index.ts',
-        name: 'cleverflow.core',
-        fileName: 'index',
+        entry: 'src/lib/markdoc/MarkdocEditor.ts',
+        name: 'markdoc-editor',
+        fileName: 'markdoc-editor',
         formats: ['es'],
     },
     rollupOptions: {
@@ -32,11 +32,11 @@ build: {
             inlineDynamicImports: false,
         },
     },
-    outDir: 'dist-vite'
+    outDir: 'dist-webcomponents',
 },
 ```
-- `src/index.ts`: contains all exports of custom elements.
-- `dist-vite`: outpout directory, instead of `dist` which is used by `@sveltejs/package` for enabling the reference of Svelte Components across Svelte Projects.
+- `src/lib/markdoc/MarkdocEditor.ts`: contains export of Web Component `MarkdocEditor`.
+- `dist-webcomponents`: outpout directory of all Web Components, instead of `dist` which is used by `@sveltejs/package` for enabling the reference of Svelte Components across Svelte Projects.
 
 3. At the Workspace Project, change the following Settings of `package.json`:
 ```json
@@ -44,23 +44,25 @@ build: {
     "dist",
     "!dist/**/*.test.*",
     "!dist/**/*.spec.*",
-    "dist-vite"
+    "dist-webcomponents"
 ],
-"svelte": "./dist-vite/index.js",
-"types": "./dist/index.d.ts",
-"main": "./dist-vite/index.js",
-"type": "module",
 "exports": {
     ".": {
         "types": "./dist/index.d.ts",
-        "svelte": "./dist-vite/index.js",
-        "import": "./dist-vite/index.js",
-        "require": "./dist-vite/index.js"
+        "svelte": "./dist/index.js"
+    },
+    "./webcomponents/markdoc-editor.js": {
+        "import": "./dist-webcomponents/markdoc-editor.js",
+        "require": "./dist-webcomponents/markdoc-editor.js"
     }
 },
 ```
+- `dist-webcomponents` must be published.
+- `./webcomponents/markdoc-editor.js`: each Web Component should have a separate import entry.
 
-4. At the Main Project, make sure that `dist-vite` folder of each Workspace Project can be found by `vite.config.ts`:
+See also: https://svelte.dev/docs/kit/packaging
+
+4. At the Main Project, make sure that `dist-webcomponents` folder of each Workspace Project can be found by `vite.config.ts`:
 ```ts
 import { defineConfig, searchForWorkspaceRoot } from 'vite';
 ...
@@ -74,10 +76,12 @@ server: {
 }
 ```
 
-5. At the Main Project, disable SSR at `src/routes/+layout.ts`:
-```ts
-export const ssr = false;
+6. At the Main Project, import Workspace Package via its name and the corresponding entry of Web Component.
+```svelte
+onMount(async () => {
+    await import('@cleverflow/cleverflow.core/webcomponents/markdoc-editor.js');
+});
+...
+<markdoc-editor></markdoc-editor>
 ```
-
-6. At the Main Project, import Workspace Package via its name. By default the Main Entry i.e. `dist-vite/index.js` is imported.
 

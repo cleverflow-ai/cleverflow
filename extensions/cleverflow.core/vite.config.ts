@@ -6,9 +6,9 @@ import { defineConfig } from 'vite';
 export default defineConfig({
     build: {
         lib: {
-            entry: 'src/index.ts',
-            name: 'cleverflow.core',
-            fileName: 'index',
+            entry: 'src/lib/markdoc/MarkdocEditor.ts',
+            name: 'markdoc-editor',
+            fileName: 'markdoc-editor',
             formats: ['es'],
         },
         rollupOptions: {
@@ -16,7 +16,7 @@ export default defineConfig({
                 inlineDynamicImports: false,
             },
         },
-        outDir: 'dist-vite'
+        outDir: 'dist-webcomponents',
     },
       
 	plugins: [
