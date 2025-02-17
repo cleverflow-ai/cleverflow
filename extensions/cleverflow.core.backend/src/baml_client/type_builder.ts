@@ -26,10 +26,10 @@ export default class TypeBuilder {
     constructor() {
         this.tb = new _TypeBuilder({
           classes: new Set([
-            "BFlow","BFlowNode","EchoBack",
+            "BFlow","BFlowNode","BFlowNodeConfig","EchoBack",
           ]),
           enums: new Set([
-            
+            "BFlowNodeType",
           ])
         });
         

@@ -40,11 +40,17 @@ export interface BFlow {
 }
 
 export interface BFlowNode {
-    type?: ("ENTRY" | "FAILBACK" | "SEQUENCE" | "PARALLEL" | "CONDITION" | "ACTION" | null)
+    type?: (BFlowNodeType | null)
     id: ((string | null) | null)
     name: ((string | null) | null)
     description: ((string | null) | null)
+    config: (partial_types.BFlowNodeConfig | null | null)
     goto?: partial_types.BFlowNode | null[]
+}
+
+export interface BFlowNodeConfig {
+    url: ((string | null) | null)
+    instructions: ((string | null) | null)
 }
 
 export interface EchoBack {

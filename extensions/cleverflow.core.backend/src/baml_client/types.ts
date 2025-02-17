@@ -35,6 +35,15 @@ export function all_succeeded<CheckName extends string>(checks: Record<CheckName
 export function get_checks<CheckName extends string>(checks: Record<CheckName, Check>): Check[] {
     return Object.values(checks)
 }
+export enum BFlowNodeType {
+  ENTRY = "ENTRY",
+  FAILBACK = "FAILBACK",
+  SEQUENCE = "SEQUENCE",
+  PARALLEL = "PARALLEL",
+  CONDITION = "CONDITION",
+  ACTION = "ACTION",
+}
+
 export interface BFlow {
   id?: string | null
   name?: string | null
@@ -44,11 +53,18 @@ export interface BFlow {
 }
 
 export interface BFlowNode {
-  type: "ENTRY" | "FAILBACK" | "SEQUENCE" | "PARALLEL" | "CONDITION" | "ACTION"
+  type: BFlowNodeType
   id?: string | null
   name?: string | null
   description?: string | null
+  config?: BFlowNodeConfig | null
   goto: BFlowNode[]
+  
+}
+
+export interface BFlowNodeConfig {
+  url?: string | null
+  instructions?: string | null
   
 }
 

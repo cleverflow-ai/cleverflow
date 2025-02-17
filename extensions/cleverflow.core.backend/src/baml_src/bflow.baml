@@ -1,20 +1,36 @@
-class BFlow {
+	class BFlow {
+
     id string?
     name string?
     description string?
     root BFlowNode
 }
 
+enum BFlowNodeType {
+    ENTRY
+    FAILBACK
+    SEQUENCE
+    PARALLEL
+    CONDITION
+    ACTION
+}
+
 class BFlowNode {
-    type "ENTRY" | "FAILBACK" | "SEQUENCE" | "PARALLEL" | "CONDITION" | "ACTION"
+    type BFlowNodeType
     id string?
     name string?
     description string?
+    config BFlowNodeConfig?
     goto BFlowNode[]
 }
 
+class BFlowNodeConfig {
+    url string?
+    instructions string?
+}
+
 function ParseMarkdocBFlowElementToBFlow(text: string) -> BFlow {
-    client Ollama_Default
+    client Ollama_Reasoner
     prompt #"
         You are expert in Markdoc and Behavior Tree.
         You consider my given Mardoc custom element which represents a Behavior Tree with different node types such as "sequence", "action", etc. 
@@ -24,7 +40,7 @@ function ParseMarkdocBFlowElementToBFlow(text: string) -> BFlow {
         It is noted that:
         - The Behavior Tree's root node is always an ENTRY node. 
         - Please automatically create an ENTRY node and set it as the root node of the Behavior Tree.
-        - The first found Markdoc element is added to 'goto' of the ENTRY node.
+        - The first Markdoc element is added to 'goto' of the ENTRY node.
         - If Markdoc entry name is not <% entry %>, <% fallback %>, <% sequence %>, <% parallel %>, or <% condition %>, then it is an ACTION node.
         - If there is any text locating before the Markdoc element, than extract it as the description of the corresponding node.
         - If it is about ACTION node, the name of the node corresponds to the name of the Markdoc element.
