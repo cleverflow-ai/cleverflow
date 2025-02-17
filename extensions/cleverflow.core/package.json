@@ -55,6 +55,7 @@
 	},
 	"dependencies": {
 		"@inlang/paraglide-sveltekit": "^0.15.5",
-		"@nats-io/nats-core": "^3.0.0-51"
+		"@nats-io/nats-core": "^3.0.0-51",
+		"nats": "^2.29.2"
 	}
 }

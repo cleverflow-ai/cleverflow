@@ -2,6 +2,7 @@
 
 <script lang="ts">
     import { wsconnect } from "@nats-io/nats-core";
+    import { JSONCodec } from "nats/lib/nats-base-client/codec.js";
 
     async function connectNATS() {
         
@@ -29,15 +30,16 @@
     (async () => {
         const nc = await connectNATS();
         if (nc) {
-            // TODO: Use JsonCodec instead of JSON.stringify!
-            // TODO: replace with Request-Reply pattern!
-            // See also: https://docs.nats.io/using-nats/developer/sending/request_reply
-            // i.e. 
-            // await nc.request("time");
-            nc.publish('hello', JSON.stringify({ url: url, text: text }));
-            console.log(`published`);
+            // TODO: Use Strong Type for Message's Data.
+            const codec = JSONCodec();
 
-            // TODO: close connection right after receiving the reply!
+            // See also: https://docs.nats.io/using-nats/developer/sending/request_reply
+            const reply = await nc.request("hello", codec.encode({ url: url, text: text }));
+
+            const repliedData = codec.decode(reply.data);
+            console.log(`received decoded Reply: ${ JSON.stringify(repliedData)}`);
+
+            await nc.close();
         }
     })();
 </script>
