@@ -6,10 +6,13 @@ import { defineConfig } from 'vite';
 export default defineConfig({
     build: {
         lib: {
-            entry: 'src/lib/markdoc/MarkdocEditor.ts',
-            name: 'markdoc-editor',
-            fileName: 'markdoc-editor',
+            entry: {
+                'markdoc-editor': 'src/lib/markdoc/MarkdocEditor.ts',
+                'b-flow': 'src/lib/bflow/BFlow.ts',
+            },
+            fileName: (format, entryName) => `${entryName}.js`,
             formats: ['es'],
+            
         },
         rollupOptions: {
             output: {

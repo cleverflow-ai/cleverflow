@@ -28,6 +28,10 @@
 		"./webcomponents/markdoc-editor.js": {
 			"import": "./dist-webcomponents/markdoc-editor.js",
 			"require": "./dist-webcomponents/markdoc-editor.js"
+		},
+		"./webcomponents/b-flow.js": {
+			"import": "./dist-webcomponents/b-flow.js",
+			"require": "./dist-webcomponents/b-flow.js"
 		}
 	},
 	"sideEffects": [
@@ -50,6 +54,7 @@
 		"vite": "^6.1.0"
 	},
 	"dependencies": {
-		"@inlang/paraglide-sveltekit": "^0.15.5"
+		"@inlang/paraglide-sveltekit": "^0.15.5",
+		"@nats-io/nats-core": "^3.0.0-51"
 	}
 }
