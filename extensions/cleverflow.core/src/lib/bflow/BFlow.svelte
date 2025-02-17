@@ -34,7 +34,12 @@
             const codec = JSONCodec();
 
             // See also: https://docs.nats.io/using-nats/developer/sending/request_reply
-            const reply = await nc.request("hello", codec.encode({ url: url, text: text }));
+            const reply = await nc.request(
+                "hello", 
+                codec.encode({ url: url, text: text }), 
+                { 
+                    timeout: 3600*1000 // 1 hour 
+                });
 
             const repliedData = codec.decode(reply.data);
             console.log(`received decoded Reply: ${ JSON.stringify(repliedData)}`);
