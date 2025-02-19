@@ -39,6 +39,27 @@ export interface BFlow {
     root?: partial_types.BFlowNode | null
 }
 
+export interface BFlowData {
+    nodes?: partial_types.BFlowJsonNode | null[]
+    edges?: partial_types.BFlowJsonEdge | null[]
+}
+
+export interface BFlowJsonEdge {
+    id: ((string | null) | null)
+    source: ((string | null) | null)
+    target: ((string | null) | null)
+}
+
+export interface BFlowJsonNode {
+    type?: (BFlowNodeType | null)
+    id: ((string | null) | null)
+    name: ((string | null) | null)
+    description: ((string | null) | null)
+    parentId: ((string | null) | null)
+    config: (partial_types.BFlowNodeConfig | null | null)
+    position?: partial_types.Position | null
+}
+
 export interface BFlowNode {
     type?: (BFlowNodeType | null)
     id: ((string | null) | null)
@@ -49,6 +70,8 @@ export interface BFlowNode {
 }
 
 export interface BFlowNodeConfig {
+    id: ((string | null) | null)
+    name?: (string | null)
     url: ((string | null) | null)
     instructions: ((string | null) | null)
 }
@@ -56,4 +79,9 @@ export interface BFlowNodeConfig {
 export interface EchoBack {
     message?: (string | null)
     messageBack?: (string | null)
+}
+
+export interface Position {
+    x?: (number | null)
+    y?: (number | null)
 }

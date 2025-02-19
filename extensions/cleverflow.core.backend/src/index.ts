@@ -29,19 +29,19 @@ const codec = JSONCodec();
 const subscription = nc.subscribe("hello",  {
     callback: (_err, msg) => {
         const data = codec.decode(msg.data);
-        console.log(`received: ${JSON.stringify(data)}`);
+        // console.log(`received: ${JSON.stringify(data)}`);
 
-        parse(data).then((result) => {;
+        parse(data).then((result) => {
             msg.respond(codec.encode(result));
-
             console.log(`responded already.`);
+        }).catch((err) => {
+            msg.respond(codec.encode({ error: err.message }));
         });
+        
     },
 });
 
-async function parse(data: any): Promise<BFlow> {
-    const response = await b.ParseMarkdocBFlowElementToBFlow(data.text, { clientRegistry: clients });
-    console.log(response);
-
-    return response;
+async function parse(data: any): Promise<any> {
+    const result = await b.ParseMarkdocBFlowElementToBFlowData(data.text, { clientRegistry: clients });
+    return result;
 }

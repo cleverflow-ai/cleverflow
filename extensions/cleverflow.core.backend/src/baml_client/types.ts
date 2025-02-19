@@ -52,6 +52,30 @@ export interface BFlow {
   
 }
 
+export interface BFlowData {
+  nodes: BFlowJsonNode[]
+  edges: BFlowJsonEdge[]
+  
+}
+
+export interface BFlowJsonEdge {
+  id?: string | null
+  source?: string | null
+  target?: string | null
+  
+}
+
+export interface BFlowJsonNode {
+  type: BFlowNodeType
+  id?: string | null
+  name?: string | null
+  description?: string | null
+  parentId?: string | null
+  config?: BFlowNodeConfig | null
+  position: Position
+  
+}
+
 export interface BFlowNode {
   type: BFlowNodeType
   id?: string | null
@@ -63,6 +87,8 @@ export interface BFlowNode {
 }
 
 export interface BFlowNodeConfig {
+  id?: string | null
+  name: string
   url?: string | null
   instructions?: string | null
   
@@ -71,5 +97,11 @@ export interface BFlowNodeConfig {
 export interface EchoBack {
   message: string
   messageBack: string
+  
+}
+
+export interface Position {
+  x: number
+  y: number
   
 }

@@ -18,7 +18,7 @@ $ pnpm add @boundaryml/baml
 import { BamlRuntime, FunctionResult, BamlCtxManager, BamlStream, Image, ClientRegistry, BamlValidationError, createBamlValidationError } from "@boundaryml/baml"
 import { Checked, Check } from "./types"
 import "./partial_types"
-import {BFlow, BFlowNode, BFlowNodeConfig, EchoBack, BFlowNodeType} from "./types"
+import {BFlow, BFlowData, BFlowJsonEdge, BFlowJsonNode, BFlowNode, BFlowNodeConfig, EchoBack, Position, BFlowNodeType} from "./types"
 import TypeBuilder from "./type_builder"
 import { DO_NOT_USE_DIRECTLY_UNLESS_YOU_KNOW_WHAT_YOURE_DOING_CTX, DO_NOT_USE_DIRECTLY_UNLESS_YOU_KNOW_WHAT_YOURE_DOING_RUNTIME } from "./globals"
 
@@ -88,6 +88,31 @@ export class BamlAsyncClient {
     }
   }
   
+  async ParseMarkdocBFlowElementToBFlowData(
+      text: string,
+      __baml_options__?: { tb?: TypeBuilder, clientRegistry?: ClientRegistry }
+  ): Promise<BFlowData> {
+    try {
+      const raw = await this.runtime.callFunction(
+        "ParseMarkdocBFlowElementToBFlowData",
+        {
+          "text": text
+        },
+        this.ctx_manager.cloneContext(),
+        __baml_options__?.tb?.__tb(),
+        __baml_options__?.clientRegistry,
+      )
+      return raw.parsed(false) as BFlowData
+    } catch (error: any) {
+      const bamlError = createBamlValidationError(error);
+      if (bamlError instanceof BamlValidationError) {
+        throw bamlError;
+      } else {
+        throw error;
+      }
+    }
+  }
+  
 }
 
 class BamlStreamClient {
@@ -146,6 +171,39 @@ class BamlStreamClient {
         raw,
         (a): a is partial_types.BFlow => a,
         (a): a is BFlow => a,
+        this.ctx_manager.cloneContext(),
+        __baml_options__?.tb?.__tb(),
+      )
+    } catch (error) {
+      if (error instanceof Error) {
+        const bamlError = createBamlValidationError(error);
+        if (bamlError instanceof BamlValidationError) {
+          throw bamlError;
+        }
+      }
+      throw error;
+    }
+  }
+  
+  ParseMarkdocBFlowElementToBFlowData(
+      text: string,
+      __baml_options__?: { tb?: TypeBuilder, clientRegistry?: ClientRegistry }
+  ): BamlStream<partial_types.BFlowData, BFlowData> {
+    try {
+      const raw = this.runtime.streamFunction(
+        "ParseMarkdocBFlowElementToBFlowData",
+        {
+          "text": text
+        },
+        undefined,
+        this.ctx_manager.cloneContext(),
+        __baml_options__?.tb?.__tb(),
+        __baml_options__?.clientRegistry,
+      )
+      return new BamlStream<partial_types.BFlowData, BFlowData>(
+        raw,
+        (a): a is partial_types.BFlowData => a,
+        (a): a is BFlowData => a,
         this.ctx_manager.cloneContext(),
         __baml_options__?.tb?.__tb(),
       )
