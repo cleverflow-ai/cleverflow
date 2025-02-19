@@ -12,7 +12,7 @@
     "typescript": "^5.7.3"
   },
   "dependencies": {
-    "@boundaryml/baml": "^0.75.0",
+    "@boundaryml/baml": "^0.76.2",
     "@nats-io/nats-core": "^3.0.0-51",
     "@nats-io/transport-node": "^3.0.0-36",
     "nats": "^2.29.2"
