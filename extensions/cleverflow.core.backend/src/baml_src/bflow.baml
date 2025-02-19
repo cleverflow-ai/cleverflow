@@ -1,5 +1,4 @@
-	class BFlow {
-
+class BFlow {
     id string?
     name string?
     description string?
@@ -15,22 +14,28 @@ enum BFlowNodeType {
     ACTION
 }
 
+enum BFlowNodeState {
+    RUNNING
+    SUCCESS
+    FAILURE
+}
+
 class BFlowNode {
     type BFlowNodeType
     id string?
     name string?
     description string?
     config BFlowNodeConfig?
+    state BFlowNodeState?
     goto BFlowNode[]
 }
 
 class BFlowNodeConfig {
-    url string?
-    instructions string?
+    yaml string?
 }
 
 function ParseMarkdocBFlowElementToBFlow(text: string) -> BFlow {
-    client Ollama_Reasoner
+    client Ollama_Tool
     prompt #"
         You are expert in Markdoc and Behavior Tree.
         You consider my given Mardoc custom element which represents a Behavior Tree with different node types such as "sequence", "action", etc. 
@@ -45,6 +50,7 @@ function ParseMarkdocBFlowElementToBFlow(text: string) -> BFlow {
         - If there is any text locating before the Markdoc element, than extract it as the description of the corresponding node.
         - If it is about ACTION node, the name of the node corresponds to the name of the Markdoc element.
            - For example: '<% get-text %>' must be converted to { type: "ACTION", name: "get-text" }
+        - Each Markdoc element might contain YAML-based configuration between opening and closing tags: please extract the whole YAML as config of the corresponding node, no matter YAML contains only one key-value pair or multiple key-value pairs.
         ---
         {{ text }}
         ---

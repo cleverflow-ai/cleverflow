@@ -8,7 +8,7 @@ client<llm> Ollama_Default {
   }
 }
 
-client<llm> Ollama_Reasoner {
+client<llm> Ollama_Tool {
   provider "openai-generic"
   options {
     base_url env.BASE_URL
