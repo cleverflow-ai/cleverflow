@@ -12,7 +12,7 @@ client<llm> Ollama_Tool {
   provider "openai-generic"
   options {
     base_url env.BASE_URL
-    model "deepscaler:latest"
+    model "command-r7b:latest"
     api_key "ollama"
     tempature 0
   }

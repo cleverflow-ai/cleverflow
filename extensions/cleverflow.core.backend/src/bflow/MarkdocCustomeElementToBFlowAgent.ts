@@ -56,7 +56,7 @@ export default class MarkdocCustomElementToBFlowAgent extends Agent<InPayload, O
         const bflow = await b.ParseMarkdocBFlowElementToBFlow(
             payload.text, 
             { 
-                clientRegistry: new Clients({ primary: Clients.OllamaTool }).registry 
+                clientRegistry: new Clients({ primary: Clients.OllamaDefault }).registry 
             });
         
         return { bflow: bflow };

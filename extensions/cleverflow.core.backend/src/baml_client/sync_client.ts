@@ -18,7 +18,7 @@ $ pnpm add @boundaryml/baml
 import { BamlRuntime, FunctionResult, BamlCtxManager, Image, Audio, ClientRegistry, toBamlError } from "@boundaryml/baml"
 import { Checked, Check, RecursivePartialNull as MovedRecursivePartialNull } from "./types"
 import * as types from "./types"
-import {BFlow, BFlowData, BFlowJsonEdge, BFlowJsonNode, BFlowNode, BFlowNodeConfig, BFlowNodeState, BFlowNodeType, EchoBack, Position} from "./types"
+import {BFlow, BFlowJsonEdge, BFlowJsonNode, BFlowNode, BFlowNodeConfig, BFlowNodeState, BFlowNodeType, BFlowViz, EchoBack, Position} from "./types"
 import type TypeBuilder from "./type_builder"
 import { DO_NOT_USE_DIRECTLY_UNLESS_YOU_KNOW_WHAT_YOURE_DOING_CTX, DO_NOT_USE_DIRECTLY_UNLESS_YOU_KNOW_WHAT_YOURE_DOING_RUNTIME } from "./globals"
 
@@ -65,6 +65,26 @@ export class BamlSyncClient {
     }
   }
   
+  ParseBFlowToBFlowViz(
+      bflow: string,
+      __baml_options__?: { tb?: TypeBuilder, clientRegistry?: ClientRegistry }
+  ): BFlowViz {
+    try {
+    const raw = this.runtime.callFunctionSync(
+      "ParseBFlowToBFlowViz",
+      {
+        "bflow": bflow
+      },
+      this.ctx_manager.cloneContext(),
+      __baml_options__?.tb?.__tb(),
+      __baml_options__?.clientRegistry,
+    )
+    return raw.parsed(false) as BFlowViz
+    } catch (error: any) {
+      throw toBamlError(error);
+    }
+  }
+  
   ParseMarkdocBFlowElementToBFlow(
       text: string,
       __baml_options__?: { tb?: TypeBuilder, clientRegistry?: ClientRegistry }
@@ -80,26 +100,6 @@ export class BamlSyncClient {
       __baml_options__?.clientRegistry,
     )
     return raw.parsed(false) as BFlow
-    } catch (error: any) {
-      throw toBamlError(error);
-    }
-  }
-  
-  ParseMarkdocBFlowElementToBFlowData(
-      text: string,
-      __baml_options__?: { tb?: TypeBuilder, clientRegistry?: ClientRegistry }
-  ): BFlowData {
-    try {
-    const raw = this.runtime.callFunctionSync(
-      "ParseMarkdocBFlowElementToBFlowData",
-      {
-        "text": text
-      },
-      this.ctx_manager.cloneContext(),
-      __baml_options__?.tb?.__tb(),
-      __baml_options__?.clientRegistry,
-    )
-    return raw.parsed(false) as BFlowData
     } catch (error: any) {
       throw toBamlError(error);
     }

@@ -27,7 +27,7 @@ export default class TypeBuilder {
     constructor() {
         this.tb = new _TypeBuilder({
           classes: new Set([
-            "BFlow","BFlowData","BFlowJsonEdge","BFlowJsonNode","BFlowNode","BFlowNodeConfig","EchoBack","Position",
+            "BFlow","BFlowJsonEdge","BFlowJsonNode","BFlowNode","BFlowNodeConfig","BFlowViz","EchoBack","Position",
           ]),
           enums: new Set([
             "BFlowNodeState","BFlowNodeType",

@@ -55,13 +55,13 @@ class BFlowJsonEdge{
     target string?
 }
 
-class BFlowData{
+class BFlowViz{
     nodes BFlowJsonNode[]
     edges BFlowJsonEdge[]
 }
 
 function ParseMarkdocBFlowElementToBFlow(text: string) -> BFlow {
-    client Ollama_Tool
+    client Ollama_Default
     prompt #"
         You are expert in Markdoc and Behavior Tree.
         You consider my given Mardoc custom element which represents a Behavior Tree with different node types such as "sequence", "action", etc. 
@@ -69,14 +69,12 @@ function ParseMarkdocBFlowElementToBFlow(text: string) -> BFlow {
         Just result and no verbose please!
         
         It is noted that:
-        - The Behavior Tree's root node is always an ENTRY node. 
-        - Please automatically create an ENTRY node and set it as the root node of the Behavior Tree.
-        - The first Markdoc element is added to 'goto' of the ENTRY node.
         - If Markdoc entry name is not <% entry %>, <% fallback %>, <% sequence %>, <% parallel %>, or <% condition %>, then it is an ACTION node.
         - If there is any text locating before the Markdoc element, than extract it as the description of the corresponding node.
         - If it is about ACTION node, the name of the node corresponds to the name of the Markdoc element.
            - For example: '<% get-text %>' must be converted to { type: "ACTION", name: "get-text" }
         - Each Markdoc element might contain YAML-based configuration between opening and closing tags: please extract the whole YAML as config of the corresponding node, no matter YAML contains only one key-value pair or multiple key-value pairs.
+        - If markdoc element contains children, then they should be added to the 'goto' field of the nearest father node.
         ---
         {{ text }}
         ---
@@ -84,65 +82,34 @@ function ParseMarkdocBFlowElementToBFlow(text: string) -> BFlow {
     "#
 }
 
-function ParseMarkdocBFlowElementToBFlowData(text: string) -> BFlowData {
+function ParseBFlowToBFlowViz(bflow: string) -> BFlowViz {
     client Ollama_Default
     prompt #"
         You are an expert in Markdoc, Behavior Tree, and JSON processing.
-
-        Task 1: Convert Markdoc to JSON
-            Given a Markdoc custom element representing a Behavior Tree, convert it into JSON format.
-            The root node is always an ENTRY node, which should be automatically created.
-            The first Markdoc element should be added to the goto field of the ENTRY node.
-            Node classification:
-                <% entry %>, <% fallback %>, <% sequence %>, <% parallel %>, <% condition %> → Keep their types.
-                Any other Markdoc element → Convert to ACTION (e.g., <% get-text id="action_1" %> → { id: ramdom, type: "ACTION", config: { id: "action_1", name: "get-text"} }).
-            If there is any text locating before the Markdoc custom element, then set it as the description of this node which is below the text.
         
-        Task 2: Flatten JSON & Compute Tree Layout
+        Task 1: Flatten JSON & Compute Tree Layout
             Flatten the nested JSON tree into an array of objects, starting from the root.
-            Assign a unique random id to each node.
+            Assign a unique random 10-character string as id to each node.
             Add a parentId field (null if no parent).
-            Ensure each node has a position field { x, y } (default { 0, 0 } if missing).
+            Add a level field to each node (0 for the root, 1 for children of the root, and so on).
+            Ensure each node has a position field with a default value of { x: 0, y: 0 } if missing.
             Layout rules:
-                Each level is 150px apart vertically.
-                Sibling nodes are 150px apart horizontally.
-                Parent nodes should be centered above their children.
+                Sibling nodes should be 160px apart horizontally.
+                Each level should be 160px apart vertically.
+                Parent nodes must be centered horizontally above their children.
         
-        Task 3: Generate Parent-Child Relationships
-            Create an array of objects representing parent-child relationships with:
-                id: A unique random 10-character string.
-                source: The parentId of the child.
-                target: The id of the child.
+        Task 2: Generate Parent-Child Relationships
+            - Create an array of objects representing parent-child relationships with:
+                - id: A unique random 10-character string, can not be null.
+                - source: The parentId of the child.
+                - target: The id of the child.
         
         Return only the final results for each task—no extra explanations.
         ---
-        {{ text }}
+        {{ bflow }}
         ---
         {{ ctx.output_format }}
     "#
-}
-
-test Test_WithoutEntry_ParseMarkdocBFlowElementToBFlow {
-    functions [ParseMarkdocBFlowElementToBFlow]
-    args {
-        text #"
-            {% b-flow id="prepare_data" %}
-                {% sequence %}
-                    1. Getting List of all Machine Models and corresponding Infos.
-                    {% get-text id="action_1" %}
-                        url: https://cleverflow.ai/use-cases/machinery/machines-list.md
-                    {% /get-text %}
-
-                    2. Converting Selection Logic to a Behavioral Flow to both 
-                    enable AI-based Decision Making, 
-                    and explain the Choices made to Human.
-                    {% get-bflow id="action_2" %}
-                        url: https://cleverflow.ai/use-cases/machinery/machines-selection.md
-                    {% /get-bflow %}
-                {% /sequence %}
-            {% /b-flow %}
-        "#
-    }
 }
 
 test Test_WithEntry_ParseMarkdocBFlowElementToBFlow {
@@ -177,8 +144,8 @@ test Test_WithEntry_ParseMarkdocBFlowElementToBFlow {
     }
 }
 
-test Test_ParseMarkdocBFlowElementToBFlowData {
-    functions [ParseMarkdocBFlowElementToBFlowData]
+test Test_WithoutEntry_ParseMarkdocBFlowElementToBFlow {
+    functions [ParseMarkdocBFlowElementToBFlow]
     args {
         text #"
             {% b-flow id="prepare_data" %}
@@ -200,8 +167,53 @@ test Test_ParseMarkdocBFlowElementToBFlowData {
     }
 }
 
-test Test_WithEntry_ParseMarkdocBFlowElementToBFlowData {
-    functions [ParseMarkdocBFlowElementToBFlowData]
+test Test_ParseBFlowToBFlowViz {
+    functions [ParseBFlowToBFlowViz]
+    args {
+        bflow #"
+            {
+                "id": "prepare_data",
+                "name": null,
+                "description": null,
+                "root": {
+                    "type": "SEQUENCE",
+                    "id": null,
+                    "name": null,
+                    "description": null,
+                    "config": null,
+                    "state": null,
+                    "goto": [
+                        {
+                            "type": "ACTION",
+                            "id": "action_1",
+                            "name": "get-text",
+                            "description": "1. Getting List of all Machine Models and corresponding Infos.",
+                            "config": {
+                                "yaml": "url: https://cleverflow.ai/use-cases/machinery/machines-list.md"
+                            },
+                            "state": null,
+                            "goto": []
+                        },
+                        {
+                            "type": "ACTION",
+                            "id": "action_2",
+                            "name": "get-bflow",
+                            "description": "2. Converting Selection Logic to a Behavioral Flow to both \n                enable AI-based Decision Making, \n                and explain the Choices made to Human.",
+                            "config": {
+                                "yaml": "url: https://cleverflow.ai/use-cases/machinery/machines-selection.md"
+                            },
+                            "state": null,
+                            "goto": []
+                        }
+                    ]
+                }
+            }
+        "#
+    }
+}
+
+test Test_WithEntry_ParseBFlowToBFlowViz {
+    functions [ParseBFlowToBFlowViz]
     args {
         text #"
             {% b-flow id="choose_machine_models" %}

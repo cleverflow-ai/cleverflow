@@ -68,12 +68,6 @@ export interface BFlow {
   
 }
 
-export interface BFlowData {
-  nodes: BFlowJsonNode[]
-  edges: BFlowJsonEdge[]
-  
-}
-
 export interface BFlowJsonEdge {
   id?: string | null
   source?: string | null
@@ -105,6 +99,12 @@ export interface BFlowNode {
 
 export interface BFlowNodeConfig {
   yaml?: string | null
+  
+}
+
+export interface BFlowViz {
+  nodes: BFlowJsonNode[]
+  edges: BFlowJsonEdge[]
   
 }
 
