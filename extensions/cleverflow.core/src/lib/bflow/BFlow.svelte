@@ -1,211 +1,129 @@
 <svelte:options customElement="b-flow" />
 
 <script lang="ts">
-    import { onMount } from 'svelte';
-    import styles from '@xyflow/svelte/dist/style.css?inline';
-    import { wsconnect } from "@nats-io/nats-core";
-    import { JSONCodec } from "nats/lib/nats-base-client/codec.js";
-    import BFlowView from "./components/BFlowView.svelte";
+	import { onMount } from 'svelte';
+	import css from '../../app.css?inline';
+    import xyflowCss from '@xyflow/svelte/dist/style.css?inline';
+    import BFlowView from "./visualization/BFlowView.svelte";
+	// SMELL: This is a workaround to make TailwindCSS work in the web component.
+	// IMPORTANT: this unuse import is required to make TailwindCSS work in the web component.
+	import Tailwindcss from './Tailwindcss.svelte';
+	import LoadingIndicator from '../common/components/LoadingIndicator.svelte';
+	import AgentConnection from '../common/agent/AgentConnection.js';
+	import MarkdocCustomeElementToBFlowAgentMessenger from './agent/MarkdocCustomeElementToBFlowAgentMessenger.js';
+	import BFlowToBFlowVizAgentMessenger from './agent/BFlowToBFlowVizAgentMessenger.js';
+	let { 
+		url = '',
+		text = '' 
+	} = $props();
 
-    let _isLoading = $state(false);
+	let agentConnection: AgentConnection | null = null;
+	let markdocCustomeElementToBFlowAgentMessenger: MarkdocCustomeElementToBFlowAgentMessenger | null = null;
+    let bflowToBFlowVizAgentMessenger: BFlowToBFlowVizAgentMessenger | null = null;
+
+	let isLoading = $state(true);
+	let loadingMessage = $state('');
+
     const initialNodes = [
-		{ 
-			id: '1', 
-			type: 'ENTRY',
-			data: { label: 'entry' }, 
-			position: { 
-				x: 100, 
-				y: 100 
-			} 
-		},
-		{ 
-			id: '2', 
-			type: 'SEQUENCE',
-			position: { 
-				x: 0, 
-				y: 200 
-			} 
-		},
-		{ 
-			id: '3', 
-			type: 'ACTION',
-			data: {
-				id: 'action_1',
-				type: 'get-text',
-				url: 'https://cleverflow.ai/use-cases/machinery/machines-list.md',
+			{
+				"type": "SEQUENCE",
+				"id": "prepare_data",
+				"name": null,
+				"description": null,
+				"parentId": null,
+				"config": null,
+				"position": {
+					"x": 0,
+					"y": 0
+				}
 			},
-			position: { 
-				x: -100, 
-				y: 300 
-			} 
-		},
-		{ 
-			id: '4', 
-			type: 'ACTION',
-			data: {
-				id: 'action_2',
-				type: 'get-bflow',
-				url: 'https://cleverflow.ai/use-cases/machinery/machines-selection.md',
+			{
+				"type": "ACTION",
+				"id": "action_1",
+				"name": "get-text",
+				"description": "1. Getting List of all Machine Models and corresponding Infos.",
+				"parentId": "prepare_data",
+				"config": {
+					"yaml": "url: https://cleverflow.ai/use-cases/machinery/machines-list.md"
+				},
+				"position": {
+					"x": 0,
+					"y": 150
+				}
 			},
-			position: { 
-				x: 50, 
-				y: 300 
-			} 
-		},
-		{ 
-			id: '5', 
-			type: 'SEQUENCE',
-			position: { 
-				x: 200, 
-				y: 200 
-			} 
-		},
-		{ 
-			id: '6', 
-			type: 'ACTION',
-			data: {
-				id: 'action_1',
-				type: 'reason-with-bflow',
-				instructions: 'Select corresponding Machine Models based on the requested Cake Types and the given Behavior Tree prepare_data.action_2.',
-			},
-			position: { 
-				x: 200, 
-				y: 300 
-			} 
-		},
-		{ 
-			id: '7', 
-			type: 'ACTION',
-			data: {
-				id: 'action_2',
-				type: 'filter',
-				instructions: `Use the data from prepare_data.action_1 and select the Machine Models which are given by choose_machine_model.action_1.
-                    Filter out the selected Machine Models with the given conditions.
-                    If there is no given condition, then we can skip this step.`,
-			},
-			position: { 
-				x: 320, 
-				y: 300 
-			} 
-		},
-		{ 
-			id: '8', 
-			type: 'ACTION',
-			data: {
-				id: 'action_3',
-				type: 'display-table',
-			},
-			position: { 
-				x: 450, 
-				y: 300 
-			} 
-		},
-	];
+			{
+				"type": "ACTION",
+				"id": "action_2",
+				"name": "get-bflow",
+				"description": "2. Converting Selection Logic to a Behavioral Flow to both \nenable AI-based Decision Making, \nand explain the Choices made to Human.",
+				"parentId": "prepare_data",
+				"config": {
+					"yaml": "url: https://cleverflow.ai/use-cases/machinery/machines-selection.md"
+				},
+				"position": {
+					"x": 0,
+					"y": 300
+				}
+			}
+		];
  
   	const initialEdges= [
-		{ 
-			id: 'e1-2', 
-			source: '1', 
-			target: '2' 
-		},
-		{ 
-			id: 'e2-3', 
-			source: '2', 
-			target: '3' 
-		},
-		{ 
-			id: 'e2-4', 
-			source: '2', 
-			target: '4' 
-		},
-		{ 
-			id: 'e1-5', 
-			source: '1', 
-			target: '5' 
-		},
-		{ 
-			id: 'e5-6', 
-			source: '5', 
-			target: '6' 
-		},
-		{ 
-			id: 'e5-7', 
-			source: '5', 
-			target: '7' 
-		},
-		{ 
-			id: 'e5-8', 
-			source: '5', 
-			target: '8' 
-		}
-	];
-    let _bflowData: any = $state({
-        nodes: initialNodes,
-        edges: initialEdges,
+			{
+				"id": 1,
+				"source": "prepare_data",
+				"target": "action_1"
+			},
+			{
+				"id": 2,
+				"source": "prepare_data",
+				"target": "action_2"
+			}
+		];
+    let bflowviz: any = $state({
+        nodes: [],
+        edges: [],
     });
 
-    onMount(() => {
-        const shadowRoot = document.querySelector('b-flow')?.shadowRoot;
-        if (shadowRoot) {
-            const styleTag = document.createElement('style');
-            styleTag.textContent = styles;
-            shadowRoot.appendChild(styleTag);
-        }
-    });
+	onMount(async() => {
+		agentConnection = new AgentConnection({name: 'bflow'});
+		await agentConnection.connect({
+			servers: 'ws://localhost:8080',
+			token: '76de3ba222bec3af21f9dbfb01f3197b'
+		});
+		
+		markdocCustomeElementToBFlowAgentMessenger = new MarkdocCustomeElementToBFlowAgentMessenger({
+			connection: agentConnection,
+		});
+		bflowToBFlowVizAgentMessenger = new BFlowToBFlowVizAgentMessenger({
+			connection: agentConnection,
+		});
 
-    async function connectNATS() {
-        
-        try {
-            // We must insert the correct protocol 'ws',
-            // as the Server is now set without TLS.
-            const nc = await wsconnect({ 
-                servers: 'ws://localhost:8080',
-                token: '76de3ba222bec3af21f9dbfb01f3197b'
-            });
+		loadingMessage = 'Convert markdoc custom element to BFlow';
+		const bflowRes = await markdocCustomeElementToBFlowAgentMessenger.request({url: url, text: text});
+		
+		loadingMessage = 'Convert BFlow to BFlowViz';
+		const bflowvizRes = await bflowToBFlowVizAgentMessenger.request({bflow: bflowRes.bflow});
 
-            console.log(`connected`);
-            return nc;
-        } catch (error) {
-            console.error(`Error connecting to NATS: ${error}`);
-            return null;
-        }
-    }
-    
-    let { 
-        url = '',
-        text = '' 
-    } = $props();
+		bflowviz = bflowvizRes.bflowViz;
 
-    // (async () => {
-    //     const nc = await connectNATS();
-    //     if (nc) {
-    //         // TODO: Use Strong Type for Message's Data.
-    //         const codec = JSONCodec();
+		isLoading = false;
+		loadingMessage = '';
+		await agentConnection.stop();
+	});
 
-    //         // See also: https://docs.nats.io/using-nats/developer/sending/request_reply
-    //         const reply = await nc.request(
-    //             "hello", 
-    //             codec.encode({ url: url, text: text }), 
-    //             { 
-    //                 timeout: 3600*1000 // 1 hour 
-    //             });
 
-    //         _bflowData = codec.decode(reply.data);
-    //         _isLoading  = false;
-    //         await nc.close();
-    //     }
-    // })();
 </script>
-<!-- <svelte:element this={'style'}>{@html xyflowCss}</svelte:element> -->
-{#if _isLoading}
-    <div>Loading...</div>
-{:else}
-    {#if _bflowData}
-        <BFlowView data={_bflowData} />
-    {:else }
-        <div>No Data</div>
-    {/if}
+
+<svelte:element this={'style'}>{@html css}</svelte:element>
+<svelte:element this={'style'}>{@html xyflowCss}</svelte:element>
+{#if isLoading}
+	<LoadingIndicator message={loadingMessage}></LoadingIndicator>
+{:else if bflowviz}
+	<BFlowView data={bflowviz} />
+{:else }
+	<div>No Data</div>
 {/if}
+
 <!-- <h1>Input (markdoc custom element):</h1>
 {{text}}
 

@@ -31,7 +31,6 @@
 	});
 	
 </script>
-
 <main class="relative">
 	<div style="height: calc(100vh - 6rem);">
 		<SvelteFlow
@@ -46,9 +45,3 @@
 		</SvelteFlow>
 	</div>
 </main>
-
-<style>
-	.backdrop {
-		background-color: rgba(0, 0, 0, 0.1);
-	}
-</style>

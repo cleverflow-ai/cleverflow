@@ -1,1 +1,1 @@
-export { default as BFlow } from './BFlow.svelte';
+export {default as BFlow} from './BFlow.svelte';
