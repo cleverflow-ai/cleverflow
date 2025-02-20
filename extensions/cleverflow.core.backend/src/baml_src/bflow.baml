@@ -92,17 +92,71 @@ function ParseBFlowToBFlowViz(bflow: string) -> BFlowViz {
             Assign a unique random 10-character string as id to each node.
             Add a parentId field (null if no parent).
             Add a level field to each node (0 for the root, 1 for children of the root, and so on).
-            Ensure each node has a position field with a default value of { x: 0, y: 0 } if missing.
-            Layout rules:
-                Sibling nodes should be 160px apart horizontally.
-                Each level should be 160px apart vertically.
-                Parent nodes must be centered horizontally above their children.
+            Ensure each node has a position field with a default value of { x: 150, y: 150 } if missing.
         
         Task 2: Generate Parent-Child Relationships
-            - Create an array of objects representing parent-child relationships with:
-                - id: A unique random 10-character string, can not be null.
-                - source: The parentId of the child.
-                - target: The id of the child.
+            Create an array of objects representing parent-child relationships with:
+                id: A unique random 10-character string, can not be null.
+                source: The parentId of the child.
+                target: The id of the child.
+        
+        Task 3: 
+            You have an array of nodes, where each node has an `id` and a `parentId` to define parent-child relationships.  
+
+            Your task is to **layout these nodes as a tree**, ensuring a well-balanced structure.  
+            Use the **Reingold-Tilford tree layout algorithm** (or an equivalent tree layout algorithm) to arrange nodes optimally.  
+
+            #### **Rules for Layout:**
+            1. **Vertical Spacing**: Each level should be **150px apart downward**.  
+            2. **Horizontal Spacing**:  
+            - Sibling nodes should be spaced **150px apart** horizontally.  
+            - Parents must be **centered horizontally above their children**.  
+            3. Ensure that nodes **do not overlap** and are evenly distributed.  
+
+            #### **Expected Output Format:**  
+            Each node should contain:
+            - `"level"`: The depth level (`0` for root, `1` for children of root, etc.).  
+            - `"position"`: `{ "x": value, "y": value }`, calculated using the tree layout algorithm.  
+
+            #### **Example Output (Balanced Tree Layout):**
+            ```json
+            [
+                {
+                    "type": "SEQUENCE",
+                    "id": "prepare_data",
+                    "level": 0,
+                    "position": { "x": 0, "y": 0 }
+                },
+                {
+                    "type": "ACTION",
+                    "id": "action_1",
+                    "parentId": "prepare_data",
+                    "level": 1,
+                    "position": { "x": -75, "y": 150 }
+                },
+                {
+                    "type": "ACTION",
+                    "id": "action_2",
+                    "parentId": "prepare_data",
+                    "level": 1,
+                    "position": { "x": 75, "y": 150 }
+                },
+                {
+                    "type": "ACTION",
+                    "id": "action_3",
+                    "parentId": "action_1",
+                    "level": 2,
+                    "position": { "x": -150, "y": 300 }
+                },
+                {
+                    "type": "ACTION",
+                    "id": "action_4",
+                    "parentId": "action_1",
+                    "level": 2,
+                    "position": { "x": 0, "y": 300 }
+                }
+            ]
+
         
         Return only the final results for each task—no extra explanations.
         ---
