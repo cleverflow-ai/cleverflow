@@ -21,6 +21,22 @@
                 {% get-bflow id="action_2" %}
                     url: https://cleverflow.ai/use-cases/machinery/machines-selection.md
                 {% /get-bflow %}
+                
+                {% sequence id="test" %}
+                    3. Converting Selection Logic to a Behavioral Flow to both 
+                    enable AI-based Decision Making, 
+                    and explain the Choices made to Human.
+                    {% get-bflow id="action_3" %}
+                        url: https://cleverflow.ai/use-cases/machinery/machines-selection2.md
+                    {% /get-bflow %}
+
+                    4. Converting Selection Logic to a Behavioral Flow to both 
+                    enable AI-based Decision Making, 
+                    and explain the Choices made to Human.
+                    {% get-bflow id="action_4" %}
+                        url: https://cleverflow.ai/use-cases/machinery/machines-selection3.md
+                    {% /get-bflow %}
+                {% /sequence %}
             {% /sequence %}
         {% /b-flow %}
     `;

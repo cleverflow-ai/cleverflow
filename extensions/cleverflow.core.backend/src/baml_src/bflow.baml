@@ -131,10 +131,10 @@ function ParseBFlowToBFlowViz(bflow: string) -> BFlowViz {
 
             ### **Rules for Layout:**
                 1. **Vertical Spacing:**  
-                    - Each level should be **at least 150px apart downward**, ensuring enough space for nodes.  
+                    - Each level should be **at least 30px apart downward**, ensuring enough space for nodes.  
                 2. **Horizontal Spacing:**  
                     - Nodes **at the same level must be horizontally aligned**.  
-                    - Nodes **at the same level must be at least 150px apart** from each other.  
+                    - Nodes **at the same level must be at least 30px apart** from each other.  
                     - Parent nodes must be **centered horizontally above their children**.  
                     - Nodes should be placed without overlapping and should be evenly distributed.
             
@@ -211,6 +211,7 @@ test Test_WithoutEntry_ParseMarkdocBFlowElementToBFlow {
                     {% get-bflow id="action_2" %}
                         url: https://cleverflow.ai/use-cases/machinery/machines-selection.md
                     {% /get-bflow %}
+                    
                 {% /sequence %}
             {% /b-flow %}
         "#

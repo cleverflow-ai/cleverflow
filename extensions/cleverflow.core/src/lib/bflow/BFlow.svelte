@@ -41,6 +41,9 @@
 				"type": "ACTION",
 				"id": "action_1",
 				"name": "get-text",
+				"data": {
+					"name": "get-text",
+				},
 				"description": "1. Getting List of all Machine Models and corresponding Infos.",
 				"parentId": "prepare_data",
 				"config": {
@@ -123,10 +126,3 @@
 {:else }
 	<div>No Data</div>
 {/if}
-
-<!-- <h1>Input (markdoc custom element):</h1>
-{{text}}
-
-<h1>Converted to Svelte-Flow-based JSON:</h1> -->
-
-<slot />
