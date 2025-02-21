@@ -50,9 +50,9 @@ export default class BFlowToBFlowVizAgent extends Agent<InPayload, OutPayload> {
      * @param {InPayload} payload - The input payload containing the BFlow data to be processed.
      * @returns {Promise<OutPayload>} - A promise that resolves to the output payload containing the BFlowViz data.
      * @async
-     * @protected
+     * @public
      */
-    protected async process(payload: InPayload): Promise<OutPayload> {
+    public async process(payload: InPayload): Promise<OutPayload> {
         const bflowViz = await b.ParseBFlowToBFlowViz(
             JSON.stringify(payload.bflow), 
             { 

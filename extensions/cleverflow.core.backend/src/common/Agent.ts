@@ -80,6 +80,15 @@ export default abstract class Agent<In extends object, Out extends object> {
             console.log(`Agent ${this.name} was drained and is not listening to any subject.`);
         }
     }
+
+    /**
+     * Abstract method to process incoming messages. Must be implemented by subclasses.
+     * 
+     * @abstract
+     * @param {In} payload - The incoming message payload.
+     * @returns {Promise<Out>}
+     */
+    public abstract process(payload: In): Promise<Out>;
     
     /**
      * Establishes a connection to the NATS server.
@@ -95,14 +104,5 @@ export default abstract class Agent<In extends object, Out extends object> {
         console.log(`connected`);
 
         return nc;
-    }
-
-    /**
-     * Abstract method to process incoming messages. Must be implemented by subclasses.
-     * 
-     * @abstract
-     * @param {In} payload - The incoming message payload.
-     * @returns {Promise<Out>}
-     */
-    protected abstract process(payload: In): Promise<Out>;
+    }   
 }

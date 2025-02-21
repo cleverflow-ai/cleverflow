@@ -50,9 +50,9 @@ export default class MarkdocCustomElementToBFlowAgent extends Agent<InPayload, O
      * @param {InPayload} payload - The input payload containing the text to be processed.
      * @returns {Promise<OutPayload>} - A promise that resolves to the output payload containing the BFlow data.
      * @async
-     * @protected
+     * @public
      */
-    protected async process(payload: InPayload): Promise<OutPayload> {
+    public async process(payload: InPayload): Promise<OutPayload> {
         const bflow = await b.ParseMarkdocBFlowElementToBFlow(
             payload.text, 
             [
@@ -66,7 +66,7 @@ export default class MarkdocCustomElementToBFlowAgent extends Agent<InPayload, O
                 }
             ],
             { 
-                clientRegistry: new Clients({ primary: Clients.OllamaDefault }).registry 
+                clientRegistry: new Clients({ primary: Clients.OllamaTool }).registry 
             });
         
         return { bflow: bflow };

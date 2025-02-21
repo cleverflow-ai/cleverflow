@@ -55,7 +55,7 @@ export default class Clients {
                 // @ts-ignore: Object literal may only specify known properties, and 'base_url' does not exist in type '{ [x: number]: any; }'
                 base_url: 'http://57.128.86.248:11434/v1',
                 api_key: 'ollama',
-                model:'command-r7b:latest' ,
+                model:'qwen2.5:latest' ,
                 temperature: 0,
             }
         );
