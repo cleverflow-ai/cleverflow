@@ -1,5 +1,6 @@
 import { JSONCodec } from 'nats/lib/nats-base-client/codec.js';
 import { connect, NatsConnection, Subscription } from 'nats';
+import AgentInfo from './AgentInfo.js';
 
 /**
  * The Agent class is an abstract base class for creating agents that connect to a NATS server,
@@ -7,8 +8,17 @@ import { connect, NatsConnection, Subscription } from 'nats';
  * 
  * @abstract
  */
-export default abstract class Agent<In extends object, Out extends object> {
+/**
+ * Abstract class representing an Agent that processes messages from a NATS server.
+ * 
+ * @template In - The type of the incoming message payload.
+ * @template Out - The type of the outgoing message payload.
+ * 
+ * @implements {AgentInfo}
+ */
+export default abstract class Agent<In extends object, Out extends object> implements AgentInfo {
     public readonly name: string | undefined;
+    public readonly description: string | undefined;
 
     protected connection: NatsConnection | null | undefined;
     protected subscription: Subscription | null | undefined;
@@ -17,10 +27,11 @@ export default abstract class Agent<In extends object, Out extends object> {
     /**
      * Constructs an Agent instance.
      * 
-     * @param {Partial<{ name: string }>} config - Configuration object containing the agent's name.
+     * @param {Partial<{ name: string, description: string }>} config - Configuration object containing the agent's name and description.
      */
-    constructor(config: Partial<{ name: string }>) {
+    constructor(config: Partial<{ name: string, description: string }>) {
         this.name = config.name;    
+        this.description = config.description;
     }
 
     /**
@@ -30,7 +41,14 @@ export default abstract class Agent<In extends object, Out extends object> {
      * @returns {Promise<void>}
      * @throws {Error} Throws an error if the subject is not provided.
      */
-    public async run(config: Partial<{ servers: string | string[], token: string, subject: string }> = { servers: 'localhost:4222', token: '76de3ba222bec3af21f9dbfb01f3197b' }): Promise<void> {
+    public async run(config: Partial<{ servers?: string | string[], token?: string, subject?: string }> = {}): Promise<void> {
+        const defaultConfig = {
+            servers: 'localhost:4222',
+            token: '76de3ba222bec3af21f9dbfb01f3197b',
+            subject: this.name
+        };
+
+        config = { ...defaultConfig, ...config };
         if (!this.connection) {
             this.connection = await this.connect(config);
             console.log(`Agent ${this.name} was connected.`);
@@ -101,7 +119,6 @@ export default abstract class Agent<In extends object, Out extends object> {
             servers: config.servers,
             token: config.token
         });
-        console.log(`connected`);
 
         return nc;
     }   

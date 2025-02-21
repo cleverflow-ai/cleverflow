@@ -41,7 +41,10 @@ export default class BFlowToBFlowVizAgent extends Agent<InPayload, OutPayload> {
      * Sets the agent name to 'bflow-to-bflowviz'.
      */
     constructor() {
-        super({ name: 'bflow-to-bflowviz' });
+        super({ 
+            name: 'bflow-to-bflowviz' ,
+            description: 'Parse given B-Flow to the Visualization Format.' 
+        });
     }
 
     /**

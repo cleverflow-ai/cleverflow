@@ -41,7 +41,10 @@ export default class MarkdocCustomElementToBFlowAgent extends Agent<InPayload, O
      * Sets the agent name to 'markdoc-custom-element-to-bflow'.
      */
     constructor() {
-        super({ name: 'markdoc-custom-element-to-bflow' });
+        super({ 
+            name: 'markdoc-custom-element-to-bflow',
+            description: 'Parse given Markdoc Custome Element (as Text) to B-Flow.'  
+        });
     }
 
     /**
