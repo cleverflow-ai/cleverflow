@@ -75,10 +75,9 @@ class BFlowViz{
 function ParseMarkdocBFlowElementToBFlow(text: string, agents: string) -> BFlow {
     client Ollama_Default
     prompt #"
-        You have two tasks:
-
-        1. As an expert in Markdoc and Behavior Tree:
+        As an expert in Markdoc and Behavior Tree:
         You consider my given Mardoc custom element which represents a Behavior Tree with different node types such as "sequence", "action", etc. 
+        You also consider my given list of Agents.
         Please convert the given element with its children to a JSON format.
         Just result and no verbose please!
         

@@ -7,7 +7,6 @@ await vmRunner.runIsolatedCode(`
     const url = "https://github.com/cleverflow-ai";
     const content = await load(url);
     log("Loaded content: " + JSON.stringify(content));
-    do('Finished').
 `);
 
 const markdocCustomElementToBFlowAgent = new MarkdocCustomElementToBFlowAgent();
