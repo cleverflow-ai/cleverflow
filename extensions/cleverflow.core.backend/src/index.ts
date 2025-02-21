@@ -1,5 +1,14 @@
 import MarkdocCustomElementToBFlowAgent from './bflow/MarkdocCustomeElementToBFlowAgent.js';
 import BFlowToBFlowVizAgent from './bflow/BFlowToBFlowVizAgent.js';
+import VmRunner from './common/VmRunner.js';
+
+const vmRunner = new VmRunner();
+await vmRunner.runIsolatedCode(`
+    const url = "https://github.com/cleverflow-ai";
+    const content = await load(url);
+    log("Loaded content: " + JSON.stringify(content));
+    do('Finished').
+`);
 
 const markdocCustomElementToBFlowAgent = new MarkdocCustomElementToBFlowAgent();
 const bflowToBFlowVizAgent = new BFlowToBFlowVizAgent();
@@ -16,3 +25,4 @@ await Promise.all([
         subject: 'bflow-to-bflowviz' 
     })
 ]);
+

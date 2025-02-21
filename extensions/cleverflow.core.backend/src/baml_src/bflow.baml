@@ -20,6 +20,18 @@ enum BFlowNodeState {
     FAILURE
 }
 
+class BFlowNodeConfig {
+    yaml string?
+}
+
+class BFlowNodeAgent {
+    name string
+    instructions string
+}
+
+class BFlowNodeOutput {
+}
+
 class BFlowNode {
     type BFlowNodeType
     id string?
@@ -27,14 +39,14 @@ class BFlowNode {
     description string?
     config BFlowNodeConfig?
     state BFlowNodeState?
-    goto BFlowNode[]
+    goto BFlowNode[]?
+
+    agent BFlowNodeAgent?
+    inputs string[]?
+    output BFlowNodeOutput?
 }
 
-class BFlowNodeConfig {
-    yaml string?
-}
-
-class BFlowJsonNode{
+class BFlowJsonNode {
     type BFlowNodeType
     id string?
     name string?
@@ -60,10 +72,12 @@ class BFlowViz{
     edges BFlowJsonEdge[]
 }
 
-function ParseMarkdocBFlowElementToBFlow(text: string) -> BFlow {
+function ParseMarkdocBFlowElementToBFlow(text: string, agents: string) -> BFlow {
     client Ollama_Default
     prompt #"
-        You are expert in Markdoc and Behavior Tree.
+        You have two tasks:
+
+        1. As an expert in Markdoc and Behavior Tree:
         You consider my given Mardoc custom element which represents a Behavior Tree with different node types such as "sequence", "action", etc. 
         Please convert the given element with its children to a JSON format.
         Just result and no verbose please!
@@ -75,8 +89,15 @@ function ParseMarkdocBFlowElementToBFlow(text: string) -> BFlow {
            - For example: '<% get-text %>' must be converted to { type: "ACTION", name: "get-text" }
         - Each Markdoc element might contain YAML-based configuration between opening and closing tags: please extract the whole YAML as config of the corresponding node, no matter YAML contains only one key-value pair or multiple key-value pairs.
         - If markdoc element contains children, then they should be added to the 'goto' field of the nearest father node.
+        - Each Node with type 'ACTION' or 'CONDITION' might need a corresponding Agent given in the Agents list.
+        - Go thruogh each Node, identity the names of other Nodes whose outputs are the inputs for it. Assign 'inputs' list with these Nodes names. 
+        - If Node doest not receive any input from another, just let its 'inputs' empty.
         ---
+        Markdoc:
         {{ text }}
+        ---
+        Agents:
+        {{ agents }}
         ---
         {{ ctx.output_format }}
     "#
