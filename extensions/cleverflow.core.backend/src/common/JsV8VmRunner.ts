@@ -1,16 +1,16 @@
 /**
- * @file VmRunner.ts
- * @description This file contains the implementation of the `VmRunner` class, which provides a secure environment to run isolated JavaScript code with predefined utility functions.
+ * @file JsV8VmRunner.ts
+ * @description This file contains the implementation of the `JsV8VmRunner` class, which provides a secure environment to run isolated JavaScript code with predefined utility functions.
  */
 
 import axios from 'axios';
 import vm from 'vm';
 
 /**
- * @class VmRunner
- * @description The `VmRunner` class provides methods to run isolated JavaScript code in a secure sandboxed environment. It also allows adding custom utility functions to the sandbox.
+ * @class JsV8VmRunner
+ * @description The `JsV8VmRunner` class provides methods to run isolated JavaScript code in a secure sandboxed environment. It also allows adding custom utility functions to the sandbox.
  */
-export default class VmRunner {
+export default class JsV8VmRunner {
     /**
      * @property {Record<string, Function>} utilities
      * @description A collection of utility functions that can be used within the sandboxed environment.
@@ -85,7 +85,7 @@ export default class VmRunner {
      * @returns {Promise<void>}
      * @throws {Error} If the code execution fails.
      */
-    public async runIsolatedCode(code: string): Promise<void> {
+    public async runIsolatedCode(code: string): Promise<any> {
         // Dynamically create the sandbox from utilities
         const sandbox = this.createSandbox(this.utilities);
 
@@ -101,7 +101,7 @@ export default class VmRunner {
 
         try {
             // Run the code in the sandboxed context
-            await vm.runInContext(wrappedCode, sandbox, { timeout: 1000 }); // Timeout for safety
+            return await vm.runInContext(wrappedCode, sandbox, { timeout: 1000 }); // Timeout for safety
         } catch (error: unknown) {
             console.error(`[ERROR]: ${error}`);
         }
@@ -123,5 +123,3 @@ export default class VmRunner {
         return sandbox;
     }
 }
-
-
