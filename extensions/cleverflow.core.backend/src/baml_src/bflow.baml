@@ -214,6 +214,18 @@ test Test_WithEntry_ParseMarkdocBFlowElementToBFlow {
                     {% /display-table %}
                 {% /sequence %}
             {% /b-flow %}
+        "#,
+        agents #"
+            [
+                { 
+                    "name": "download-file",
+                    "instructions": 'Can be use for fetching file from a given URL.'
+                },
+                { 
+                    "name": "generate-code",
+                    instructions: 'Depending on the given instructions, can generate the code in Javascript for excuting the task ad hoc.'
+                }
+            ]
         "#
     }
 }
