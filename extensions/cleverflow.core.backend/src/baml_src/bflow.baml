@@ -72,8 +72,8 @@ class BFlowViz{
     edges BFlowJsonEdge[]
 }
 
-function ParseMarkdocBFlowElementToBFlow(text: string, agents: string) -> BFlow {
-    client Ollama_Default
+function ParseMarkdocBFlowElementToBFlow(text: string, agents: BFlowNodeAgent[]) -> BFlow {
+    client Ollama_Tool
     prompt #"
         As an expert in Markdoc and Behavior Tree:
         You consider my given Mardoc custom element which represents a Behavior Tree with different node types such as "sequence", "action", etc. 
@@ -215,18 +215,16 @@ test Test_WithEntry_ParseMarkdocBFlowElementToBFlow {
                 {% /sequence %}
             {% /b-flow %}
         "#,
-        agents #"
-            [
-                { 
-                    "name": "download-file",
-                    "instructions": 'Can be use for fetching file from a given URL.'
-                },
-                { 
-                    "name": "generate-code",
-                    instructions: 'Depending on the given instructions, can generate the code in Javascript for excuting the task ad hoc.'
-                }
-            ]
-        "#
+        agents [
+            {
+                name "download-file"
+                instructions "Can be use for fetching file from a given URL."
+            }
+            {
+                name "generate-code"
+                instructions "Depending on the given instructions, can generate the code in Javascript for excuting the task ad hoc."
+            }
+        ]
     }
 }
 
@@ -250,6 +248,17 @@ test Test_WithoutEntry_ParseMarkdocBFlowElementToBFlow {
                 {% /sequence %}
             {% /b-flow %}
         "#
+        agents [
+            {
+                name "download-file"
+                instructions "Can be use for fetching file from a given URL."
+            }
+            {
+                name "generate-code"
+                instructions "Depending on the given instructions, can generate the code in Javascript for excuting the task ad hoc."
+            }
+        ]
+        
     }
 }
 

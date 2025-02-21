@@ -55,18 +55,16 @@ export default class MarkdocCustomElementToBFlowAgent extends Agent<InPayload, O
     protected async process(payload: InPayload): Promise<OutPayload> {
         const bflow = await b.ParseMarkdocBFlowElementToBFlow(
             payload.text, 
-            JSON.stringify(
-                [
-                    { 
-                        name: 'download-file',
-                        instructions: 'Can be use for fetching file from a given URL.'
-                    },
-                    { 
-                        name: 'generate-code',
-                        instructions: 'Depending on the given instructions, can generate the code in Javascript for excuting the task ad hoc.'
-                    }
-                ]
-            ),
+            [
+                { 
+                    name: 'download-file',
+                    instructions: 'Can be use for fetching file from a given URL.'
+                },
+                { 
+                    name: 'generate-code',
+                    instructions: 'Depending on the given instructions, can generate the code in Javascript for excuting the task ad hoc.'
+                }
+            ],
             { 
                 clientRegistry: new Clients({ primary: Clients.OllamaDefault }).registry 
             });
