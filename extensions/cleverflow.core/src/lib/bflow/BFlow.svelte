@@ -15,6 +15,7 @@
 	import MarkdocCustomeElementToBFlowAgentMessenger from './agent/MarkdocCustomeElementToBFlowAgentMessenger.js';
 	import BFlowToBFlowVizAgentMessenger from './agent/BFlowToBFlowVizAgentMessenger.js';
     import type AgentInfo from '$lib/common/agent/AgentInfo.js';
+	import _ from 'lodash';
 	
 	let { 
 		url = '',
@@ -86,7 +87,7 @@
 
 		try{
 			const result = await monitorAgentMessenger.request({query: 'list'});
-			agents = result.agents;
+			agents = result?.agents;
 		}catch(e: any){
 			console.error(e);
 			isBFlowBizLoading = false;
@@ -103,7 +104,7 @@
 		bflowbizLoadingInfoMessage = 'Convert Markdoc Custom Element to BFlow';
 		try{
 			const bflowRes = await markdocCustomeElementToBFlowAgentMessenger.request({url, text, agents});
-			return bflowRes.bflow;
+			return bflowRes?.bflow;
 		}catch(e: any){
 			console.error(e);
 			isBFlowBizLoading = false;
@@ -120,7 +121,8 @@
 		bflowbizLoadingInfoMessage = 'Convert BFlow to BFlowViz';
 		try{
 			const bflowvizRes = await bflowToBFlowVizAgentMessenger.request({bflow: bflow});
-			return bflowvizRes.bflowViz;
+			addDataPropertyToNodes(bflowvizRes?.bflowViz?.nodes);
+			return bflowvizRes?.bflowViz;
 		}catch(e: any){
 			console.error(e);
 			isBFlowBizLoading = false;
@@ -131,6 +133,14 @@
 			bflowbizLoadingInfoMessage = '';
 		}
 	};
+
+	const addDataPropertyToNodes = (nodes: any) => {
+		if(nodes && nodes.length > 0){
+			_.forEach(nodes, (node: any) => {
+				node.data = JSON.parse(JSON.stringify(node));
+			});
+		}
+	}
 
 </script>
 

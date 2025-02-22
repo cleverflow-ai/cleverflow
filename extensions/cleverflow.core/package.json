@@ -60,6 +60,7 @@
 		"@nats-io/nats-core": "^3.0.0-51",
 		"carta-md": "^4.7.0",
 		"isomorphic-dompurify": "^2.22.0",
+		"lodash": "^4.17.21",
 		"nats": "^2.29.2"
 	}
 }
