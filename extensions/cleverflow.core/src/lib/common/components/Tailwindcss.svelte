@@ -1,9 +1,11 @@
 <div class="
-    w-[50px] w-[100px] 
-    h-[50px] 
+    w-full w-[50px] w-[100px] w-10
+    h-full h-[50px] h-10
     rounded-full 
     border border-black
     flex items-center justify-center
     relative
+    gap-2
+    text-red-500 text-red-700
 ">
 </div>

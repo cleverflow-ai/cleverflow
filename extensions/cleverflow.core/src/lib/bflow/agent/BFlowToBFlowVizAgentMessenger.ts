@@ -11,46 +11,53 @@ export type OutPayload = {
 }
 
 /**
- * @class MarkdocCustomElementToBFlowAgent
- * @extends WSAgent<InPayload, OutPayload>
+ * @class BFlowToBFlowVizAgentMessenger
+ * @extends AgentMessenger<InPayload, OutPayload>
  * 
- * This class is responsible for converting Markdoc custom elements to BFlow format.
- * It extends the generic WSAgent class with input payload type `InPayload` and output payload type `OutPayload`.
+ * This class is responsible for sending requests to convert BFlow data to BFlowViz format.
+ * It extends the generic AgentMessenger class with input payload type `InPayload` and output payload type `OutPayload`.
  * 
  * @example
- * const agent = new MarkdocCustomElementToBFlowAgent();
- * const result = await agent.process({ text: 'some markdoc text' });
- * console.log(result.bflow);
+ * const agent = new BFlowToBFlowVizAgentMessenger({ connection: new AgentConnection() });
+ * const result = await agent.request({ bflow: someBFlowData });
+ * console.log(result.bflowViz);
  * 
  * @method constructor
- * Initializes a new instance of the MarkdocCustomElementToBFlowAgent class with a predefined name.
+ * Initializes a new instance of the BFlowToBFlowVizAgentMessenger class with a predefined subject.
+ * 
+ * @method request
+ * Sends a request to the BFlow service to convert BFlow data to BFlowViz format.
+ * 
+ * @param {InPayload} payload - The input payload containing the BFlow data to be processed.
+ * @returns {Promise<OutPayload>} - A promise that resolves to the output payload containing the BFlowViz data.
  * 
  * @method process
- * Processes the input payload to convert Markdoc custom elements to BFlow format.
+ * This method is not implemented and will throw an error if called.
  * 
- * @param {InPayload} payload - The input payload containing the text to be processed.
- * @returns {Promise<OutPayload>} - A promise that resolves to the output payload containing the BFlow data.
+ * @param {InPayload} payload - The input payload containing the BFlow data to be processed.
+ * @returns {Promise<OutPayload>} - A promise that resolves to the output payload containing the BFlowViz data.
  * 
  * @async
  * @protected
  */
-export default class MarkdocCustomeElementToBFlowAgentMessenger extends AgentMessenger<InPayload, OutPayload> {
+export default class BFlowToBFlowVizAgentMessenger extends AgentMessenger<InPayload, OutPayload> {
     
     /**
-     * Initializes a new instance of the MarkdocCustomElementToBFlowAgent class.
-     * Sets the agent name to 'markdoc-custom-element-to-bflow'.
+     * Initializes a new instance of the BFlowToBFlowVizAgentMessenger class.
+     * Sets the agent subject to 'bflow-to-bflowviz'.
+     * 
+     * @param {Partial<{ connection: AgentConnection }>} config - The configuration object containing the agent connection.
      */
     constructor(config: Partial<{ connection: AgentConnection }>) {
         super({ connection: config.connection, subject: 'bflow-to-bflowviz' });
     }
     
     /**
-     * Send a request to the BFlow service to convert Markdoc custom elements to BFlow format.
+     * Sends a request to the BFlow service to convert BFlow data to BFlowViz format.
      * 
-     * @param {InPayload} payload - The input payload containing the text to be processed.
-     * @returns {Promise<OutPayload>} - A promise that resolves to the output payload containing the BFlow data.
+     * @param {InPayload} payload - The input payload containing the BFlow data to be processed.
+     * @returns {Promise<OutPayload>} - A promise that resolves to the output payload containing the BFlowViz data.
      * @async
-     * @protected
      */
     public async request(payload: InPayload): Promise<OutPayload> {
         if(this.connection){
@@ -61,12 +68,19 @@ export default class MarkdocCustomeElementToBFlowAgentMessenger extends AgentMes
                     timeout: 3600*1000 // 1 hour 
                 }, 
             });
-        }else {
+        } else {
             throw new Error('Connection is not established');
         }
     }
 
-
+    /**
+     * This method is not implemented and will throw an error if called.
+     * 
+     * @param {InPayload} payload - The input payload containing the BFlow data to be processed.
+     * @returns {Promise<OutPayload>} - A promise that resolves to the output payload containing the BFlowViz data.
+     * @async
+     * @protected
+     */
     protected async process(payload: InPayload): Promise<OutPayload> {
         throw new Error("Method not implemented.");
     }

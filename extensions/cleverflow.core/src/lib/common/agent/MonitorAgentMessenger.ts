@@ -1,16 +1,14 @@
 import { JSONCodec } from "nats";
-import AgentConnection from "../../common/agent/AgentConnection.js";
-import AgentMessenger from "../../common/agent/AgentMessager.js";
-import type AgentInfo from "$lib/common/agent/AgentInfo.js";
+import AgentConnection from "./AgentConnection.js";
+import type AgentInfo from "./AgentInfo.js";
+import AgentMessenger from "./AgentMessager.js";
 
 export type InPayload = {
-    text: string;
-    url: string;
-    agents: AgentInfo[],
+    query: string,
 }
 
 export type OutPayload = {
-    bflow: any;
+    agents: AgentInfo[];
 }
 
 /**
@@ -37,14 +35,38 @@ export type OutPayload = {
  * @async
  * @protected
  */
-export default class MarkdocCustomeElementToBFlowAgentMessenger extends AgentMessenger<InPayload, OutPayload> {
+/**
+ * @file MonitorAgentMessenger.ts
+ * @description This file contains the definition of the MonitorAgentMessenger class, which extends the AgentMessenger class.
+ * The MonitorAgentMessenger class is responsible for sending requests to the BFlow service to convert Markdoc custom elements to BFlow format.
+ * 
+ * @module MonitorAgentMessenger
+ */
+
+ /**
+ * @class MonitorAgentMessenger
+ * @extends {AgentMessenger<InPayload, OutPayload>}
+ * @classdesc The MonitorAgentMessenger class is responsible for sending requests to the BFlow service to convert Markdoc custom elements to BFlow format.
+ * 
+ * @template InPayload - The type of the input payload.
+ * @template OutPayload - The type of the output payload.
+ * 
+ * @example
+ * const messenger = new MonitorAgentMessenger({ connection: agentConnection });
+ * const result = await messenger.request(inputPayload);
+ * 
+ * @param {Partial<{ connection: AgentConnection }>} config - The configuration object containing the agent connection.
+ * 
+ * @throws {Error} Throws an error if the connection is not established.
+ */
+export default class MonitorAgentMessenger extends AgentMessenger<InPayload, OutPayload> {
     
     /**
      * Initializes a new instance of the MarkdocCustomElementToBFlowAgent class.
      * Sets the agent name to 'markdoc-custom-element-to-bflow'.
      */
     constructor(config: Partial<{ connection: AgentConnection }>) {
-        super({ connection: config.connection, subject: 'markdoc-custom-element-to-bflow' });
+        super({ connection: config.connection, subject: 'monitor-all-agents' });
     }
     
     /**

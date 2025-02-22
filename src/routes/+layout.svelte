@@ -6,9 +6,6 @@
 
 	let { children } = $props();
 
-	onMount(() => {
-		console.log("ParaglideJS loaded on the client");
-	});
 </script>
 
 <ParaglideJS {i18n}>

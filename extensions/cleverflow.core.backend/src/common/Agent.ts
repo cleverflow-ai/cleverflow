@@ -65,12 +65,15 @@ export default abstract class Agent<In extends object, Out extends object> imple
             if (this.subscription) { 
                 for await (const message of this.subscription) {
                     const inPayload = this.codec.decode(message.data) as In;
-                    console.log(`Agent ${this.name} received: ${JSON.stringify(inPayload)}.`);
+                    console.log(`[Agent ${this.name} received]:`);
+                    console.log(JSON.stringify(inPayload));
             
                     const outPayload: Out = await this.process(inPayload);
+                    
                     const encodedOutPayload = this.codec.encode(outPayload);
                     message.respond(encodedOutPayload);
-                    console.log(`Agent ${this.name} replied: ${JSON.stringify(outPayload)}.`);
+                    console.log(`[Agent ${this.name} replied]:`);
+                    console.log(JSON.stringify(outPayload));
                 }
             }
         }

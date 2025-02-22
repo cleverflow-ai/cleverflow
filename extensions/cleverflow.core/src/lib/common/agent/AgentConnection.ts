@@ -1,18 +1,28 @@
 import { JSONCodec } from 'nats/lib/nats-base-client/codec.js';
-import { wsconnect, NatsConnection, Subscription, Msg, Payload, RequestOptions } from "@nats-io/nats-core";
+import { wsconnect } from "@nats-io/nats-core";
+import type { NatsConnection, Subscription, Payload, RequestOptions } from "@nats-io/nats-core";
 
 /**
  * The Agent class is class for creating agents that connect to a NATS server
  * 
  * @abstract
  */
+/**
+ * Represents a connection to the NATS server for an agent.
+ */
 export default class AgentConnection {
+    /**
+     * The name of the agent.
+     */
     public readonly name: string | undefined;
 
+    /**
+     * The NATS connection instance.
+     */
     protected connection: NatsConnection | null | undefined;
     
     /**
-     * Constructs an Agent instance.
+     * Constructs an AgentConnection instance.
      * 
      * @param {Partial<{ name: string }>} config - Configuration object containing the agent's name.
      */
@@ -24,7 +34,7 @@ export default class AgentConnection {
      * Establishes a connection to the NATS server.
      * 
      * @param {Partial<{ servers: string | string[], token: string }>} config - Configuration object containing server details and token.
-     * @returns {Promise<NatsConnection>}
+     * @returns {Promise<NatsConnection>} - A promise that resolves to the NATS connection instance.
      */
     public async connect(config: Partial<{ servers: string | string[], token: string }>): Promise<NatsConnection> {
         this.connection = await wsconnect({
@@ -37,21 +47,11 @@ export default class AgentConnection {
     }
 
     /**
-     * Stops the agent by draining the subscription and closing the connection.
+     * Stops the agent by closing the connection.
      * 
-     * @returns {Promise<void>}
+     * @returns {Promise<void>} - A promise that resolves when the connection is closed.
      */
     public async stop(): Promise<void> {
-        // if (this.subscription) {
-        //     // Notes:
-        //     // 1. `unsubscribe()` is immediate and does not guarantee processing of pending messages.
-        //     // 2. `drain()` ensures all pending messages are processed before unsubscribing.
-        //     // 3. For asynchronous subscriptions, you can also use the `max` option to automatically unsubscribe after receiving a specified number of messages.
-        //     this.subscription.drain();
-        //     this.subscription = null;
-        //     console.log(`Agent ${this.name} was disconnected.`);
-        // }
-
         if (this.connection) {
             this.connection.close();
             this.connection = null;
@@ -60,11 +60,12 @@ export default class AgentConnection {
     }
 
     /**
-     * Create a subscription to a subject.
-     * @param config 
-     * @returns 
+     * Creates a subscription to a subject.
+     * 
+     * @param {Partial<{ subject: string }>} config - Configuration object containing the subject to subscribe to.
+     * @returns {Promise<Subscription>} - A promise that resolves to the subscription instance.
+     * @throws {Error} - Throws an error if the connection or subject is not provided.
      */
-   
     public async subscribe(config: Partial<{ subject: string }>): Promise<Subscription> {
         if(!this.connection){
             throw new Error('Connection is required to subscribe.');
@@ -78,11 +79,12 @@ export default class AgentConnection {
     }
 
     /**
-     * Do a request reply to a subject.
-     * @param config 
-     * @returns 
+     * Sends a request and waits for a reply from a subject.
+     * 
+     * @param {Partial<{ subject: string, payload: Payload, options: RequestOptions }>} config - Configuration object containing the subject, payload, and request options.
+     * @returns {Promise<T>} - A promise that resolves to the decoded response data.
+     * @throws {Error} - Throws an error if the connection or subject is not provided.
      */
-   
     public async sendRequest<T>(config: Partial<{ subject: string, payload: Payload, options: RequestOptions }>): Promise<T> {
         if(!this.connection){
             throw new Error('Connection is required to subscribe.');

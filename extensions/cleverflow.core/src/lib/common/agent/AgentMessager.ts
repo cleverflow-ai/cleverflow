@@ -1,4 +1,4 @@
-import {Subscription } from "@nats-io/nats-core";
+import type { Subscription } from "@nats-io/nats-core";
 import AgentConnection from './AgentConnection.js';
 import { JSONCodec } from "nats";
 
@@ -8,6 +8,20 @@ import { JSONCodec } from "nats";
  * 
  * @abstract
  */
+/**
+ * @file AgentMessenger.ts
+ * @description Defines the abstract AgentMessenger class for managing agent connections and message processing.
+ * 
+ * @template In - The type of the incoming message payload.
+ * @template Out - The type of the outgoing message payload.
+ */
+
+ /**
+    * Abstract class representing an agent messenger that handles connections and message processing.
+    * 
+    * @template In - The type of the incoming message payload.
+    * @template Out - The type of the outgoing message payload.
+    */
 export default abstract class AgentMessenger<In extends object, Out extends object> {
     public readonly subject: string | undefined;
 

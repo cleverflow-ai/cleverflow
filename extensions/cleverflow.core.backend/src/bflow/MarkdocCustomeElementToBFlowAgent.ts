@@ -2,9 +2,11 @@ import { b } from '../baml_client/async_client.js';
 import { BFlow, BFlowNodeAgent } from '../baml_client/types.js';
 import Agent from "../common/Agent.js";
 import Clients from '../baml/Clients.js';
+import AgentInfo from '../common/AgentInfo.js';
 
 export type InPayload = {
     text: string;
+    agents: AgentInfo[],
 }
 
 export type OutPayload = {
@@ -58,16 +60,7 @@ export default class MarkdocCustomElementToBFlowAgent extends Agent<InPayload, O
     public async process(payload: InPayload): Promise<OutPayload> {
         const bflow = await b.ParseMarkdocBFlowElementToBFlow(
             payload.text, 
-            [
-                { 
-                    name: 'download-file',
-                    instructions: 'Can be use for fetching file from a given URL.'
-                },
-                { 
-                    name: 'generate-code',
-                    instructions: 'Depending on the given instructions, can generate the code in Javascript for excuting the task ad hoc.'
-                }
-            ],
+            payload.agents,
             { 
                 clientRegistry: new Clients({ primary: Clients.OllamaTool }).registry 
             });

@@ -1,3 +1,4 @@
+import _ from "lodash";
 import Agent from "./Agent.js";
 import AgentInfo from "./AgentInfo.js";
 
@@ -46,7 +47,16 @@ export default class MonitorAgent extends Agent<InPayload, OutPayload> {
      */
     public async process(payload: InPayload): Promise<OutPayload> {
         if (payload.query === 'list') {
-            return { agents: this._agents };
+            // SMELL: 
+            // return { agents: this._agents };
+            return { 
+                agents: _.map(this._agents, (agent: AgentInfo) => {
+                    return {
+                        name: agent.name,
+                        description: agent.description,
+                    };
+                })
+            };
         } else {
             throw new Error(`${payload.query} is still not supported.`);
         }

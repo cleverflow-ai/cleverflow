@@ -15,6 +15,7 @@
     "@boundaryml/baml": "^0.76.2",
     "@nats-io/nats-core": "^3.0.0-51",
     "@nats-io/transport-node": "^3.0.0-36",
+    "lodash": "^4.17.21",
     "nats": "^2.29.2"
   }
 }
