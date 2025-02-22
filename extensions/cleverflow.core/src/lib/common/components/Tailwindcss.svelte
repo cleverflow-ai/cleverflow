@@ -7,5 +7,6 @@
     relative
     gap-2
     text-red-500 text-red-700
+    text-green-500 text-green-700
 ">
 </div>

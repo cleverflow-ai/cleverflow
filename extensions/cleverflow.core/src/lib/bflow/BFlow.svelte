@@ -1,10 +1,10 @@
 <svelte:options customElement="b-flow" />
 
 <script lang="ts">
-	import { onMount } from 'svelte';
+	import { onDestroy, onMount } from 'svelte';
 	import css from '../../app.css?inline';
     import xyflowCss from '@xyflow/svelte/dist/style.css?inline';
-	import { CircleX } from 'lucide-svelte';
+	import { CircleX, RefreshCcw } from 'lucide-svelte';
     import BFlowView from "./visualization/BFlowView.svelte";
 	// SMELL: This is a workaround to make TailwindCSS work in the web component.
 	// IMPORTANT: this unuse import is required to make TailwindCSS work in the web component.
@@ -26,9 +26,9 @@
 	let markdocCustomeElementToBFlowAgentMessenger: MarkdocCustomeElementToBFlowAgentMessenger;
     let bflowToBFlowVizAgentMessenger: BFlowToBFlowVizAgentMessenger;
 
-	let isLoading = $state(true);
-	let loadingMessage = $state('');
-	let errorMessage = $state('');
+	let isBFlowBizLoading = $state(true);
+	let bflowbizLoadingInfoMessage = $state('');
+	let bflowbizLoadingErrorMessage = $state('');
     
 	let agents: AgentInfo[] = [];
     let bflowviz: any = $state(null);
@@ -37,6 +37,7 @@
 		
 		agentConnection = new AgentConnection({name: 'bflow'});
 
+		// SMELL: 
 		await agentConnection.connect({
 			servers: 'ws://localhost:8080',
 			token: '76de3ba222bec3af21f9dbfb01f3197b'
@@ -53,62 +54,81 @@
 			connection: agentConnection,
 		});
 
+		await loadBFlowViz();
+		
+	});
+
+	onDestroy(async () => {
+		try{
+			await monitorAgentMessenger.stop();
+			await markdocCustomeElementToBFlowAgentMessenger.stop();
+			await bflowToBFlowVizAgentMessenger.stop();
+			await agentConnection.stop();
+		}catch{}
+	});
+
+	const loadBFlowViz = async() => {
+		isBFlowBizLoading = true;
+
 		await loadAgents();
 		const bflow = await convertMarkdocCustomElementToBFlow(url, text);
 		if(bflow){
 			bflowviz = await convertBFlowToBFlowViz(bflow);
 		}
 		
-		isLoading = false;
-		loadingMessage = '';
-		await agentConnection.stop();
-	});
+		isBFlowBizLoading = false;
+		bflowbizLoadingInfoMessage = '';
+	}
 
 	const loadAgents = async() => {
+		isBFlowBizLoading = true;
+		bflowbizLoadingInfoMessage = 'Loading Agents';
+
 		try{
-			loadingMessage = 'Loading Agents';
 			const result = await monitorAgentMessenger.request({query: 'list'});
 			agents = result.agents;
 		}catch(e: any){
 			console.error(e);
-			isLoading = false;
-			errorMessage = e.message;
+			isBFlowBizLoading = false;
+			bflowbizLoadingErrorMessage = e.message;
 			console.log('>>>>> Error:', e);
 		}finally{
-			isLoading = false;
-			loadingMessage = '';
+			isBFlowBizLoading = false;
+			bflowbizLoadingInfoMessage = '';
 		}
 	};
 
 	const convertMarkdocCustomElementToBFlow = async(url: string, text: string) => {
+		isBFlowBizLoading = true;
+		bflowbizLoadingInfoMessage = 'Convert Markdoc Custom Element to BFlow';
 		try{
-			loadingMessage = 'Convert Markdoc Custom Element to BFlow';
 			const bflowRes = await markdocCustomeElementToBFlowAgentMessenger.request({url, text, agents});
 			return bflowRes.bflow;
 		}catch(e: any){
 			console.error(e);
-			isLoading = false;
-			errorMessage = e.message;
+			isBFlowBizLoading = false;
+			bflowbizLoadingErrorMessage = e.message;
 			return null;
 		}finally{
-			isLoading = false;
-			loadingMessage = '';
+			isBFlowBizLoading = false;
+			bflowbizLoadingInfoMessage = '';
 		}
 	};
 
 	const convertBFlowToBFlowViz = async(bflow: any) => {
+		isBFlowBizLoading = true;
+		bflowbizLoadingInfoMessage = 'Convert BFlow to BFlowViz';
 		try{
-			loadingMessage = 'Convert BFlow to BFlowViz';
 			const bflowvizRes = await bflowToBFlowVizAgentMessenger.request({bflow: bflow});
 			return bflowvizRes.bflowViz;
 		}catch(e: any){
 			console.error(e);
-			isLoading = false;
-			errorMessage = e.message;
+			isBFlowBizLoading = false;
+			bflowbizLoadingErrorMessage = e.message;
 			return null;
 		}finally{
-			isLoading = false;
-			loadingMessage = '';
+			isBFlowBizLoading = false;
+			bflowbizLoadingInfoMessage = '';
 		}
 	};
 
@@ -116,15 +136,20 @@
 
 <svelte:element this={'style'}>{@html css}</svelte:element>
 <svelte:element this={'style'}>{@html xyflowCss}</svelte:element>
-{#if isLoading}
-	<LoadingIndicator message={loadingMessage}></LoadingIndicator>
+{#if isBFlowBizLoading}
+	<LoadingIndicator message={bflowbizLoadingInfoMessage}></LoadingIndicator>
 {:else if bflowviz}
 	<BFlowView data={bflowviz} />
-{:else if errorMessage}
+{:else if bflowbizLoadingErrorMessage}
 	<div class="h-full w-full flex flex-col items-center justify-center gap-2">
 		<CircleX class="text-red-700 w-10 h-10"/>
-		<div>{errorMessage}</div>
+		<div>{bflowbizLoadingErrorMessage}</div>
 	</div>
 {:else }
-	<div>No Data</div>
+	<div class="h-full w-full flex flex-col items-center justify-center gap-2">
+		<div>An error occurred. Please click the refresh button below to try again.</div>
+		<button onclick={async () => await loadBFlowViz()}>
+			<RefreshCcw class="text-red-700 w-10 h-10"/>
+		</button>
+	</div>
 {/if}

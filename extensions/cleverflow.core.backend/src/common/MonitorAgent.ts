@@ -54,6 +54,7 @@ export default class MonitorAgent extends Agent<InPayload, OutPayload> {
                     return {
                         name: agent.name,
                         description: agent.description,
+                        instructions: 'SMELL: TODO'
                     };
                 })
             };
