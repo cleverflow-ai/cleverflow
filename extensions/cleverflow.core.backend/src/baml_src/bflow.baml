@@ -72,15 +72,6 @@ class BFlowVizEdge {
   target string
 }
 
-class BFlowVizNodeData {
-  id string?
-  name string?
-  description string?
-  config BFlowNodeConfig?
-  dimension Dimension
-  level int
-}
-
 class BFlowViz {
   nodes BFlowVizNode[]
   edges BFlowVizEdge[]
@@ -116,8 +107,8 @@ function ParseMarkdocBFlowElementToBFlow(text: string, agents: BFlowNodeAgent[])
     "#
 }
 
-function ParseBFlowToBFlowViz(bflow: string) -> BFlowViz {
-    client Ollama_Default
+function ParseBFlowToBFlowViz2(bflow: string) -> BFlowViz {
+    client Ollama_Tool
     prompt #"
         You are an expert in Markdoc, Behavior Tree, and JSON processing.
         
@@ -127,7 +118,7 @@ function ParseBFlowToBFlowViz(bflow: string) -> BFlowViz {
             Add a parentId field (null if no parent).
             Add a level field to each node (0 for the root, 1 for children of the root, and so on).
             Ensure each node has a position field.
-            
+            If node type is ACTION, keep its name.
         
         Task 2: Layout Nodes as a Tree
             You have an array of nodes, where each node has an `id` and a `parentId` to define parent-child relationships.  
@@ -135,27 +126,17 @@ function ParseBFlowToBFlowViz(bflow: string) -> BFlowViz {
             Your task is to **layout these nodes as a tree**, ensuring a well-balanced structure.  
 
             ### **Node Dimensions:**
-                - Each node is **150 wide** and **30 tall**.
+                If the node type is SEQUENCE, its dimension is {width: 50, height: 50}, but for other types, the dimension is {width: 150, height: 50}
 
-            ### **Rules for Layout:**
-                1. **Vertical Spacing:**  
-                    - Each level should be **at least 20 apart downward**, ensuring enough space for nodes.  
-                2. **Horizontal Spacing:**  
-                    - Nodes **at the same level must be horizontally aligned**.  
-                    - Nodes **at the same level must be at least 20 apart** from each other.  
-                    - Parent nodes must be **centered horizontally above their children**.  
-                    - Nodes should be placed without overlapping and should be evenly distributed.
-            
-            Using following functions to update all node's position
-
+            ### **Using these following functions to update all node's position**
                 function buildTree(nodes) {
                     const nodeMap = new Map();
                     const rootNodes = [];
 
-                    // Tạo map để tra cứu node theo id
+                    // Create a map for quick node lookup by ID
                     nodes.forEach(node => nodeMap.set(node.id, { ...node, children: [] }));
 
-                    // Gán children vào parent
+                    // Assign children to their respective parents
                     nodes.forEach(node => {
                         if (node.parentId !== null) {
                             nodeMap.get(node.parentId).children.push(nodeMap.get(node.id));
@@ -167,7 +148,7 @@ function ParseBFlowToBFlowViz(bflow: string) -> BFlowViz {
                     return rootNodes;
                 }
 
-                function calculatePositions(nodes, startX = 0, startY = 0, xGap = 20, yGap = 5) {
+                function calculatePositions(nodes, startX = 0, startY = 0, xGap = 70, yGap = 80) {
                     let xOffset = startX;
                     let yOffset = startY;
 
@@ -176,7 +157,7 @@ function ParseBFlowToBFlowViz(bflow: string) -> BFlowViz {
                         let width = node.dimension.width;
                         let height = node.dimension.height;
 
-                        // Nếu không có con, đặt node ở vị trí hiện tại
+                        // If there are no children, position the node and move right
                         if (children.length === 0) {
                             node.position.x = xOffset;
                             node.position.y = yOffset + depth * (height + yGap);
@@ -184,10 +165,10 @@ function ParseBFlowToBFlowViz(bflow: string) -> BFlowViz {
                             return node.position.x;
                         }
 
-                        // Định vị các con
+                        // Position children first
                         let childXPositions = children.map(child => layout(child, depth + 1));
 
-                        // Đặt cha nằm giữa các con
+                        // Center the parent node between its children
                         let minX = Math.min(...childXPositions);
                         let maxX = Math.max(...childXPositions);
                         node.position.x = (minX + maxX) / 2;
@@ -199,10 +180,11 @@ function ParseBFlowToBFlowViz(bflow: string) -> BFlowViz {
                     nodes.forEach(node => layout(node));
                 }
 
+                // Build tree and calculate positions
                 const tree = buildTree(nodes);
                 calculatePositions(tree);
             
-        Task 3: Generate Parent-Child Relationships
+        Task 3: Generate Parent-Child Relationships as edges
             Create an array of objects representing parent-child relationships with:
                 id: A unique random 10-character string, can not be null.
                 source: The parentId of the child.
@@ -294,7 +276,7 @@ test Test_WithoutEntry_ParseMarkdocBFlowElementToBFlow {
 }
 
 test Test_ParseBFlowToBFlowViz {
-    functions [ParseBFlowToBFlowViz]
+    functions [ParseBFlowToBFlowViz2]
     args {
         bflow #"
             {
@@ -320,15 +302,15 @@ test Test_ParseBFlowToBFlowViz {
                             "state": null,
                             "goto": [],
                             "agent": {
-                                "name": "download-file",
-                                "instructions": "Can be use for fetching file from a given URL."
+                                "name": "markdoc-custom-element-to-bflow",
+                                "instructions": "SMELL: TODO"
                             },
                             "inputs": [],
                             "output": null
                         },
                         {
                             "type": "ACTION",
-                            "id": "action_2",
+                            "id": null,
                             "name": "get-bflow",
                             "description": null,
                             "config": {
@@ -337,8 +319,8 @@ test Test_ParseBFlowToBFlowViz {
                             "state": null,
                             "goto": [],
                             "agent": {
-                                "name": "generate-code",
-                                "instructions": "Depending on the given instructions, can generate the code in Javascript for excuting the task ad hoc."
+                                "name": "markdoc-custom-element-to-bflow",
+                                "instructions": "SMELL: TODO"
                             },
                             "inputs": [],
                             "output": null
@@ -347,13 +329,13 @@ test Test_ParseBFlowToBFlowViz {
                             "type": "SEQUENCE",
                             "id": "test",
                             "name": null,
-                            "description": "3. Converting Selection Logic to a Behavioral Flow to both enable AI-based Decision Making, and explain the Choices made to Human.",
+                            "description": null,
                             "config": null,
                             "state": null,
                             "goto": [
                                 {
                                     "type": "ACTION",
-                                    "id": "action_3",
+                                    "id": null,
                                     "name": "get-bflow",
                                     "description": null,
                                     "config": {
@@ -362,15 +344,15 @@ test Test_ParseBFlowToBFlowViz {
                                     "state": null,
                                     "goto": [],
                                     "agent": {
-                                        "name": "generate-code",
-                                        "instructions": "Depending on the given instructions, can generate the code in Javascript for excuting the task ad hoc."
+                                        "name": "markdoc-custom-element-to-bflow",
+                                        "instructions": "SMELL: TODO"
                                     },
                                     "inputs": [],
                                     "output": null
                                 },
                                 {
                                     "type": "ACTION",
-                                    "id": "action_4",
+                                    "id": null,
                                     "name": "get-bflow",
                                     "description": null,
                                     "config": {
@@ -379,8 +361,8 @@ test Test_ParseBFlowToBFlowViz {
                                     "state": null,
                                     "goto": [],
                                     "agent": {
-                                        "name": "generate-code",
-                                        "instructions": "Depending on the given instructions, can generate the code in Javascript for excuting the task ad hoc."
+                                        "name": "markdoc-custom-element-to-bflow",
+                                        "instructions": "SMELL: TODO"
                                     },
                                     "inputs": [],
                                     "output": null
@@ -388,51 +370,16 @@ test Test_ParseBFlowToBFlowViz {
                             ],
                             "agent": null,
                             "inputs": [
-                                "action_3",
-                                "action_4"
+                                "get-bflow"
                             ],
                             "output": null
                         }
                     ],
                     "agent": null,
-                    "inputs": [
-                        "action_2"
-                    ],
+                    "inputs": [],
                     "output": null
                 }
             }
-        "#
-    }
-}
-
-test Test_WithEntry_ParseBFlowToBFlowViz {
-    functions [ParseBFlowToBFlowViz]
-    args {
-        text #"
-            {% b-flow id="choose_machine_models" %}
-                {% entry %}
-                {% /entry %}
-
-                {% sequence %}
-                    1. Going through the Selection Process, which is described in the following Document.
-                    {% reason-with-bflow id="action_1" %}
-                        instructions: |
-                            Select corresponding Machine Models based on the requested Cake Types and the given Behavior Tree prepare_data.action_2.
-                    {% /reason-with-bflow %}
-
-                    2. Setting any filter rule e.g. filter out those Machine Models are not available
-                    {% filter id="action_2" %}
-                        instructions: |
-                            Use the data from prepare_data.action_1 and select the Machine Models which are given by choose_machine_model.action_1.
-                            Filter out the selected Machine Models with the given conditions.
-                            If there is no given condition, then we can skip this step.
-                    {% /filter %}
-
-                    3. Displaying the result as Table. Each row contains a concrete Machine Model.
-                    {% display-table id="action_3" %}
-                    {% /display-table %}
-                {% /sequence %}
-            {% /b-flow %}
         "#
     }
 }
