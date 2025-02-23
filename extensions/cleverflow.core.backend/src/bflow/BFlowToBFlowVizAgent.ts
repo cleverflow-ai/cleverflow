@@ -41,9 +41,9 @@ export default class BFlowToBFlowVizAgent extends Agent<InPayload, OutPayload> {
      * Sets the agent name to 'bflow-to-bflowviz'.
      */
     constructor() {
-        super({ 
-            name: 'bflow-to-bflowviz' ,
-            description: 'Parse given B-Flow to the Visualization Format.' 
+        super({
+            name: 'bflow-to-bflowviz',
+            description: 'Parse given B-Flow to the Visualization Format.'
         });
     }
 
@@ -57,11 +57,11 @@ export default class BFlowToBFlowVizAgent extends Agent<InPayload, OutPayload> {
      */
     public async process(payload: InPayload): Promise<OutPayload> {
         const bflowViz = await b.ParseBFlowToBFlowViz(
-            JSON.stringify(payload.bflow), 
-            { 
-                clientRegistry: new Clients({ primary: Clients.OllamaDefault }).registry 
+            JSON.stringify(payload.bflow),
+            {
+                clientRegistry: new Clients({ primary: Clients.OllamaTool }).registry
             });
-        
+
         return { bflowViz: bflowViz };
     }
 }

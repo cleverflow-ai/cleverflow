@@ -1,8 +1,8 @@
 class BFlow {
-    id string?
-    name string?
-    description string?
-    root BFlowNode
+  id string?
+  name string?
+  description string?
+  root BFlowNode
 }
 
 enum BFlowNodeType {
@@ -21,62 +21,69 @@ enum BFlowNodeState {
 }
 
 class BFlowNodeConfig {
-    yaml string?
+  yaml string?
 }
 
 class BFlowNodeAgent {
-    name string
-    instructions string
+  name string
+  instructions string
 }
 
-class BFlowNodeOutput {
-}
+class BFlowNodeOutput {}
 
 class BFlowNode {
-    type BFlowNodeType
-    id string?
-    name string?
-    description string?
-    config BFlowNodeConfig?
-    state BFlowNodeState?
-    goto BFlowNode[]?
-
-    agent BFlowNodeAgent?
-    inputs string[]?
-    output BFlowNodeOutput?
+  type BFlowNodeType
+  id string?
+  name string?
+  description string?
+  config BFlowNodeConfig?
+  state BFlowNodeState?
+  goto BFlowNode[]?
+  agent BFlowNodeAgent?
+  inputs string[]?
+  output BFlowNodeOutput?
 }
 
 class BFlowVizNode {
-    type BFlowNodeType
-    id string
-    name string?
-    description string?
-    parentId string?
-    config BFlowNodeConfig?
-    position Position
-    dimension Dimension
-    level int
+  type BFlowNodeType
+  id string
+  name string?
+  description string?
+  parentId string?
+  position Position
+  config BFlowNodeConfig?
+  dimension Dimension
+  level int
 }
 
 class Position {
-    x int
-    y int
+  x int
+  y int
 }
 
 class Dimension {
-    width int
-    height int
+  width int
+  height int
 }
 
-class BFlowVizEdge{
-    id string
-    source string
-    target string
+class BFlowVizEdge {
+  id string
+  source string
+  target string
 }
 
-class BFlowViz{
-    nodes BFlowVizNode[]
-    edges BFlowVizEdge[]
+class BFlowVizNodeData {
+  id string?
+  name string?
+  description string?
+  config BFlowNodeConfig?
+  dimension Dimension
+  level int
+}
+
+class BFlowViz {
+  nodes BFlowVizNode[]
+  edges BFlowVizEdge[]
 }
 
 function ParseMarkdocBFlowElementToBFlow(text: string, agents: BFlowNodeAgent[]) -> BFlow {
@@ -110,7 +117,7 @@ function ParseMarkdocBFlowElementToBFlow(text: string, agents: BFlowNodeAgent[])
 }
 
 function ParseBFlowToBFlowViz(bflow: string) -> BFlowViz {
-    client Ollama_Tool
+    client Ollama_Default
     prompt #"
         You are an expert in Markdoc, Behavior Tree, and JSON processing.
         
@@ -120,6 +127,7 @@ function ParseBFlowToBFlowViz(bflow: string) -> BFlowViz {
             Add a parentId field (null if no parent).
             Add a level field to each node (0 for the root, 1 for children of the root, and so on).
             Ensure each node has a position field.
+            
         
         Task 2: Layout Nodes as a Tree
             You have an array of nodes, where each node has an `id` and a `parentId` to define parent-child relationships.  
@@ -127,16 +135,72 @@ function ParseBFlowToBFlowViz(bflow: string) -> BFlowViz {
             Your task is to **layout these nodes as a tree**, ensuring a well-balanced structure.  
 
             ### **Node Dimensions:**
-                - Each node is **150px wide** and **50px tall**.
+                - Each node is **150 wide** and **30 tall**.
 
             ### **Rules for Layout:**
                 1. **Vertical Spacing:**  
-                    - Each level should be **at least 30px apart downward**, ensuring enough space for nodes.  
+                    - Each level should be **at least 20 apart downward**, ensuring enough space for nodes.  
                 2. **Horizontal Spacing:**  
                     - Nodes **at the same level must be horizontally aligned**.  
-                    - Nodes **at the same level must be at least 30px apart** from each other.  
+                    - Nodes **at the same level must be at least 20 apart** from each other.  
                     - Parent nodes must be **centered horizontally above their children**.  
                     - Nodes should be placed without overlapping and should be evenly distributed.
+            
+            Using following functions to update all node's position
+
+                function buildTree(nodes) {
+                    const nodeMap = new Map();
+                    const rootNodes = [];
+
+                    // Tạo map để tra cứu node theo id
+                    nodes.forEach(node => nodeMap.set(node.id, { ...node, children: [] }));
+
+                    // Gán children vào parent
+                    nodes.forEach(node => {
+                        if (node.parentId !== null) {
+                            nodeMap.get(node.parentId).children.push(nodeMap.get(node.id));
+                        } else {
+                            rootNodes.push(nodeMap.get(node.id));
+                        }
+                    });
+
+                    return rootNodes;
+                }
+
+                function calculatePositions(nodes, startX = 0, startY = 0, xGap = 20, yGap = 5) {
+                    let xOffset = startX;
+                    let yOffset = startY;
+
+                    function layout(node, depth = 0) {
+                        let children = node.children;
+                        let width = node.dimension.width;
+                        let height = node.dimension.height;
+
+                        // Nếu không có con, đặt node ở vị trí hiện tại
+                        if (children.length === 0) {
+                            node.position.x = xOffset;
+                            node.position.y = yOffset + depth * (height + yGap);
+                            xOffset += width + xGap;
+                            return node.position.x;
+                        }
+
+                        // Định vị các con
+                        let childXPositions = children.map(child => layout(child, depth + 1));
+
+                        // Đặt cha nằm giữa các con
+                        let minX = Math.min(...childXPositions);
+                        let maxX = Math.max(...childXPositions);
+                        node.position.x = (minX + maxX) / 2;
+                        node.position.y = yOffset + depth * (height + yGap);
+
+                        return node.position.x;
+                    }
+
+                    nodes.forEach(node => layout(node));
+                }
+
+                const tree = buildTree(nodes);
+                calculatePositions(tree);
             
         Task 3: Generate Parent-Child Relationships
             Create an array of objects representing parent-child relationships with:
