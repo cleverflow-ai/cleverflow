@@ -47,23 +47,10 @@ class BFlowNode {
 class BFlowVizNode {
   type BFlowNodeType
   id string
+  parentNodeId string?
   name string?
   description string?
-  parentId string?
-  position Position
   config BFlowNodeConfig?
-  dimension Dimension
-  level int
-}
-
-class Position {
-  x int
-  y int
-}
-
-class Dimension {
-  width int
-  height int
 }
 
 class BFlowVizEdge {
@@ -115,79 +102,15 @@ function ParseBFlowToBFlowViz2(bflow: string) -> BFlowViz {
         Task 1: Flatten JSON into Array of Objects
             Flatten the nested JSON tree into an array of objects, starting from the root.
             Assign a unique random 10-character string as id to each node.
-            Add a parentId field (null if no parent).
+            Add a parentNodeId field (null if no parent).
             Add a level field to each node (0 for the root, 1 for children of the root, and so on).
             Ensure each node has a position field.
             If node type is ACTION, keep its name.
-        
-        Task 2: Layout Nodes as a Tree
-            You have an array of nodes, where each node has an `id` and a `parentId` to define parent-child relationships.  
-
-            Your task is to **layout these nodes as a tree**, ensuring a well-balanced structure.  
-
-            ### **Node Dimensions:**
-                If the node type is SEQUENCE, its dimension is {width: 50, height: 50}, but for other types, the dimension is {width: 150, height: 50}
-
-            ### **Using these following functions to update all node's position**
-                function buildTree(nodes) {
-                    const nodeMap = new Map();
-                    const rootNodes = [];
-
-                    // Create a map for quick node lookup by ID
-                    nodes.forEach(node => nodeMap.set(node.id, { ...node, children: [] }));
-
-                    // Assign children to their respective parents
-                    nodes.forEach(node => {
-                        if (node.parentId !== null) {
-                            nodeMap.get(node.parentId).children.push(nodeMap.get(node.id));
-                        } else {
-                            rootNodes.push(nodeMap.get(node.id));
-                        }
-                    });
-
-                    return rootNodes;
-                }
-
-                function calculatePositions(nodes, startX = 0, startY = 0, xGap = 70, yGap = 80) {
-                    let xOffset = startX;
-                    let yOffset = startY;
-
-                    function layout(node, depth = 0) {
-                        let children = node.children;
-                        let width = node.dimension.width;
-                        let height = node.dimension.height;
-
-                        // If there are no children, position the node and move right
-                        if (children.length === 0) {
-                            node.position.x = xOffset;
-                            node.position.y = yOffset + depth * (height + yGap);
-                            xOffset += width + xGap;
-                            return node.position.x;
-                        }
-
-                        // Position children first
-                        let childXPositions = children.map(child => layout(child, depth + 1));
-
-                        // Center the parent node between its children
-                        let minX = Math.min(...childXPositions);
-                        let maxX = Math.max(...childXPositions);
-                        node.position.x = (minX + maxX) / 2;
-                        node.position.y = yOffset + depth * (height + yGap);
-
-                        return node.position.x;
-                    }
-
-                    nodes.forEach(node => layout(node));
-                }
-
-                // Build tree and calculate positions
-                const tree = buildTree(nodes);
-                calculatePositions(tree);
             
-        Task 3: Generate Parent-Child Relationships as edges
+        Task 2: Generate Parent-Child Relationships as edges
             Create an array of objects representing parent-child relationships with:
                 id: A unique random 10-character string, can not be null.
-                source: The parentId of the child.
+                source: The parentNodeId of the child.
                 target: The id of the child.
 
         Return only the final results for each task—no extra explanations.
