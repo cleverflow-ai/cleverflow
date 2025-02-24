@@ -16,7 +16,11 @@ const out = await agent.process({
                 {% /filter-data %}
             {% /sequence %}
         {% /b-flow %}
-    `
+    `,
+    agents: [
+        { name: 'fetch-data', description: 'getting data via URL' },
+        { name: 'generate-code-for-processing', description: 'default agent' }
+    ]
 });
 
 console.log(JSON.stringify(out));
