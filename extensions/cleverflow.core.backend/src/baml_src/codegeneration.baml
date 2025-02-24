@@ -1,22 +1,25 @@
 class JsV8Code {
     code string
 }
-function GenerateJSV8Code(instructions: string, utilities: string) -> JsV8Code {
+
+function GenerateJSV8Code(instructions: string, utilities: string?) -> JsV8Code {
     client Ollama_Tool
     prompt #"
-        As an expert of Javascript (V8), you consider the given instructions, and generate the corresponding Javascript for them.
-        The generated code must be given in pure Javascript:
-        - Without using any external library.
-        - Without functions.
-        - Can use available functions given in Utilities.
-        - Can use both synchronous and asynchronous calls.
+        As an expert of Javascript (V8), you always generate Javascript Code for resolving the issue given in instructions and input (if there is).
 
-        Please double check the generated code so that it can be copied and run anywhere.
+        Please always consider the following rules:
+        - There is no defined functions (very important!).
+        - It does not call any external library.
+        - It can use only available functions given in Utilities.
+        - It can use asynchronous calls with await inside without any extra setup.
+        - Example: (async () => { const data = await load(url); }) can be simplified as await load(url);
+        - No assumption and no additional code if not requested.
+        - Main code has 'return' line:
+            For example: 
+                - If your code loads data from the given URL, then "return data;".
+                - If your code filters raw data , then "return filteredData;".
+
         Please extract only the code inside Markdown Code Section.
-
-        If Instructions requires to return value such as: 'please return the last result',
-        then the Code must contain:
-            return lastResult;
 
         Just generated code and no verbose!
         ---

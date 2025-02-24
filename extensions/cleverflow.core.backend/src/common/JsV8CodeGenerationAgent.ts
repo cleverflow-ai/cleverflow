@@ -5,7 +5,9 @@ import Agent from "./Agent.js";
 import JsV8VmRunner from "./JsV8VmRunner.js";
 
 export type InPayload = {
-    instructions: string;
+    description: string;
+    config: string;
+    input: any;
 }
 
 export type OutPayload = {
@@ -52,14 +54,18 @@ export default class JsV8CodeGenerationAgent extends Agent<InPayload, OutPayload
         }
 
         const generated: JsV8Code = await b.GenerateJSV8Code(
-            payload.instructions, 
             `
-                log(): void                                     // For debugging purpose.
-                load(url: string): Promise<string>              // For downloading or fetching file with a given URL. Usage: await load(...).
-                save(url: string, data: string): Promise<void>  // For saving file with a given destination URL. Usage: await save(...).
+            ${payload.description}
+            ${payload.input}
+            ${payload.config}
+            `,
+            `
+            log(): void                                     // For printing and debugging purpose.
+            load(url: string): Promise<string>              // For downloading or fetching file with a given URL. Usage: await load(...).
+            save(url: string, data: string): Promise<void>  // For saving file with a given destination URL. Usage: await save(...).
             `, 
             { 
-                clientRegistry: new Clients({ primary: Clients.OllamaTool }).registry 
+            clientRegistry: new Clients({ primary: Clients.OllamaCode }).registry 
             }
         );
 
