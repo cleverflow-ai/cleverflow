@@ -3,6 +3,7 @@ import MarkdocCustomElementToBFlowAgent from './bflow/MarkdocCustomeElementToBFl
 import BFlowToBFlowVizAgent from './bflow/BFlowToBFlowVizAgent.js';
 import JsV8VmRunner from './common/JsV8VmRunner.js';
 import JsV8CodeGenerationAgent from './common/JsV8CodeGenerationAgent.js';
+import BFlowRunnerAgent from './bflow/BFlowRunnerAgent.js';
 
 const monitorAgent = new MonitorAgent();
 
@@ -15,6 +16,9 @@ monitorAgent.register(bflowToBFlowVizAgent);
 const jsV8VmRunner = new JsV8VmRunner();
 const jsV8CodeGenerationAgent = new JsV8CodeGenerationAgent({ vmRunner: jsV8VmRunner });
 monitorAgent.register(jsV8CodeGenerationAgent);
+
+const bflowRunnerAgent = new BFlowRunnerAgent();
+monitorAgent.register(bflowRunnerAgent);
 
 await Promise.all([
     monitorAgent.run({ 
@@ -30,6 +34,10 @@ await Promise.all([
         token: '76de3ba222bec3af21f9dbfb01f3197b'
     }),
     jsV8CodeGenerationAgent.run({ 
+        servers: 'localhost:4222', 
+        token: '76de3ba222bec3af21f9dbfb01f3197b'
+    }),
+    bflowRunnerAgent.run({ 
         servers: 'localhost:4222', 
         token: '76de3ba222bec3af21f9dbfb01f3197b'
     }),

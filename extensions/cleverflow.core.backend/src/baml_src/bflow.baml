@@ -7,7 +7,7 @@ class BFlow {
 
 enum BFlowNodeType {
     ENTRY
-    FAILBACK
+    FALLBACK
     SEQUENCE
     PARALLEL
     CONDITION
@@ -26,7 +26,7 @@ class BFlowNodeConfig {
 
 class BFlowNodeAgent {
   name string
-  instructions string
+  description string
 }
 
 class BFlowNodeOutput {}

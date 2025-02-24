@@ -8,7 +8,7 @@ function GenerateJSV8Code(instructions: string, utilities: string) -> JsV8Code {
         The generated code must be given in pure Javascript:
         - Without using any external library.
         - Without functions.
-        - Can call functions given in Utilities.
+        - Can use available functions given in Utilities.
         - Can use both synchronous and asynchronous calls.
 
         Please double check the generated code so that it can be copied and run anywhere.
@@ -23,7 +23,7 @@ function GenerateJSV8Code(instructions: string, utilities: string) -> JsV8Code {
         Instructions:
         {{ instructions }}
         ---
-        Instructions:
+        Utilities:
         {{ utilities }}
         ---
         {{ ctx.output_format }}

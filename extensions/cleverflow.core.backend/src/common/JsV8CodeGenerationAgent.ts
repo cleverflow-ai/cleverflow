@@ -55,8 +55,8 @@ export default class JsV8CodeGenerationAgent extends Agent<InPayload, OutPayload
             payload.instructions, 
             `
                 log(): void                                     // For debugging purpose.
-                load(url: string): Promise<string>              // For downloading or fetching file with a given URL.
-                save(url: string, data: string): Promise<void>  // For saving file with a given destination URL.
+                load(url: string): Promise<string>              // For downloading or fetching file with a given URL. Usage: await load(...).
+                save(url: string, data: string): Promise<void>  // For saving file with a given destination URL. Usage: await save(...).
             `, 
             { 
                 clientRegistry: new Clients({ primary: Clients.OllamaTool }).registry 
