@@ -8,6 +8,9 @@ import { BFLowState } from "./BFlowState.js";
 
 export default class BFlowDataProvider {
 
+    private servers: string | string[] = "";
+    private token: string = "";
+
     private agentConnection?: AgentConnection;
     private monitorAgentMessenger?: MonitorAgentMessenger;
     private markdocCustomeElementToBFlowAgentMessenger?: MarkdocCustomeElementToBFlowAgentMessenger;
@@ -17,24 +20,26 @@ export default class BFlowDataProvider {
     public state: BFLowState = $state(BFLowState.NONE);
     public bflowviz: any = $state(null);
 
+    private url: string | undefined;
+    private text: string | undefined;
+
     private isBFlowBizLoading = $state(true);
     private bflowbizLoadingInfoMessage = $state("");
     private bflowbizLoadingErrorMessage = $state("");
 
-    /**
-     *
-     */
-    constructor() {
+    constructor(servers: string | string[], token: string) {
+        this.servers = servers;
+        this.token = token;
     }
 
-    async connect(servers: string | string[], token: string) {
+    async connect() {
         this.state = BFLowState.CONNECTING;
         try {
             this.agentConnection = new AgentConnection({ name: "bflow" });
 
             await this.agentConnection.connect({
-                servers: servers, // "ws://localhost:8080",
-                token: token, //"76de3ba222bec3af21f9dbfb01f3197b",
+                servers: this.servers, // "ws://localhost:8080",
+                token: this.token, //"76de3ba222bec3af21f9dbfb01f3197b",
             });
 
             this.monitorAgentMessenger = new MonitorAgentMessenger({
@@ -65,21 +70,26 @@ export default class BFlowDataProvider {
         this.state = BFLowState.NONE;
     }
 
+    isDocumentChanged(url: string, text: string) {
+        if (this.url === undefined || this.text === undefined) {
+            return false;
+        }
+        return this.url !== url || this.text !== text;
+    }
+
     async loadBFlowViz(url: string, text: string) {
-        console.log(`>>>> loadBFlowViz`);
+        this.url = url;
+        this.text = text;
+        this.bflowviz = null;
         await this.loadAgents();
         const bflow = await this.convertMarkdocCustomElementToBFlow(url, text);
         if (bflow) {
             this.bflowviz = await this.convertBFlowToBFlowViz(bflow);
         }
-
-        this.state = BFLowState.NONE;
     };
 
     async loadAgents() {
         this.state = BFLowState.LIST_AGENTS;
-
-        // bflowbizLoadingInfoMessage = "Loading Agents";
 
         try {
             const result = await this.monitorAgentMessenger?.request({
@@ -98,7 +108,6 @@ export default class BFlowDataProvider {
         text: string,
     ) {
         this.state = BFLowState.CONVERT_MARKDOC_ELEMENT_TO_BFLOW;
-        // bflowbizLoadingInfoMessage = "Convert Markdoc Custom Element to BFlow";
         try {
             const bflowRes =
                 await this.markdocCustomeElementToBFlowAgentMessenger?.request({
@@ -116,22 +125,139 @@ export default class BFlowDataProvider {
     };
 
     async convertBFlowToBFlowViz(bflow: any) {
-        this.state = BFLowState.CONVERT_MARKDOC_ELEMENT_TO_BFLOW;
-        // bflowbizLoadingInfoMessage = "Convert BFlow to BFlowViz";
+        this.state = BFLowState.CONVERT_BFLOW_TO_BFLOWVIZ;
         try {
             const bflowvizRes = await this.bflowToBFlowVizAgentMessenger?.request({
                 bflow: bflow,
             });
-            // TODO:
-            // this.addDataPropertyToNodes(bflowvizRes?.bflowViz?.nodes);
-            // const tree = this.buildTree(bflowvizRes?.bflowViz?.nodes);
-            // this.calculatePositions(tree);
-            this.state = BFLowState.CONVERT_MARKDOC_ELEMENT_TO_BFLOW_SUCCESS;
+            this.addDataPropertyToNodes(bflowvizRes?.bflowViz?.nodes);
+            const tree = this.buildTree(bflowvizRes?.bflowViz?.nodes);
+            this.calculatePositions(tree);
+            this.state = BFLowState.CONVERT_BFLOW_TO_BFLOWVIZ_SUCCESS;
             return bflowvizRes?.bflowViz;
         } catch (e: any) {
             console.error(e);
-            this.state = BFLowState.CONVERT_MARKDOC_ELEMENT_TO_BFLOW_FAILED;
+            this.state = BFLowState.CONVERT_BFLOW_TO_BFLOWVIZ_FAILED;
             return null;
         }
     };
+
+    isStateLoading() {
+        return (
+            this.state === BFLowState.CONNECTING ||
+            this.state === BFLowState.LIST_AGENTS ||
+            this.state === BFLowState.CONVERT_MARKDOC_ELEMENT_TO_BFLOW ||
+            this.state === BFLowState.CONVERT_BFLOW_TO_BFLOWVIZ
+        );
+    };
+
+    isFailedState() {
+        return (
+            this.state === BFLowState.CONNECT_FAILED ||
+            this.state === BFLowState.LIST_AGENTS_FAILED ||
+            this.state === BFLowState.CONVERT_MARKDOC_ELEMENT_TO_BFLOW_FAILED ||
+            this.state === BFLowState.CONVERT_BFLOW_TO_BFLOWVIZ_FAILED
+        );
+    };
+
+    isFinishedState() {
+        return (
+            this.state === BFLowState.CONNECT_SUCCESS ||
+            this.state === BFLowState.LIST_AGENTS_SUCCESS ||
+            this.state === BFLowState.CONVERT_MARKDOC_ELEMENT_TO_BFLOW_SUCCESS ||
+            this.state === BFLowState.CONVERT_BFLOW_TO_BFLOWVIZ_SUCCESS
+        );
+    };
+
+    addDataPropertyToNodes(nodes: any) {
+        if (nodes && nodes.length > 0) {
+            _.forEach(nodes, (node: any) => {
+                node.data = JSON.parse(JSON.stringify(node));
+                node.position = {
+                    x: 0,
+                    y: 0,
+                };
+                if (node.type === "SEQUENCE") {
+                    node.dimension = {
+                        width: 50,
+                        height: 50,
+                    };
+                } else {
+                    node.dimension = {
+                        width: 100,
+                        height: 50,
+                    };
+                }
+            });
+        }
+    };
+
+    buildTree(nodes: any) {
+        if (!nodes) {
+            return null;
+        }
+        const nodeMap = new Map();
+        const rootNodes: any = [];
+
+        // Create a map for quick node lookup by ID
+        nodes.forEach((node: any) =>
+            nodeMap.set(node.id, { ...node, children: [] }),
+        );
+
+        // Assign children to their respective parents
+        nodes.forEach((node: any) => {
+            if (node.parentNodeId !== null) {
+                nodeMap
+                    .get(node.parentNodeId)
+                    .children.push(nodeMap.get(node.id));
+            } else {
+                rootNodes.push(nodeMap.get(node.id));
+            }
+        });
+
+        return rootNodes;
+    }
+
+    calculatePositions(
+        nodes: any,
+        startX = 0,
+        startY = 0,
+        xGap = 20,
+        yGap = 40,
+    ) {
+        if (!nodes) {
+            return;
+        }
+        let xOffset = startX;
+        let yOffset = startY;
+
+        function layout(node: any, depth = 0) {
+            let children = node.children;
+            let width = node.dimension.width;
+            let height = node.dimension.height;
+
+            // If there are no children, position the node and move right
+            if (children.length === 0) {
+                node.position.x = xOffset;
+                node.position.y = yOffset + depth * (height + yGap);
+                xOffset += width + xGap;
+                return node.position.x;
+            }
+
+            // Position children first
+            let childXPositions = children.map((child: any) =>
+                layout(child, depth + 1),
+            );
+
+            // Center the parent node between its children
+            let minX = Math.min(...childXPositions);
+            let maxX = Math.max(...childXPositions);
+            node.position.x = (minX + maxX) / 2;
+            node.position.y = yOffset + depth * (height + yGap);
+
+            return node.position.x;
+        }
+
+        nodes.forEach((node: any) => layout(node));
+    }
 }

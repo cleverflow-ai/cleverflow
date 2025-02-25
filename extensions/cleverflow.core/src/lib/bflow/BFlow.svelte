@@ -4,7 +4,7 @@
 	import { onDestroy, onMount } from "svelte";
 	import css from "../../app.css?inline";
 	import xyflowCss from "@xyflow/svelte/dist/style.css?inline";
-	import { CircleX, RefreshCcw } from "lucide-svelte";
+	import { CircleX, RefreshCcw, Zap, Play } from "lucide-svelte";
 	import BFlowView from "./visualization/BFlowView.svelte";
 	// SMELL: This is a workaround to make TailwindCSS work in the web component.
 	// IMPORTANT: this unuse import is required to make TailwindCSS work in the web component.
@@ -12,130 +12,136 @@
 	import LoadingIndicator from "../common/components/LoadingIndicator.svelte";
 	import { BFLowState } from "./BFlowState.js";
 
-	let { dataProvider, url = "", text = "" } = $props();
-
-	let isBFlowBizLoading = $state(true);
-	let bflowbizLoadingInfoMessage = $state("");
-	let bflowbizLoadingErrorMessage = $state("");
+	let { dataProvider = $bindable(), url = "", text = "" } = $props();
 
 	onMount(async () => {
-		await dataProvider.loadBFlowViz(url, text);
+		if (
+			(url || text) &&
+			dataProvider.state === BFLowState.CONNECT_SUCCESS
+		) {
+			await dataProvider.loadBFlowViz(url, text);
+		}
 	});
 
-	onDestroy(async () => {});
+	const convertStateToMessage = (state: BFLowState) => {
+		switch (state) {
+			case BFLowState.NONE:
+				return "Not started. Please start it";
+			case BFLowState.CONNECTING:
+				return "Connecting...";
+			case BFLowState.CONNECT_SUCCESS:
+				return "Connected successfully";
+			case BFLowState.CONNECT_FAILED:
+				return "Failed to connect. Please try again.";
+			case BFLowState.LIST_AGENTS:
+				return "Loading agents...";
+			case BFLowState.LIST_AGENTS_SUCCESS:
+				return "Agents loaded successfully";
+			case BFLowState.LIST_AGENTS_FAILED:
+				return "Failed to load agents";
+			case BFLowState.CONVERT_MARKDOC_ELEMENT_TO_BFLOW:
+				return "Converting Markdoc Custom Element to BFlow...";
+			case BFLowState.CONVERT_MARKDOC_ELEMENT_TO_BFLOW_SUCCESS:
+				return "Successfully converted Markdoc Custom Element to BFlow";
+			case BFLowState.CONVERT_MARKDOC_ELEMENT_TO_BFLOW_FAILED:
+				return "Failed to convert Markdoc Custom Element to BFlow";
+			case BFLowState.CONVERT_BFLOW_TO_BFLOWVIZ:
+				return "Converting BFlow to BFlowViz...";
+			case BFLowState.CONVERT_BFLOW_TO_BFLOWVIZ_SUCCESS:
+				return "Successfully converted BFlow to BFlowViz";
+			case BFLowState.CONVERT_BFLOW_TO_BFLOWVIZ_FAILED:
+				return "Failed to convert BFlow to BFlowViz";
+			default:
+				return "";
+		}
+	};
 
-	// const addDataPropertyToNodes = (nodes: any) => {
-	// 	if (nodes && nodes.length > 0) {
-	// 		_.forEach(nodes, (node: any) => {
-	// 			node.data = JSON.parse(JSON.stringify(node));
-	// 			node.position = {
-	// 				x: 0,
-	// 				y: 0,
-	// 			};
-	// 			if (node.type === "SEQUENCE") {
-	// 				node.dimension = {
-	// 					width: 50,
-	// 					height: 50,
-	// 				};
-	// 			} else {
-	// 				node.dimension = {
-	// 					width: 100,
-	// 					height: 50,
-	// 				};
-	// 			}
-	// 		});
-	// 	}
-	// };
+	const start = async () => {
+		try {
+			await dataProvider.connect();
+			await dataProvider.loadBFlowViz(url, text);
+		} catch (exception: any) {
+			console.error(exception);
+		}
+	};
 
-	// function buildTree(nodes: any) {
-	// 	if (!nodes) {
-	// 		return null;
-	// 	}
-	// 	const nodeMap = new Map();
-	// 	const rootNodes: any = [];
-
-	// 	// Create a map for quick node lookup by ID
-	// 	nodes.forEach((node: any) =>
-	// 		nodeMap.set(node.id, { ...node, children: [] }),
-	// 	);
-
-	// 	// Assign children to their respective parents
-	// 	nodes.forEach((node: any) => {
-	// 		if (node.parentNodeId !== null) {
-	// 			nodeMap
-	// 				.get(node.parentNodeId)
-	// 				.children.push(nodeMap.get(node.id));
-	// 		} else {
-	// 			rootNodes.push(nodeMap.get(node.id));
-	// 		}
-	// 	});
-
-	// 	return rootNodes;
-	// }
-
-	// function calculatePositions(
-	// 	nodes: any,
-	// 	startX = 0,
-	// 	startY = 0,
-	// 	xGap = 20,
-	// 	yGap = 40,
-	// ) {
-	// 	if (!nodes) {
-	// 		return;
-	// 	}
-	// 	let xOffset = startX;
-	// 	let yOffset = startY;
-
-	// 	function layout(node: any, depth = 0) {
-	// 		let children = node.children;
-	// 		let width = node.dimension.width;
-	// 		let height = node.dimension.height;
-
-	// 		// If there are no children, position the node and move right
-	// 		if (children.length === 0) {
-	// 			node.position.x = xOffset;
-	// 			node.position.y = yOffset + depth * (height + yGap);
-	// 			xOffset += width + xGap;
-	// 			return node.position.x;
-	// 		}
-
-	// 		// Position children first
-	// 		let childXPositions = children.map((child: any) =>
-	// 			layout(child, depth + 1),
-	// 		);
-
-	// 		// Center the parent node between its children
-	// 		let minX = Math.min(...childXPositions);
-	// 		let maxX = Math.max(...childXPositions);
-	// 		node.position.x = (minX + maxX) / 2;
-	// 		node.position.y = yOffset + depth * (height + yGap);
-
-	// 		return node.position.x;
-	// 	}
-
-	// 	nodes.forEach((node: any) => layout(node));
-	// }
+	const reload = async () => {
+		await dataProvider.loadBFlowViz(url, text);
+	};
 </script>
 
 <svelte:element this={"style"}>{@html css}</svelte:element>
 <svelte:element this={"style"}>{@html xyflowCss}</svelte:element>
-{#if dataProvider.state !== BFLowState.NONE}
-	<LoadingIndicator message={dataProvider.state}></LoadingIndicator>
-{:else if dataProvider.bflowviz}
-	<BFlowView data={dataProvider.bflowviz} />
-{:else if bflowbizLoadingErrorMessage}
-	<div class="h-full w-full flex flex-col items-center justify-center gap-2">
-		<CircleX class="text-red-700 w-10 h-10" />
-		<div>{bflowbizLoadingErrorMessage}</div>
-	</div>
-{:else}
-	<div class="h-full w-full flex flex-col items-center justify-center gap-2">
-		<div>
-			An error occurred. Please click the refresh button below to try
-			again.
+{#key dataProvider.state}
+	{#if !url && !text}
+		<div
+			class="h-full w-full flex flex-col items-center justify-center gap-2"
+		>
+			<CircleX class="text-red-700 w-10 h-10" />
+			<div>No URL or text provided</div>
 		</div>
-		<button onclick={async () => await dataProvider.loadBFlowViz()}>
-			<RefreshCcw class="text-red-700 w-10 h-10" />
-		</button>
-	</div>
-{/if}
+	{:else if dataProvider.bflowviz}
+		<div class="relative">
+			<div class="w-full h-full">
+				<BFlowView data={dataProvider.bflowviz} />
+			</div>
+			{#if dataProvider.isDocumentChanged(url, text)}
+				<div
+					class="fixed bottom-0 w-full flex justify-center gap-2 p-4"
+				>
+					<div
+						class="flex flex-col justify-center items-center gap-2"
+					>
+						<div>Document has been changed!</div>
+						<button
+							class="flex items-center gap-2 cursor-pointer bg-blue-500 hover:bg-blue-600 text-white px-6 py-3 rounded-lg shadow-lg"
+							onclick={async () => await reload()}
+						>
+							<Zap class="text-white-700 w-10 h-10" />
+							Reload
+						</button>
+					</div>
+				</div>
+			{/if}
+		</div>
+	{:else if dataProvider.state == BFLowState.NONE || dataProvider.state == BFLowState.CONNECT_FAILED}
+		<div
+			class="h-full w-full flex flex-col items-center justify-center gap-2"
+		>
+			<div>{convertStateToMessage(dataProvider.state)}</div>
+			<button class="cursor-pointer" onclick={async () => await start()}>
+				<Play class="text-green-700 w-10 h-10" />
+			</button>
+		</div>
+	{:else if dataProvider.state == BFLowState.NONE || dataProvider.isStateLoading(dataProvider.state) || dataProvider.isFinishedState(dataProvider.state)}
+		<div
+			class="h-full w-full flex flex-col items-center justify-center gap-2"
+		>
+			<LoadingIndicator
+				message={convertStateToMessage(dataProvider.state)}
+			/>
+		</div>
+	{:else if dataProvider.isFailedState(dataProvider.state)}
+		<div
+			class="h-full w-full flex flex-col items-center justify-center gap-2"
+		>
+			<CircleX class="text-red-700 w-10 h-10" />
+			<div>{convertStateToMessage(dataProvider.state)}</div>
+			<button class="cursor-pointer" onclick={async () => await reload()}>
+				<RefreshCcw class="text-red-700 w-10 h-10" />
+			</button>
+		</div>
+	{:else}
+		<div
+			class="h-full w-full flex flex-col items-center justify-center gap-2"
+		>
+			<div>
+				An error occurred. Please click the refresh button below to try
+				again. Thank you for your patience.
+			</div>
+			<button class="cursor-pointer" onclick={async () => await reload()}>
+				<RefreshCcw class="text-red-700 w-10 h-10" />
+			</button>
+		</div>
+	{/if}
+{/key}

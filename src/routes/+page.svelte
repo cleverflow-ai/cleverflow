@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { Pencil, Eye } from "lucide-svelte";
+  import { Pencil, Eye, Loader, CircleX, Check, Zap } from "lucide-svelte";
   import { onMount } from "svelte";
   import * as m from "$lib/paraglide/messages.js";
   import BFlowDataProvider from "@cleverflow/cleverflow.core/webcomponents/b-flow-data-provider.js";
@@ -10,59 +10,52 @@
   });
 
   let activeTab = $state("editor");
-  let bflowDataProvider = new BFlowDataProvider();
+  let bflowDataProvider = new BFlowDataProvider(
+    "ws://localhost:8080",
+    "76de3ba222bec3af21f9dbfb01f3197b",
+  );
+
+  let bflowUrl = "https://cleverflow.ai/files/dummy.mdoc";
+  let bflow = $state(
+    `
+      {% b-flow id="select_baking_machine" %}
+          {% sequence %}
+              1. Get List of all Machine Models and corresponding Infos.
+              {% get-text id="action_1" %}
+                  url: https://raw.githubusercontent.com/cleverflow-ai/examples/refs/heads/main/machinery/machines-list.md
+              {% /get-text %}
+
+              2. Filter the List of Machines, to get only those Available:
+              {% filter-data id="action_2" %}
+                  filter: only lines having Availability as 'available'.
+              {% /filter-data %}
+
+              3. Get Machine Selection Processes
+              {% get-text id="action_3" %}
+                  url: https://raw.githubusercontent.com/cleverflow-ai/examples/refs/heads/main/machinery/machines-selection.md
+              {% /get-text %}
+
+              4. Select the best suitable Machines for Customer
+              {% select-machine id="action_4" %}
+                  conditions: can bake Brownies and Muffins.
+              {% /select-machine %}
+          {% /sequence %}
+      {% /b-flow %}
+    `,
+  );
 
   // svelte-ignore non_reactive_update
   let markdocEditorElement: any = null;
   let blowElement: any = null;
 
   onMount(async () => {
-    await bflowDataProvider.connect(
-      "ws://localhost:8080",
-      "76de3ba222bec3af21f9dbfb01f3197b",
-    );
+    await bflowDataProvider.connect();
   });
 
   function switchToView() {
     bflow = markdocEditorElement.getMarkdown();
     activeTab = "view";
   }
-
-  let bflow = $state(
-    `
-        {% b-flow id="prepare_data" %}
-            {% sequence %}
-                1. Getting List of all Machine Models and corresponding Infos.
-                {% get-text id="action_1" %}
-                    url: https://cleverflow.ai/use-cases/machinery/machines-list.md
-                {% /get-text %}
-
-                2. Converting Selection Logic to a Behavioral Flow to both 
-                enable AI-based Decision Making, 
-                and explain the Choices made to Human.
-                {% get-bflow id="action_2" %}
-                    url: https://cleverflow.ai/use-cases/machinery/machines-selection.md
-                {% /get-bflow %}
-                
-                {% sequence id="test" %}
-                    3. Converting Selection Logic to a Behavioral Flow to both 
-                    enable AI-based Decision Making, 
-                    and explain the Choices made to Human.
-                    {% get-bflow id="action_3" %}
-                        url: https://cleverflow.ai/use-cases/machinery/machines-selection2.md
-                    {% /get-bflow %}
-
-                    4. Converting Selection Logic to a Behavioral Flow to both 
-                    enable AI-based Decision Making, 
-                    and explain the Choices made to Human.
-                    {% get-bflow id="action_4" %}
-                        url: https://cleverflow.ai/use-cases/machinery/machines-selection3.md
-                    {% /get-bflow %}
-                {% /sequence %}
-            {% /sequence %}
-        {% /b-flow %}
-    `,
-  );
 </script>
 
 <div class="flex flex-col h-screen">
@@ -85,7 +78,7 @@
 
     <button
       class="flex items-center gap-2 px-4 py-2 text-lg font-medium transition rounded-lg relative"
-      onclick={() => (activeTab = "view")}
+      onclick={() => switchToView()}
     >
       <Eye class="w-5 h-5" />
       <span>View</span>
@@ -93,6 +86,18 @@
         <span
           class="absolute bottom-0 left-0 w-full h-[3px] bg-blue-500 rounded-full"
         ></span>
+      {:else}
+        {#key bflowDataProvider.state}
+          {#if bflowDataProvider.isDocumentChanged(bflowUrl, bflow)}
+            <Zap class="text-green-700 w-3 h-3" />
+          {:else if bflowDataProvider.isStateLoading()}
+            <Loader class="animate-spin w-3 h-3" />
+          {:else if bflowDataProvider.isFinishedState()}
+            <Check class="text-green-700 w-3 h-3" />
+          {:else if bflowDataProvider.isFailedState()}
+            <CircleX class="text-red-700 w-3 h-3" />
+          {/if}
+        {/key}
       {/if}
     </button>
   </div>
@@ -110,7 +115,7 @@
     {:else}
       <div class="w-full h-full">
         <b-flow
-          url="https://cleverflow.ai/files/dummy.mdoc"
+          url={bflowUrl}
           text={bflow}
           dataProvider={bflowDataProvider}
           bind:this={blowElement}

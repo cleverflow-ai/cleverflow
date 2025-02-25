@@ -5,10 +5,11 @@
     rounded-full
     border border-black
     flex items-center justify-center
-    relative
+    relative absolute fixed
     gap-2
     text-red-500 text-red-700
     text-green-500 text-green-700
     p-4
+    cursor-pointer
 "
 ></div>
