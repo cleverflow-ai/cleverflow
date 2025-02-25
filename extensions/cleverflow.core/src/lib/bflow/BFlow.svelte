@@ -89,7 +89,6 @@
 			<div class="fixed bottom-0 w-full flex justify-center gap-2 p-4">
 				<button
 					class="flex items-center gap-2 cursor-pointer bg-green-500 hover:bg-green-600 text-white px-6 py-3 rounded-lg shadow-lg"
-					onclick={async () => await reload()}
 				>
 					<Flame class="text-white-700 w-5 h-5" />
 					Run
