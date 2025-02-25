@@ -29,6 +29,12 @@ export default class Clients {
     public static readonly OllamaTool = 'Ollama_Tool';
 
     /**
+     * @constant {string} OllamaCode
+     * @description The code client configuration identifier.
+     */
+    public static readonly OllamaCode = 'Ollama_Code';
+
+    /**
      * @constructor
      * @param {Partial<{ primary: string }>} [config={ primary: Clients.OllamaDefault }]
      * @description Initializes a new instance of the Clients class. Sets up the client registry with default clients and sets the primary client.
@@ -56,6 +62,18 @@ export default class Clients {
                 base_url: 'http://57.128.86.248:11434/v1',
                 api_key: 'ollama',
                 model:'qwen2.5:latest' ,
+                temperature: 0,
+            }
+        );
+
+        this._registry.addLlmClient(
+            Clients.OllamaCode, 
+            'openai-generic', 
+            {
+                // @ts-ignore: Object literal may only specify known properties, and 'base_url' does not exist in type '{ [x: number]: any; }'
+                base_url: 'http://57.128.86.248:11434/v1',
+                api_key: 'ollama',
+                model:'qwen2.5-coder:latest' ,
                 temperature: 0,
             }
         );

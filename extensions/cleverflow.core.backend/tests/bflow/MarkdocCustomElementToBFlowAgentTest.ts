@@ -3,17 +3,27 @@ import MarkdocCustomElementToBFlowAgent from "../../src/bflow/MarkdocCustomeElem
 const agent = new MarkdocCustomElementToBFlowAgent();
 const out = await agent.process({ 
     text: `
-        {% b-flow id="prepare_data" %}
+        {% b-flow id="select_baking_machine" %}
             {% sequence %}
-                1. Getting List of all Machine Models and corresponding Infos.
+                1. Get List of all Machine Models and corresponding Infos:
                 {% get-text id="action_1" %}
-                    url: https://cleverflow.ai/use-cases/machinery/machines-list.md
+                    url: https://raw.githubusercontent.com/cleverflow-ai/examples/refs/heads/main/machinery/machines-list.md
                 {% /get-text %}
 
-                2. Filter the fetched List of Machines.
+                2. Filter the List of Machines, to get only those Available:
                 {% filter-data id="action_2" %}
-                    filter: only available one
+                    filter: only lines having Availability as 'available'.
                 {% /filter-data %}
+
+                3. Get Machine Selection Processes:
+                {% get-text id="action_3" %}
+                    url: https://raw.githubusercontent.com/cleverflow-ai/examples/refs/heads/main/machinery/machines-selection.md
+                {% /get-text %}
+
+                4. Select the best suitable Machines for Customer:
+                {% select-machine id="action_4" %}
+                    conditions: can bake Brownies and Muffins.
+                {% /select-machine %}
             {% /sequence %}
         {% /b-flow %}
     `,

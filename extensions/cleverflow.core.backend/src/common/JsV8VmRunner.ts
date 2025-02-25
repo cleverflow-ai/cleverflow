@@ -35,7 +35,15 @@ export default class JsV8VmRunner {
          */
         load: async (url: string): Promise<string> => {
             try {
-                const response = await axios.get(url);
+                const response = await axios.get(
+                    url,
+                    {
+                        headers: {
+                          "Cache-Control": "no-cache",
+                          "Access-Control-Allow-Origin": "*"
+                        },
+                    }
+                );
                 return response.data; // Return the response body
             } catch (error: any) {
                 throw new Error(`Failed to fetch: ${error.message}`);
