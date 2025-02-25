@@ -6,7 +6,7 @@ import type AgentInfo from "$lib/common/agent/AgentInfo.js";
 export type InPayload = {
     text: string;
     url: string;
-    agents: AgentInfo[],
+    agents: AgentInfo[] | undefined,
 }
 
 export type OutPayload = {
@@ -38,7 +38,7 @@ export type OutPayload = {
  * @protected
  */
 export default class MarkdocCustomeElementToBFlowAgentMessenger extends AgentMessenger<InPayload, OutPayload> {
-    
+
     /**
      * Initializes a new instance of the MarkdocCustomElementToBFlowAgent class.
      * Sets the agent name to 'markdoc-custom-element-to-bflow'.
@@ -46,7 +46,7 @@ export default class MarkdocCustomeElementToBFlowAgentMessenger extends AgentMes
     constructor(config: Partial<{ connection: AgentConnection }>) {
         super({ connection: config.connection, subject: 'markdoc-custom-element-to-bflow' });
     }
-    
+
     /**
      * Send a request to the BFlow service to convert Markdoc custom elements to BFlow format.
      * 
@@ -56,15 +56,15 @@ export default class MarkdocCustomeElementToBFlowAgentMessenger extends AgentMes
      * @protected
      */
     public async request(payload: InPayload): Promise<OutPayload> {
-        if(this.connection){
+        if (this.connection) {
             return await this.connection.sendRequest<OutPayload>({
                 subject: this.subject,
                 payload: JSONCodec<InPayload>().encode(payload),
                 options: {
-                    timeout: 3600*1000 // 1 hour 
-                }, 
+                    timeout: 3600 * 1000 // 1 hour 
+                },
             });
-        }else {
+        } else {
             throw new Error('Connection is not established');
         }
     }

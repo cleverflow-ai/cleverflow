@@ -9,10 +9,11 @@ export default defineConfig({
             entry: {
                 'markdoc-editor': 'src/lib/markdoc/MarkdocEditor.ts',
                 'b-flow': 'src/lib/bflow/BFlow.ts',
+                'b-flow-data-provider': 'src/lib/bflow/BFlowDataProvider.svelte.ts',
             },
             fileName: (format, entryName) => `${entryName}.js`,
             formats: ['es'],
-            
+
         },
         rollupOptions: {
             output: {
@@ -21,10 +22,10 @@ export default defineConfig({
         },
         outDir: 'dist-webcomponents',
     },
-      
-	plugins: [
-        svelte(), 
-        tailwindcss(), 
+
+    plugins: [
+        svelte(),
+        tailwindcss(),
         paraglide({
             project: "./project.inlang",
             outdir: "./src/lib/paraglide"

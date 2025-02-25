@@ -32,6 +32,10 @@
 		"./webcomponents/b-flow.js": {
 			"import": "./dist-webcomponents/b-flow.js",
 			"require": "./dist-webcomponents/b-flow.js"
+		},
+		"./webcomponents/b-flow-data-provider.js": {
+			"import": "./dist-webcomponents/b-flow-data-provider.js",
+			"require": "./dist-webcomponents/b-flow-data-provider.js"
 		}
 	},
 	"sideEffects": [
