@@ -153,11 +153,11 @@ test Test_WithEntry_ParseMarkdocBFlowElementToBFlow {
         agents [
             {
                 name "download-file"
-                instructions "Can be use for fetching file from a given URL."
+                description "Can be use for fetching file from a given URL."
             }
             {
                 name "generate-code"
-                instructions "Depending on the given instructions, can generate the code in Javascript for excuting the task ad hoc."
+                description "Depending on the given instructions, can generate the code in Javascript for excuting the task ad hoc."
             }
         ]
     }
@@ -187,11 +187,11 @@ test Test_WithoutEntry_ParseMarkdocBFlowElementToBFlow {
         agents [
             {
                 name "download-file"
-                instructions "Can be use for fetching file from a given URL."
+                description "Can be use for fetching file from a given URL."
             }
             {
                 name "generate-code"
-                instructions "Depending on the given instructions, can generate the code in Javascript for excuting the task ad hoc."
+                description "Depending on the given instructions, can generate the code in Javascript for excuting the task ad hoc."
             }
         ]
         
