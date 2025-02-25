@@ -10,9 +10,15 @@
   });
 
   let activeTab = $state("editor");
-  let bflowDataProvider = new BFlowDataProvider(
-    "ws://localhost:8080",
-    "76de3ba222bec3af21f9dbfb01f3197b",
+  let bflowState = $state("");
+  let bflowDataProvider = $state(
+    new BFlowDataProvider(
+      "ws://localhost:8080",
+      "76de3ba222bec3af21f9dbfb01f3197b",
+      (state: string) => {
+        bflowState = state;
+      },
+    ),
   );
 
   let bflowUrl = "https://cleverflow.ai/files/dummy.mdoc";
@@ -46,7 +52,6 @@
 
   // svelte-ignore non_reactive_update
   let markdocEditorElement: any = null;
-  let blowElement: any = null;
 
   onMount(async () => {
     await bflowDataProvider.connect();
@@ -87,7 +92,7 @@
           class="absolute bottom-0 left-0 w-full h-[3px] bg-blue-500 rounded-full"
         ></span>
       {:else}
-        {#key bflowDataProvider.state}
+        {#key bflowState}
           {#if bflowDataProvider.isDocumentChanged(bflowUrl, bflow)}
             <Zap class="text-green-700 w-3 h-3" />
           {:else if bflowDataProvider.isStateLoading()}
@@ -114,11 +119,7 @@
       </div>
     {:else}
       <div class="w-full h-full">
-        <b-flow
-          url={bflowUrl}
-          text={bflow}
-          dataProvider={bflowDataProvider}
-          bind:this={blowElement}
+        <b-flow url={bflowUrl} text={bflow} dataProvider={bflowDataProvider}
         ></b-flow>
       </div>
     {/if}

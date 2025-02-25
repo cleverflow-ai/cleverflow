@@ -4,7 +4,7 @@
 	import { onDestroy, onMount } from "svelte";
 	import css from "../../app.css?inline";
 	import xyflowCss from "@xyflow/svelte/dist/style.css?inline";
-	import { CircleX, RefreshCcw, Zap, Play } from "lucide-svelte";
+	import { CircleX, RefreshCcw, Zap, Play, Flame } from "lucide-svelte";
 	import BFlowView from "./visualization/BFlowView.svelte";
 	// SMELL: This is a workaround to make TailwindCSS work in the web component.
 	// IMPORTANT: this unuse import is required to make TailwindCSS work in the web component.
@@ -12,7 +12,7 @@
 	import LoadingIndicator from "../common/components/LoadingIndicator.svelte";
 	import { BFLowState } from "./BFlowState.js";
 
-	let { dataProvider = $bindable(), url = "", text = "" } = $props();
+	let { dataProvider, url = "", text = "" } = $props();
 
 	onMount(async () => {
 		if (
@@ -85,24 +85,25 @@
 			<div class="w-full h-full">
 				<BFlowView data={dataProvider.bflowviz} />
 			</div>
-			{#if dataProvider.isDocumentChanged(url, text)}
-				<div
-					class="fixed bottom-0 w-full flex justify-center gap-2 p-4"
+
+			<div class="fixed bottom-0 w-full flex justify-center gap-2 p-4">
+				<button
+					class="flex items-center gap-2 cursor-pointer bg-green-500 hover:bg-green-600 text-white px-6 py-3 rounded-lg shadow-lg"
+					onclick={async () => await reload()}
 				>
-					<div
-						class="flex flex-col justify-center items-center gap-2"
+					<Flame class="text-white-700 w-5 h-5" />
+					Run
+				</button>
+				{#if dataProvider.isDocumentChanged(url, text)}
+					<button
+						class="flex items-center gap-2 cursor-pointer bg-blue-500 hover:bg-blue-600 text-white px-6 py-3 rounded-lg shadow-lg"
+						onclick={async () => await reload()}
 					>
-						<div>Document has been changed!</div>
-						<button
-							class="flex items-center gap-2 cursor-pointer bg-blue-500 hover:bg-blue-600 text-white px-6 py-3 rounded-lg shadow-lg"
-							onclick={async () => await reload()}
-						>
-							<Zap class="text-white-700 w-10 h-10" />
-							Reload
-						</button>
-					</div>
-				</div>
-			{/if}
+						<Zap class="text-white-700 w-5 h-5" />
+						Document has been changed. Reload
+					</button>
+				{/if}
+			</div>
 		</div>
 	{:else if dataProvider.state == BFLowState.NONE || dataProvider.state == BFLowState.CONNECT_FAILED}
 		<div

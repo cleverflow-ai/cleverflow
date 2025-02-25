@@ -23,17 +23,17 @@ export default class BFlowDataProvider {
     private url: string | undefined;
     private text: string | undefined;
 
-    private isBFlowBizLoading = $state(true);
-    private bflowbizLoadingInfoMessage = $state("");
-    private bflowbizLoadingErrorMessage = $state("");
+    private onStateChanged: (state: BFLowState) => void = () => { };
 
-    constructor(servers: string | string[], token: string) {
+
+    constructor(servers: string | string[], token: string, onStateChanged?: (state: BFLowState) => void) {
         this.servers = servers;
         this.token = token;
+        this.onStateChanged = onStateChanged || (() => { });
     }
 
     async connect() {
-        this.state = BFLowState.CONNECTING;
+        this.setState(BFLowState.CONNECTING);
         try {
             this.agentConnection = new AgentConnection({ name: "bflow" });
 
@@ -53,9 +53,9 @@ export default class BFlowDataProvider {
             this.bflowToBFlowVizAgentMessenger = new BFlowToBFlowVizAgentMessenger({
                 connection: this.agentConnection,
             });
-            this.state = BFLowState.CONNECT_SUCCESS;
+            this.setState(BFLowState.CONNECT_SUCCESS);
         } catch (exception) {
-            this.state = BFLowState.CONNECT_FAILED;
+            this.setState(BFLowState.CONNECT_FAILED);
         }
     }
 
@@ -67,8 +67,14 @@ export default class BFlowDataProvider {
             await this.agentConnection?.stop();
         } catch { }
 
-        this.state = BFLowState.NONE;
+        this.setState(BFLowState.NONE);
     }
+
+    setState(state: BFLowState) {
+        this.state = state;
+        this.onStateChanged(state);
+    }
+
 
     isDocumentChanged(url: string, text: string) {
         if (this.url === undefined || this.text === undefined) {
@@ -89,17 +95,17 @@ export default class BFlowDataProvider {
     };
 
     async loadAgents() {
-        this.state = BFLowState.LIST_AGENTS;
+        this.setState(BFLowState.LIST_AGENTS);
 
         try {
             const result = await this.monitorAgentMessenger?.request({
                 query: "list",
             });
             this.agents = result?.agents;
-            this.state = BFLowState.LIST_AGENTS_SUCCESS;
+            this.setState(BFLowState.LIST_AGENTS_SUCCESS);
         } catch (e: any) {
             console.log(">>>>> Error:", e);
-            this.state = BFLowState.LIST_AGENTS_FAILED;
+            this.setState(BFLowState.LIST_AGENTS_FAILED);
         }
     };
 
@@ -107,7 +113,7 @@ export default class BFlowDataProvider {
         url: string,
         text: string,
     ) {
-        this.state = BFLowState.CONVERT_MARKDOC_ELEMENT_TO_BFLOW;
+        this.setState(BFLowState.CONVERT_MARKDOC_ELEMENT_TO_BFLOW);
         try {
             const bflowRes =
                 await this.markdocCustomeElementToBFlowAgentMessenger?.request({
@@ -115,17 +121,17 @@ export default class BFlowDataProvider {
                     text,
                     agents: this.agents,
                 });
-            this.state = BFLowState.CONVERT_MARKDOC_ELEMENT_TO_BFLOW_SUCCESS;
+            this.setState(BFLowState.CONVERT_MARKDOC_ELEMENT_TO_BFLOW_SUCCESS);
             return bflowRes?.bflow;
         } catch (e: any) {
             console.error(e);
-            this.state = BFLowState.CONVERT_MARKDOC_ELEMENT_TO_BFLOW_FAILED;
+            this.setState(BFLowState.CONVERT_MARKDOC_ELEMENT_TO_BFLOW_FAILED);
             return null;
         }
     };
 
     async convertBFlowToBFlowViz(bflow: any) {
-        this.state = BFLowState.CONVERT_BFLOW_TO_BFLOWVIZ;
+        this.setState(BFLowState.CONVERT_BFLOW_TO_BFLOWVIZ);
         try {
             const bflowvizRes = await this.bflowToBFlowVizAgentMessenger?.request({
                 bflow: bflow,
@@ -133,11 +139,11 @@ export default class BFlowDataProvider {
             this.addDataPropertyToNodes(bflowvizRes?.bflowViz?.nodes);
             const tree = this.buildTree(bflowvizRes?.bflowViz?.nodes);
             this.calculatePositions(tree);
-            this.state = BFLowState.CONVERT_BFLOW_TO_BFLOWVIZ_SUCCESS;
+            this.setState(BFLowState.CONVERT_BFLOW_TO_BFLOWVIZ_SUCCESS);
             return bflowvizRes?.bflowViz;
         } catch (e: any) {
             console.error(e);
-            this.state = BFLowState.CONVERT_BFLOW_TO_BFLOWVIZ_FAILED;
+            this.setState(BFLowState.CONVERT_BFLOW_TO_BFLOWVIZ_FAILED);
             return null;
         }
     };
