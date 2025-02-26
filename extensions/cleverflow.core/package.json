@@ -29,6 +29,10 @@
 			"import": "./dist-webcomponents/markdoc-editor.js",
 			"require": "./dist-webcomponents/markdoc-editor.js"
 		},
+		"./webcomponents/markdoc-viz.js": {
+			"import": "./dist-webcomponents/markdoc-viz.js",
+			"require": "./dist-webcomponents/markdoc-viz.js"
+		},
 		"./webcomponents/b-flow.js": {
 			"import": "./dist-webcomponents/b-flow.js",
 			"require": "./dist-webcomponents/b-flow.js"
@@ -61,9 +65,11 @@
 	},
 	"dependencies": {
 		"@inlang/paraglide-sveltekit": "^0.15.5",
+		"@markdoc/markdoc": "^0.5.1",
 		"@nats-io/nats-core": "^3.0.0-51",
 		"carta-md": "^4.7.0",
 		"isomorphic-dompurify": "^2.22.0",
+		"js-yaml": "^4.1.0",
 		"lodash": "^4.17.21",
 		"nats": "^2.29.2"
 	}

@@ -51,6 +51,12 @@
 				return "Successfully converted BFlow to BFlowViz";
 			case BFLowState.CONVERT_BFLOW_TO_BFLOWVIZ_FAILED:
 				return "Failed to convert BFlow to BFlowViz";
+			case BFLowState.RUN_BFLOW:
+				return "Running BFlow...";
+			case BFLowState.RUN_BFLOW_SUCCESS:
+				return "Successfully ran BFlow";
+			case BFLowState.RUN_BFLOW_FAILED:
+				return "Failed to run BFlow";
 			default:
 				return "";
 		}
@@ -88,6 +94,7 @@
 
 			<div class="fixed bottom-0 w-full flex justify-center gap-2 p-4">
 				<button
+					onclick={async () => await dataProvider.runBFlow()}
 					class="flex items-center gap-2 cursor-pointer bg-green-500 hover:bg-green-600 text-white px-6 py-3 rounded-lg shadow-lg"
 				>
 					<Flame class="text-white-700 w-5 h-5" />

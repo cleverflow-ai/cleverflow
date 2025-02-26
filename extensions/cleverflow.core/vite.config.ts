@@ -8,6 +8,7 @@ export default defineConfig({
         lib: {
             entry: {
                 'markdoc-editor': 'src/lib/markdoc/MarkdocEditor.ts',
+                'markdoc-viz': 'src/lib/markdoc/MarkdocViz.ts',
                 'b-flow': 'src/lib/bflow/BFlow.ts',
                 'b-flow-data-provider': 'src/lib/bflow/BFlowDataProvider.svelte.ts',
             },

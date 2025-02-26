@@ -34,7 +34,7 @@ export default class BFlowRunnerAgent extends Agent<InPayload, OutPayload> {
      */
     public async process(payload: InPayload): Promise<OutPayload> {
         await this.runNode(payload.bflow.root);
-        return {  
+        return {
             bflow: payload.bflow,
             outs: this._outs
         }
@@ -52,7 +52,7 @@ export default class BFlowRunnerAgent extends Agent<InPayload, OutPayload> {
             }
         }
 
-        if (node.type === BFlowNodeType.FALLBACK) {
+        if (node.type === BFlowNodeType.FAILBACK) {
             for (const child of node.goto!) {
                 const status = await this.runNode(child);
                 if (status === BFlowNodeState.SUCCESS) {
@@ -96,14 +96,14 @@ export default class BFlowRunnerAgent extends Agent<InPayload, OutPayload> {
                 node.state = BFlowNodeState.RUNNING;
 
                 const reply = await this.connection.request(
-                    node.agent.name, 
+                    node.agent.name,
                     this.codec.encode({
                         description: node.description,
                         config: node.config?.yaml,
-                        input: inputData, 
-                    }), 
-                    { 
-                        timeout: 1000 * 3600 
+                        input: inputData,
+                    }),
+                    {
+                        timeout: 1000 * 3600
                     });
                 const result = this.codec.decode(reply.data);
                 if (node.name) {
