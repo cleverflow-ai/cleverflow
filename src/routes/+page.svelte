@@ -2,7 +2,7 @@
   import { Pencil, Eye, Loader, CircleX, Check, Zap } from "lucide-svelte";
   import { onMount } from "svelte";
   import * as m from "$lib/paraglide/messages.js";
-  import BFlowDataProvider from "@cleverflow/cleverflow.core/webcomponents/b-flow-data-provider.js";
+  import BFlowController from "@cleverflow/cleverflow.core/webcomponents/b-flow-controller.js";
 
   onMount(async () => {
     await import("@cleverflow/cleverflow.core/webcomponents/markdoc-editor.js");
@@ -11,8 +11,8 @@
 
   let activeTab = $state("editor");
   let bflowState = $state("");
-  let bflowDataProvider = $state(
-    new BFlowDataProvider(
+  let bflowController = $state(
+    new BFlowController(
       "ws://localhost:8080",
       "76de3ba222bec3af21f9dbfb01f3197b",
       (state: string) => {
@@ -54,7 +54,7 @@
   let markdocEditorElement: any = null;
 
   onMount(async () => {
-    await bflowDataProvider.connect();
+    await bflowController.connect();
   });
 
   function switchToView() {
@@ -93,13 +93,13 @@
         ></span>
       {:else}
         {#key bflowState}
-          {#if bflowDataProvider.isDocumentChanged(bflowUrl, bflow)}
+          {#if bflowController.isDocumentChanged(bflowUrl, bflow)}
             <Zap class="text-green-700 w-3 h-3" />
-          {:else if bflowDataProvider.isStateLoading()}
+          {:else if bflowController.isStateLoading()}
             <Loader class="animate-spin w-3 h-3" />
-          {:else if bflowDataProvider.isFinishedState()}
+          {:else if bflowController.isFinishedState()}
             <Check class="text-green-700 w-3 h-3" />
-          {:else if bflowDataProvider.isFailedState()}
+          {:else if bflowController.isFailedState()}
             <CircleX class="text-red-700 w-3 h-3" />
           {/if}
         {/key}
@@ -119,7 +119,7 @@
       </div>
     {:else}
       <div class="w-full h-full">
-        <b-flow url={bflowUrl} text={bflow} dataProvider={bflowDataProvider}
+        <b-flow url={bflowUrl} text={bflow} controller={bflowController}
         ></b-flow>
       </div>
     {/if}

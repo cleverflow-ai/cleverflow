@@ -1,8 +1,8 @@
 <script lang="ts">
-  import { Pencil, Eye, Loader, CircleX, Check, Zap } from "lucide-svelte";
-  import { onMount } from "svelte";
+    import { Pencil, Eye, Loader, CircleX, Check, Zap } from "lucide-svelte";
+    import { onMount } from "svelte";
 
-  let markdoc = `
+    let markdoc = `
       {% b-flow id="select_baking_machine" %}
           {% sequence %}
               1. Get List of all Machine Models and corresponding Infos.
@@ -28,9 +28,11 @@
       {% /b-flow %}
     `;
 
-  onMount(async () => {
-    await import("@cleverflow/cleverflow.core/webcomponents/markdoc-viz.js");
-  });
+    onMount(async () => {
+        await import(
+            "@cleverflow/cleverflow.core/webcomponents/markdoc-renderer.js"
+        );
+    });
 </script>
 
-<markdoc-viz {markdoc} />
+<markdoc-renderer {markdoc} />

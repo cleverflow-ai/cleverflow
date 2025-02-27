@@ -29,17 +29,17 @@
 			"import": "./dist-webcomponents/markdoc-editor.js",
 			"require": "./dist-webcomponents/markdoc-editor.js"
 		},
-		"./webcomponents/markdoc-viz.js": {
-			"import": "./dist-webcomponents/markdoc-viz.js",
-			"require": "./dist-webcomponents/markdoc-viz.js"
+		"./webcomponents/markdoc-renderer.js": {
+			"import": "./dist-webcomponents/markdoc-renderer.js",
+			"require": "./dist-webcomponents/markdoc-renderer.js"
 		},
 		"./webcomponents/b-flow.js": {
 			"import": "./dist-webcomponents/b-flow.js",
 			"require": "./dist-webcomponents/b-flow.js"
 		},
-		"./webcomponents/b-flow-data-provider.js": {
-			"import": "./dist-webcomponents/b-flow-data-provider.js",
-			"require": "./dist-webcomponents/b-flow-data-provider.js"
+		"./webcomponents/b-flow-controller.js": {
+			"import": "./dist-webcomponents/b-flow-controller.js",
+			"require": "./dist-webcomponents/b-flow-controller.js"
 		}
 	},
 	"sideEffects": [

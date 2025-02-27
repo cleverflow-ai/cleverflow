@@ -7,7 +7,7 @@ import _ from "lodash";
 import { BFLowState } from "./BFlowState.js";
 import BFlowRunnerAgentMessenger from "./agent/BFlowRunnerAgentMessenger.js";
 
-export default class BFlowDataProvider {
+export default class BFlowController {
 
     private servers: string | string[] = "";
     private token: string = "";
