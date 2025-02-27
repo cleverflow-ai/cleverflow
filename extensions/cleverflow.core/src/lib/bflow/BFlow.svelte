@@ -12,14 +12,14 @@
 	import LoadingIndicator from "../common/components/LoadingIndicator.svelte";
 	import { BFLowState } from "./BFlowState.js";
 
-	let { dataProvider, url = "", text = "" } = $props();
+	let { controller: BFlowController, url = "", text = "" } = $props();
 
 	onMount(async () => {
 		if (
 			(url || text) &&
-			dataProvider.state === BFLowState.CONNECT_SUCCESS
+			controller.state === BFLowState.CONNECT_SUCCESS
 		) {
-			await dataProvider.loadBFlowViz(url, text);
+			await controller.loadBFlowViz(url, text);
 		}
 	});
 
@@ -64,21 +64,21 @@
 
 	const start = async () => {
 		try {
-			await dataProvider.connect();
-			await dataProvider.loadBFlowViz(url, text);
+			await controller.connect();
+			await controller.loadBFlowViz(url, text);
 		} catch (exception: any) {
 			console.error(exception);
 		}
 	};
 
 	const reload = async () => {
-		await dataProvider.loadBFlowViz(url, text);
+		await controller.loadBFlowViz(url, text);
 	};
 </script>
 
 <svelte:element this={"style"}>{@html css}</svelte:element>
 <svelte:element this={"style"}>{@html xyflowCss}</svelte:element>
-{#key dataProvider.state}
+{#key controller.state}
 	{#if !url && !text}
 		<div
 			class="h-full w-full flex flex-col items-center justify-center gap-2"
@@ -86,21 +86,21 @@
 			<CircleX class="text-red-700 w-10 h-10" />
 			<div>No URL or text provided</div>
 		</div>
-	{:else if dataProvider.bflowviz}
+	{:else if controller.bflowviz}
 		<div class="relative">
 			<div class="w-full h-full">
-				<BFlowView data={dataProvider.bflowviz} />
+				<BFlowView data={controller.bflowviz} />
 			</div>
 
 			<div class="fixed bottom-0 w-full flex justify-center gap-2 p-4">
 				<button
-					onclick={async () => await dataProvider.runBFlow()}
+					onclick={async () => await controller.runBFlow()}
 					class="flex items-center gap-2 cursor-pointer bg-green-500 hover:bg-green-600 text-white px-6 py-3 rounded-lg shadow-lg"
 				>
 					<Flame class="text-white-700 w-5 h-5" />
 					Run
 				</button>
-				{#if dataProvider.isDocumentChanged(url, text)}
+				{#if controller.isDocumentChanged(url, text)}
 					<button
 						class="flex items-center gap-2 cursor-pointer bg-blue-500 hover:bg-blue-600 text-white px-6 py-3 rounded-lg shadow-lg"
 						onclick={async () => await reload()}
@@ -111,29 +111,29 @@
 				{/if}
 			</div>
 		</div>
-	{:else if dataProvider.state == BFLowState.NONE || dataProvider.state == BFLowState.CONNECT_FAILED}
+	{:else if controller.state == BFLowState.NONE || controller.state == BFLowState.CONNECT_FAILED}
 		<div
 			class="h-full w-full flex flex-col items-center justify-center gap-2"
 		>
-			<div>{convertStateToMessage(dataProvider.state)}</div>
+			<div>{convertStateToMessage(controller.state)}</div>
 			<button class="cursor-pointer" onclick={async () => await start()}>
 				<Play class="text-green-700 w-10 h-10" />
 			</button>
 		</div>
-	{:else if dataProvider.state == BFLowState.NONE || dataProvider.isStateLoading(dataProvider.state) || dataProvider.isFinishedState(dataProvider.state)}
+	{:else if controller.state == BFLowState.NONE || controller.isStateLoading(controller.state) || controller.isFinishedState(controller.state)}
 		<div
 			class="h-full w-full flex flex-col items-center justify-center gap-2"
 		>
 			<LoadingIndicator
-				message={convertStateToMessage(dataProvider.state)}
+				message={convertStateToMessage(controller.state)}
 			/>
 		</div>
-	{:else if dataProvider.isFailedState(dataProvider.state)}
+	{:else if controller.isFailedState(controller.state)}
 		<div
 			class="h-full w-full flex flex-col items-center justify-center gap-2"
 		>
 			<CircleX class="text-red-700 w-10 h-10" />
-			<div>{convertStateToMessage(dataProvider.state)}</div>
+			<div>{convertStateToMessage(controller.state)}</div>
 			<button class="cursor-pointer" onclick={async () => await reload()}>
 				<RefreshCcw class="text-red-700 w-10 h-10" />
 			</button>

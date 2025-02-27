@@ -1,6 +1,7 @@
 <script lang="ts">
     import { Pencil, Eye, Loader, CircleX, Check, Zap } from "lucide-svelte";
     import { onMount } from "svelte";
+    import MarkdocRendererController from "@cleverflow/cleverflow.core/webcomponents/markdoc-renderer-controller.js";
 
     let markdoc = `
       {% b-flow id="select_baking_machine" %}
@@ -28,6 +29,8 @@
       {% /b-flow %}
     `;
 
+    let markdocRendererController = new MarkdocRendererController(markdoc);
+
     onMount(async () => {
         await import(
             "@cleverflow/cleverflow.core/webcomponents/markdoc-renderer.js"
@@ -35,4 +38,4 @@
     });
 </script>
 
-<markdoc-renderer {markdoc} />
+<markdoc-renderer controller={markdocRendererController} />

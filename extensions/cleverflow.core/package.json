@@ -33,6 +33,10 @@
 			"import": "./dist-webcomponents/markdoc-renderer.js",
 			"require": "./dist-webcomponents/markdoc-renderer.js"
 		},
+		"./webcomponents/markdoc-renderer-controller.js": {
+			"import": "./dist-webcomponents/markdoc-renderer-controller.js",
+			"require": "./dist-webcomponents/markdoc-renderer-controller.js"
+		},
 		"./webcomponents/b-flow.js": {
 			"import": "./dist-webcomponents/b-flow.js",
 			"require": "./dist-webcomponents/b-flow.js"
