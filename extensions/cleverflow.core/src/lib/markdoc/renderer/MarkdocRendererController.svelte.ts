@@ -1,6 +1,7 @@
 import BFlowController from "../../bflow/BFlowController.svelte.js";
 import Markdoc from "@markdoc/markdoc";
 import yaml from "js-yaml";
+import Heading from "./elements/Heading.svelte";
 
 export default class MarkdocRendererController {
 
@@ -18,36 +19,41 @@ export default class MarkdocRendererController {
         this.markdoc = markdoc;
         this.ast = Markdoc.parse(this.convertToMarkdocStringForTransform(markdoc));
         this.astContent = Markdoc.transform(this.ast, {
-            tags: {
-                'b-flow': {
-                    render: 'BFlow',
-                    attributes: { id: { type: String } },
-                    children: ['sequence'], // Allow child elements
-                    selfClosing: false
-                },
-                'sequence': {
-                    render: 'Sequence',
-                    children: ['get-text', 'filter-data', 'select-machine'], // Allow nested elements
-                    selfClosing: false
-                },
-                'get-text': {
-                    render: 'GetText',
-                    attributes: { id: { type: String }, url: { type: String } },
-                    selfClosing: false
-                },
-                'filter-data': {
-                    render: 'FilterData',
-                    attributes: { id: { type: String }, filter: { type: String } },
-                    selfClosing: false
-                },
-                'select-machine': {
-                    render: 'SelectMachine',
-                    attributes: { id: { type: String }, conditions: { type: String } },
-                    selfClosing: false
-                }
-            }
+            tags: this.getTransformConfigTags(),
         });
     }
+
+    getTransformConfigTags() {
+        return {
+            'b-flow': {
+                render: 'BFlow',
+                attributes: { id: { type: String } },
+                children: ['sequence'], // Allow child elements
+                selfClosing: false
+            },
+            'sequence': {
+                render: 'Sequence',
+                children: ['get-text', 'filter-data', 'select-machine'], // Allow nested elements
+                selfClosing: false
+            },
+            'get-text': {
+                render: 'GetText',
+                attributes: { id: { type: String }, url: { type: String } },
+                selfClosing: false
+            },
+            'filter-data': {
+                render: 'FilterData',
+                attributes: { id: { type: String }, filter: { type: String } },
+                selfClosing: false
+            },
+            'select-machine': {
+                render: 'SelectMachine',
+                attributes: { id: { type: String }, conditions: { type: String } },
+                selfClosing: false
+            }
+        };
+    }
+
 
     convertToMarkdocStringForTransform(markdoc: string) {
         return markdoc.split("\n").map(line => line.replace(/^\s+/, "")).join("\n");
