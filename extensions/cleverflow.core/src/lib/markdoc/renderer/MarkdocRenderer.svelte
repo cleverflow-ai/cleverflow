@@ -1,6 +1,7 @@
 <svelte:options customElement="markdoc-renderer" />
 
 <script lang="ts">
+    import { onMount } from "svelte";
     import css from "../../../app.css?inline";
     // SMELL: This is a workaround to make TailwindCSS work in the web component.
     // IMPORTANT: this unuse import is required to make TailwindCSS work in the web component.
@@ -10,6 +11,7 @@
     import Self from "./Self.svelte";
 
     let { controller }: { controller: MarkdocRendererController } = $props();
+
 
     const classes = {
         // Headings
@@ -71,7 +73,6 @@
                 <BFlow
                     {...child.attributes}
                     controller={bflowController}
-                    {node}
                     {id}
                     {text}
                 ></BFlow>
@@ -93,3 +94,4 @@
         {/each}
     {/if}
 </main>
+

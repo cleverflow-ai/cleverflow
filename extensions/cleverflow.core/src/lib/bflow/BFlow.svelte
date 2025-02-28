@@ -14,15 +14,13 @@
 	import { BFLowState } from "./BFlowState.js";
 
 	let props = $props();
-	let { url = "", text = "", id = null, node } = props;
+	let { url = "", text = "", id = null } = props;
 	let { controller }: { controller: BFlowController } = props;
 
 	onMount(async () => {
 		if ((url || text) && controller.state === BFLowState.CONNECT_SUCCESS) {
 			await controller.loadBFlowViz(url, text);
 		}
-
-		console.log(node);
 	});
 
 	const convertStateToMessage = (state: BFLowState) => {
@@ -81,9 +79,31 @@
 <svelte:element this={"style"}>{@html css}</svelte:element>
 <svelte:element this={"style"}>{@html xyflowCss}</svelte:element>
 <main class=" my-8">
-	<span class="bg-blue-800 text-white px-3 py-1 text-sm font-semibold">
-		BFlow: {id}
-	</span>
+	<div class="flex items-center justify-between gap-2">
+		<span class="bg-blue-800 text-white px-3 py-1 text-sm font-semibold">
+			BFlow: {id}
+		</span>
+		{#if controller.bflowviz}
+			<div class="flex justify-end items-center gap-2">
+				{#if controller.isDocumentChanged(url, text)}
+					<button
+						class="flex items-center gap-2 cursor-pointer bg-blue-500 hover:bg-blue-600 text-white px-3 py-1  shadow-lg"
+						onclick={async () => await reload()}
+					>
+						<Zap class="text-white-700 w-5 h-5" />
+						Document changed. Reload
+					</button>
+				{/if}
+				<button
+					onclick={async () => await controller.runBFlow()}
+					class="flex items-center gap-2 cursor-pointer bg-green-500 hover:bg-green-600 text-white px-3 py-1 shadow-lg"
+				>
+					<Flame class="text-white-700 w-5 h-5" />
+					Run
+				</button>
+			</div>
+		{/if}
+	</div>
 	<div class="w-full border border-gray-300 p-4 h-[500px]">
 		{#key controller.state}
 			{#if !url && !text}
@@ -97,27 +117,6 @@
 				<div class="relative w-full h-full">
 					<div class="w-full h-full">
 						<BFlowView data={controller.bflowviz} />
-					</div>
-
-					<div
-						class="absolute bottom-0 w-full flex justify-center gap-2 p-4"
-					>
-						<button
-							onclick={async () => await controller.runBFlow()}
-							class="flex items-center gap-2 cursor-pointer bg-green-500 hover:bg-green-600 text-white px-6 py-3 rounded-lg shadow-lg"
-						>
-							<Flame class="text-white-700 w-5 h-5" />
-							Run
-						</button>
-						{#if controller.isDocumentChanged(url, text)}
-							<button
-								class="flex items-center gap-2 cursor-pointer bg-blue-500 hover:bg-blue-600 text-white px-6 py-3 rounded-lg shadow-lg"
-								onclick={async () => await reload()}
-							>
-								<Zap class="text-white-700 w-5 h-5" />
-								Document has been changed. Reload
-							</button>
-						{/if}
 					</div>
 				</div>
 			{:else if controller.state == BFLowState.NONE || controller.state == BFLowState.CONNECT_FAILED}

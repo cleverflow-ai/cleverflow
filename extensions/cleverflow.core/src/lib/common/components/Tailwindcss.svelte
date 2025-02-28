@@ -8,7 +8,7 @@
         border-t-2
         border-b
         border-collapse
-        flex items-center justify-center
+        flex items-center justify-center justify-between
         relative absolute fixed
         bg-yellow-200
         bg-gray-200 border-gray-300 bg-gray-900
@@ -23,8 +23,8 @@
         text-base text-sm text-lg text-xl text-2xl text-3xl text-4xl
         font-mono font-medium font-semibold font-bold italic underline line-through
         p-4
-        px-1 px-4
-        py-2
+        px-1 px-3 px-4
+        py-1 py-2
         pl-4
         my-4 my-8
         gap-2

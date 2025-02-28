@@ -2,28 +2,22 @@
   import { Pencil, Eye, Loader, CircleX, Check, Zap } from "lucide-svelte";
   import { onMount } from "svelte";
   import * as m from "$lib/paraglide/messages.js";
-  import BFlowController from "@cleverflow/cleverflow.core/webcomponents/b-flow-controller.js";
+  import MarkdocRendererController from "@cleverflow/cleverflow.core/webcomponents/markdoc-renderer-controller.js";
 
-  onMount(async () => {
-    await import("@cleverflow/cleverflow.core/webcomponents/markdoc-editor.js");
-    await import("@cleverflow/cleverflow.core/webcomponents/b-flow.js");
-  });
+
+  const eventServer = "ws://localhost:8080";
+  const eventServerToken = "76de3ba222bec3af21f9dbfb01f3197b";
+  
+  let markdocRendererController = $state(null);
+
 
   let activeTab = $state("editor");
-  let bflowState = $state("");
-  let bflowController = $state(
-    new BFlowController(
-      "ws://localhost:8080",
-      "76de3ba222bec3af21f9dbfb01f3197b",
-      (state: string) => {
-        bflowState = state;
-      },
-    ),
-  );
+  let markdocEditorElement;
 
   let bflowUrl = "https://cleverflow.ai/files/dummy.mdoc";
-  let bflow = $state(
+  let markdoc = $state(
     `
+      # Baking Machine Selection
       {% b-flow id="select_baking_machine" %}
           {% sequence %}
               1. Get List of all Machine Models and corresponding Infos.
@@ -50,15 +44,21 @@
     `,
   );
 
-  // svelte-ignore non_reactive_update
-  let markdocEditorElement: any = null;
-
   onMount(async () => {
-    await bflowController.connect();
+    await import("@cleverflow/cleverflow.core/webcomponents/markdoc-editor.js");
+    await import("@cleverflow/cleverflow.core/webcomponents/markdoc-renderer.js");
+
+    markdocRendererController = new MarkdocRendererController(
+      eventServer,
+      eventServerToken,
+    );
+
+    markdocRendererController.setMarkdoc(markdoc);
   });
 
   function switchToView() {
-    bflow = markdocEditorElement.getMarkdown();
+    markdoc = markdocEditorElement.getMarkdown();
+    markdocRendererController.setMarkdoc(markdoc);
     activeTab = "view";
   }
 </script>
@@ -113,14 +113,15 @@
       <div class="w-full h-full">
         <markdoc-editor
           name="mydoc.mdoc"
-          text={bflow}
+          text={markdoc}
           bind:this={markdocEditorElement}
         ></markdoc-editor>
       </div>
     {:else}
       <div class="w-full h-full">
-        <b-flow url={bflowUrl} text={bflow} controller={bflowController}
-        ></b-flow>
+        {#if markdocRendererController}
+            <markdoc-renderer controller={markdocRendererController} {markdoc}></markdoc-renderer>
+        {/if}
       </div>
     {/if}
   </div>

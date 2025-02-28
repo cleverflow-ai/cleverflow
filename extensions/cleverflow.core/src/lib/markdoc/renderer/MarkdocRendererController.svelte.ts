@@ -1,21 +1,23 @@
 import BFlowController from "../../bflow/BFlowController.svelte.js";
 import Markdoc from "@markdoc/markdoc";
 import yaml from "js-yaml";
-import Heading from "./elements/Heading.svelte";
 
 export default class MarkdocRendererController {
 
     servers: string | string[] = "";
     token: string = "";
 
-    markdoc: string;
+    markdoc: string | undefined;
     ast: any;
     astContent: any;
     bflowControllers: Map<string, BFlowController> = new Map();
 
-    constructor(servers: string | string[], token: string, markdoc: string) {
+    constructor(servers: string | string[], token: string) {
         this.servers = servers;
         this.token = token;
+    }
+
+    setMarkdoc(markdoc: string) {
         this.markdoc = markdoc;
         this.ast = Markdoc.parse(this.convertToMarkdocStringForTransform(markdoc));
         this.astContent = Markdoc.transform(this.ast, {
