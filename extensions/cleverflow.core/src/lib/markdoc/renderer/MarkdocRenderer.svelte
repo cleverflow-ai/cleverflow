@@ -60,34 +60,36 @@
 </script>
 
 <svelte:element this={"style"}>{@html css}</svelte:element>
-{#if controller && controller.astContent && controller.astContent.children}
-    {#each controller.astContent.children as child}
-        {#if child.name === "BFlow"}
-            {@const id = child.attributes.id}
-            {@const node = controller.findBFlowNode(id)}
-            {@const text = controller.reconstructMarkdoc(node)}
-            {@const bflowController = controller.getBFlowController(id)}
-            <BFlow
-                {...child.attributes}
-                controller={bflowController}
-                {node}
-                {id}
-                {text}
-            ></BFlow>
-        {:else}
-            <svelte:element
-                this={child.name}
-                {...child.attributes}
-                class={classes[child.name] || ""}
-            >
-                {#if child.children}
-                    <Self children={child.children} {classes} />
-                {/if}
-            </svelte:element>
-        {/if}
+<main class="w-full p-4 my-4">
+    {#if controller && controller.astContent && controller.astContent.children}
+        {#each controller.astContent.children as child}
+            {#if child.name === "BFlow"}
+                {@const id = child.attributes.id}
+                {@const node = controller.findBFlowNode(id)}
+                {@const text = controller.reconstructMarkdoc(node)}
+                {@const bflowController = controller.getBFlowController(id)}
+                <BFlow
+                    {...child.attributes}
+                    controller={bflowController}
+                    {node}
+                    {id}
+                    {text}
+                ></BFlow>
+            {:else}
+                <svelte:element
+                    this={child.name}
+                    {...child.attributes}
+                    class={classes[child.name] || ""}
+                >
+                    {#if child.children}
+                        <Self children={child.children} {classes} />
+                    {/if}
+                </svelte:element>
+            {/if}
 
-        {#if typeof child === "string"}
-            {child}
-        {/if}
-    {/each}
-{/if}
+            {#if typeof child === "string"}
+                {child}
+            {/if}
+        {/each}
+    {/if}
+</main>

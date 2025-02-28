@@ -26,7 +26,7 @@
         px-1 px-4
         py-2
         pl-4
-        my-4
+        my-4 my-8
         gap-2
         cursor-pointer
         leading-normal leading-snug leading-tight leading-relaxed leading-loose
@@ -34,5 +34,6 @@
         list-decimal list-disc
         align-sub align-super
         overflow-x-auto
+        top-4
     "
 ></div>
