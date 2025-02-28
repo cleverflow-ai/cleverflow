@@ -30,10 +30,9 @@ export default class BFlowController {
     private onStateChanged: (state: BFLowState) => void = () => { };
 
 
-    constructor(servers: string | string[], token: string, onStateChanged?: (state: BFLowState) => void) {
+    constructor(servers: string | string[], token: string) {
         this.servers = servers;
         this.token = token;
-        this.onStateChanged = onStateChanged || (() => { });
     }
 
     async connect() {

@@ -5,6 +5,7 @@
 	import css from "../../app.css?inline";
 	import xyflowCss from "@xyflow/svelte/dist/style.css?inline";
 	import { CircleX, RefreshCcw, Zap, Play, Flame } from "lucide-svelte";
+	import type BFlowController from "./BFlowController.js";
 	import BFlowView from "./visualization/BFlowView.svelte";
 	// SMELL: This is a workaround to make TailwindCSS work in the web component.
 	// IMPORTANT: this unuse import is required to make TailwindCSS work in the web component.
@@ -12,7 +13,9 @@
 	import LoadingIndicator from "../common/components/LoadingIndicator.svelte";
 	import { BFLowState } from "./BFlowState.js";
 
-	let { controller: BFlowController, url = "", text = "" } = $props();
+	let props = $props();
+	let { url = "", text = "", id = null } = props;
+	let { controller }: { controller: BFlowController } = props;
 
 	onMount(async () => {
 		if (

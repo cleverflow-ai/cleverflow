@@ -87,7 +87,7 @@
     >
       <Eye class="w-5 h-5" />
       <span>View</span>
-      {#if activeTab === "view"}
+      <!-- {#if activeTab === "view"}
         <span
           class="absolute bottom-0 left-0 w-full h-[3px] bg-blue-500 rounded-full"
         ></span>
@@ -103,7 +103,7 @@
             <CircleX class="text-red-700 w-3 h-3" />
           {/if}
         {/key}
-      {/if}
+      {/if} -->
     </button>
   </div>
 

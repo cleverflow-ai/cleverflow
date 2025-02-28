@@ -1,30 +1,51 @@
+import BFlowController from "../../bflow/BFlowController.svelte.js";
 import Markdoc from "@markdoc/markdoc";
 import yaml from "js-yaml";
 
 export default class MarkdocRendererController {
 
+    servers: string | string[] = "";
+    token: string = "";
+
     markdoc: string;
     ast: any;
     astContent: any;
+    bflowControllers: Map<string, BFlowController> = new Map();
 
-    constructor(markdoc: string) {
+    constructor(servers: string | string[], token: string, markdoc: string) {
+        this.servers = servers;
+        this.token = token;
         this.markdoc = markdoc;
         this.ast = Markdoc.parse(markdoc);
         this.astContent = Markdoc.transform(this.ast, {
             tags: {
-                "b-flow": {
-                    render: "BFlow",
-                    attributes: {
-                        id: {
-                            type: String,
-                            default: "",
-                        },
-                    },
+                'b-flow': {
+                    render: 'BFlow',
+                    attributes: { id: { type: String } },
+                    children: ['sequence'], // Allow child elements
+                    selfClosing: false
                 },
-            },
-            variables: {
-                frontmatter: this.getFrontmatter(this.ast.attributes.frontmatter),
-            },
+                'sequence': {
+                    render: 'Sequence',
+                    children: ['get-text', 'filter-data', 'select-machine'], // Allow nested elements
+                    selfClosing: false
+                },
+                'get-text': {
+                    render: 'GetText',
+                    attributes: { id: { type: String }, url: { type: String } },
+                    selfClosing: false
+                },
+                'filter-data': {
+                    render: 'FilterData',
+                    attributes: { id: { type: String }, filter: { type: String } },
+                    selfClosing: false
+                },
+                'select-machine': {
+                    render: 'SelectMachine',
+                    attributes: { id: { type: String }, conditions: { type: String } },
+                    selfClosing: false
+                }
+            }
         });
     }
 
@@ -100,5 +121,18 @@ export default class MarkdocRendererController {
         let closingTag = `${indent}{% /${node.tag} %}`;
 
         return `${openingTag}\n${childrenContent}\n${closingTag}`;
+    }
+
+    getBFlowController(bflowId: string): BFlowController | undefined | null {
+        if (!this.bflowControllers.has(bflowId)) {
+
+            const bflowController = new BFlowController(
+                this.servers,
+                this.token,
+            );
+            this.bflowControllers.set(bflowId, bflowController);
+        }
+
+        return this.bflowControllers.get(bflowId);
     }
 }
