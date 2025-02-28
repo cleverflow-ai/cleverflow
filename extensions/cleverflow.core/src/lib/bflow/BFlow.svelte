@@ -14,16 +14,15 @@
 	import { BFLowState } from "./BFlowState.js";
 
 	let props = $props();
-	let { url = "", text = "", id = null } = props;
+	let { url = "", text = "", id = null, node } = props;
 	let { controller }: { controller: BFlowController } = props;
 
 	onMount(async () => {
-		if (
-			(url || text) &&
-			controller.state === BFLowState.CONNECT_SUCCESS
-		) {
+		if ((url || text) && controller.state === BFLowState.CONNECT_SUCCESS) {
 			await controller.loadBFlowViz(url, text);
 		}
+
+		console.log(node);
 	});
 
 	const convertStateToMessage = (state: BFLowState) => {

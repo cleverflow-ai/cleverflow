@@ -92,7 +92,7 @@ export default class MarkdocRendererController {
         if (node.type === "text") {
             return indent + node.attributes.content + "\n";
         }
-        if (["paragraph", "inline"].includes(node.type)) {
+        if (["paragraph", "inline", "list", "item"].includes(node.type)) {
             return node.children
                 .map((child: any) => this.reconstructMarkdoc(child, indentLevel + 1))
                 .join("\n");

@@ -26,6 +26,7 @@
             <BFlow
                 {...child.attributes}
                 controller={bflowController}
+                {node}
                 {id}
                 {text}
             ></BFlow>
