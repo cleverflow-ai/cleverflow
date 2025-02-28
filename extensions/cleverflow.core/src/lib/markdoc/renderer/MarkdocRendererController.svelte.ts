@@ -16,7 +16,7 @@ export default class MarkdocRendererController {
         this.servers = servers;
         this.token = token;
         this.markdoc = markdoc;
-        this.ast = Markdoc.parse(markdoc);
+        this.ast = Markdoc.parse(this.convertToMarkdocStringForTransform(markdoc));
         this.astContent = Markdoc.transform(this.ast, {
             tags: {
                 'b-flow': {
@@ -47,6 +47,10 @@ export default class MarkdocRendererController {
                 }
             }
         });
+    }
+
+    convertToMarkdocStringForTransform(markdoc: string) {
+        return markdoc.split("\n").map(line => line.replace(/^\s+/, "")).join("\n");
     }
 
     getFrontmatter(frontmatter: string) {

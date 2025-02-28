@@ -11,59 +11,60 @@ Markdoc is open-source—check out its [source](http://github.com/markdoc/markdo
 
 ## How is Markdoc different?
 
-{% b-flow id="select_baking_machine1" %}
-{% sequence %}
-1. Get List of all Machine Models and corresponding Infos.
-{% get-text id="action_1" %}
-url: https://raw.githubusercontent.com/cleverflow-ai/examples/refs/heads/main/machinery/machines-list.md
-{% /get-text %}
-
-2. Filter the List of Machines, to get only those Available:
-{% filter-data id="action_2" %}
-filter: only lines having Availability as 'available'.
-{% /filter-data %}
-
-3. Get Machine Selection Processes
-{% get-text id="action_3" %}
-url: https://raw.githubusercontent.com/cleverflow-ai/examples/refs/heads/main/machinery/machines-selection.md
-{% /get-text %}
-
-4. Select the best suitable Machines for Customer
-{% select-machine id="action_4" %}
-conditions: can bake Brownies and Muffins.
-{% /select-machine %}
-{% /sequence %}
-{% /b-flow %}
-
 {% b-flow id="select_baking_machine" %}
-{% sequence %}
-1. Get List of all Machine Models and corresponding Infos.
-{% get-text id="action_1" %}
-url: https://raw.githubusercontent.com/cleverflow-ai/examples/refs/heads/main/machinery/machines-list.md
-{% /get-text %}
+    {% sequence %}
+        1. Get List of all Machine Models and corresponding Infos.
+        {% get-text id="action_1" %}
+            url: https://raw.githubusercontent.com/cleverflow-ai/examples/refs/heads/main/machinery/machines-list.md
+        {% /get-text %}
 
-2. Filter the List of Machines, to get only those Available:
-{% filter-data id="action_2" %}
-filter: only lines having Availability as 'available'.
-{% /filter-data %}
+        2. Filter the List of Machines, to get only those Available:
+        {% filter-data id="action_2" %}
+            filter: only lines having Availability as 'available'.
+        {% /filter-data %}
 
-3. Get Machine Selection Processes
-{% get-text id="action_3" %}
-url: https://raw.githubusercontent.com/cleverflow-ai/examples/refs/heads/main/machinery/machines-selection.md
-{% /get-text %}
+        3. Get Machine Selection Processes
+        {% get-text id="action_3" %}
+            url: https://raw.githubusercontent.com/cleverflow-ai/examples/refs/heads/main/machinery/machines-selection.md
+        {% /get-text %}
 
-4. Select the best suitable Machines for Customer
-{% select-machine id="action_4" %}
-conditions: can bake Brownies and Muffins.
-{% /select-machine %}
-{% /sequence %}
+        4. Select the best suitable Machines for Customer
+        {% select-machine id="action_4" %}
+            conditions: can bake Brownies and Muffins.
+        {% /select-machine %}
+    {% /sequence %}
 {% /b-flow %}
+
 
 Markdoc uses a fully declarative approach to composition and flow control, where other solutions… [Read more](/docs/overview).
 
 ## Next steps
 - [Install Markdoc](/docs/getting-started)
 - [Explore the syntax](/docs/syntax)
+
+{% b-flow id="select_baking_machine2" %}
+    {% sequence %}
+        1. Get List of all Machine Models and corresponding Infos.
+        {% get-text id="action_1" %}
+            url: https://raw.githubusercontent.com/cleverflow-ai/examples/refs/heads/main/machinery/machines-list.md
+        {% /get-text %}
+
+        2. Filter the List of Machines, to get only those Available:
+        {% filter-data id="action_2" %}
+            filter: only lines having Availability as 'available'.
+        {% /filter-data %}
+
+        3. Get Machine Selection Processes
+        {% get-text id="action_3" %}
+            url: https://raw.githubusercontent.com/cleverflow-ai/examples/refs/heads/main/machinery/machines-selection.md
+        {% /get-text %}
+
+        4. Select the best suitable Machines for Customer
+        {% select-machine id="action_4" %}
+            conditions: can bake Brownies and Muffins.
+        {% /select-machine %}
+    {% /sequence %}
+{% /b-flow %}
 `;
 
     let markdocRendererController = $state(null);
