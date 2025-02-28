@@ -51,6 +51,7 @@ class BFlowVizNode {
   name string?
   description string?
   config BFlowNodeConfig?
+  agent BFlowNodeAgent?
 }
 
 class BFlowVizEdge {

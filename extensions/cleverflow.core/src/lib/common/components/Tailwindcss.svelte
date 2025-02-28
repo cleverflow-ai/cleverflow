@@ -20,7 +20,7 @@
         text-gray-600
         text-blue-600
         hover:text-blue-800
-        text-base text-sm text-lg text-xl text-2xl text-3xl text-4xl
+        text-[10px] text-base text-sm text-lg text-xl text-2xl text-3xl text-4xl
         font-mono font-medium font-semibold font-bold italic underline line-through
         p-4
         px-1 px-3 px-4
