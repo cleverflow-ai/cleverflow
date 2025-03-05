@@ -10,7 +10,7 @@ const out = await agent.process({
                     url: https://raw.githubusercontent.com/cleverflow-ai/examples/refs/heads/main/machinery/machines-list.md
                 {% /get-text %}
 
-                2. Filter the List of Machines, to get only those Available:
+                2. Filter the List of Machines:
                 {% filter-data id="action_2" %}
                     filter: only lines having Availability as 'available'.
                 {% /filter-data %}
