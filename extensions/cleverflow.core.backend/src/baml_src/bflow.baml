@@ -81,7 +81,7 @@ function ParseMarkdocBFlowElementToBFlow(text: string, agents: BFlowNodeAgent[])
            - For example: '<% get-text %>' must be converted to { type: "ACTION", name: "get-text" }
         - Each Markdoc element might contain YAML-based configuration between opening and closing tags: please extract the whole YAML as config of the corresponding node, no matter YAML contains only one key-value pair or multiple key-value pairs.
         - If markdoc element contains children, then they should be added to the 'goto' field of the nearest father node.
-        - Each Node with type 'ACTION' or 'CONDITION' might need a corresponding Agent given in the Agents list.
+        - Each Node with type 'ACTION' or 'CONDITION' needs a corresponding Agent given in the Agents list. If you cannot decide which Agent to assign, just assign the default one.
         - Go thruogh each Node, identity the names of other Nodes whose outputs are the inputs for it. Assign 'inputs' list with these Nodes names. 
         - If Node doest not receive any input from another, just let its 'inputs' empty.
         ---
