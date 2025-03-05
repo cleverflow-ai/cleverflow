@@ -59,7 +59,7 @@ export default class BFlowToBFlowVizAgent extends Agent<InPayload, OutPayload> {
         const bflowViz = await b.ParseBFlowToBFlowViz2(
             JSON.stringify(payload.bflow),
             {
-                clientRegistry: new Clients({ primary: Clients.OllamaDefault }).registry
+                clientRegistry: new Clients({ primary: Clients.OllamaTool }).registry
             });
 
         return { bflowViz: bflowViz };

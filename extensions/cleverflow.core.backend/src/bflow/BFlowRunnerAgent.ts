@@ -52,7 +52,7 @@ export default class BFlowRunnerAgent extends Agent<InPayload, OutPayload> {
             }
         }
 
-        if (node.type === BFlowNodeType.FAILBACK) {
+        if (node.type === BFlowNodeType.FALLBACK) {
             for (const child of node.goto!) {
                 const status = await this.runNode(child);
                 if (status === BFlowNodeState.SUCCESS) {
