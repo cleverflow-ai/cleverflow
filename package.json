@@ -27,6 +27,8 @@
 	},
 	"dependencies": {
 		"@inlang/paraglide-sveltekit": "^0.15.5",
+		"@markdoc/markdoc": "^0.5.1",
+		"js-yaml": "^4.1.0",
 		"lucide-svelte": "^0.475.0"
 	}
 }

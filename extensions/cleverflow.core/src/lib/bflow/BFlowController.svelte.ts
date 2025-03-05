@@ -5,8 +5,9 @@ import BFlowToBFlowVizAgentMessenger from "./agent/BFlowToBFlowVizAgentMessenger
 import type AgentInfo from "$lib/common/agent/AgentInfo.js";
 import _ from "lodash";
 import { BFLowState } from "./BFlowState.js";
+import BFlowRunnerAgentMessenger from "./agent/BFlowRunnerAgentMessenger.js";
 
-export default class BFlowDataProvider {
+export default class BFlowController {
 
     private servers: string | string[] = "";
     private token: string = "";
@@ -15,9 +16,12 @@ export default class BFlowDataProvider {
     private monitorAgentMessenger?: MonitorAgentMessenger;
     private markdocCustomeElementToBFlowAgentMessenger?: MarkdocCustomeElementToBFlowAgentMessenger;
     private bflowToBFlowVizAgentMessenger?: BFlowToBFlowVizAgentMessenger;
+    private bflowRunnerAgentMessenger?: BFlowRunnerAgentMessenger;
 
     private agents: AgentInfo[] | undefined = [];
     public state: BFLowState = $state(BFLowState.NONE);
+
+    public bflow: any;
     public bflowviz: any = $state(null);
 
     private url: string | undefined;
@@ -26,10 +30,9 @@ export default class BFlowDataProvider {
     private onStateChanged: (state: BFLowState) => void = () => { };
 
 
-    constructor(servers: string | string[], token: string, onStateChanged?: (state: BFLowState) => void) {
+    constructor(servers: string | string[], token: string) {
         this.servers = servers;
         this.token = token;
-        this.onStateChanged = onStateChanged || (() => { });
     }
 
     async connect() {
@@ -53,6 +56,10 @@ export default class BFlowDataProvider {
             this.bflowToBFlowVizAgentMessenger = new BFlowToBFlowVizAgentMessenger({
                 connection: this.agentConnection,
             });
+            this.bflowRunnerAgentMessenger = new BFlowRunnerAgentMessenger({
+                connection: this.agentConnection,
+            });
+
             this.setState(BFLowState.CONNECT_SUCCESS);
         } catch (exception) {
             this.setState(BFLowState.CONNECT_FAILED);
@@ -88,9 +95,9 @@ export default class BFlowDataProvider {
         this.text = text;
         this.bflowviz = null;
         await this.loadAgents();
-        const bflow = await this.convertMarkdocCustomElementToBFlow(url, text);
-        if (bflow) {
-            this.bflowviz = await this.convertBFlowToBFlowViz(bflow);
+        this.bflow = await this.convertMarkdocCustomElementToBFlow(url, text);
+        if (this.bflow) {
+            this.bflowviz = await this.convertBFlowToBFlowViz(this.bflow);
         }
     };
 
@@ -148,12 +155,28 @@ export default class BFlowDataProvider {
         }
     };
 
+    async runBFlow() {
+        this.setState(BFLowState.RUN_BFLOW);
+        try {
+            const runningBflowResult = await this.bflowRunnerAgentMessenger?.request({
+                bflow: this.bflow,
+            });
+            this.setState(BFLowState.RUN_BFLOW_SUCCESS);
+            return runningBflowResult;
+        } catch (e: any) {
+            console.error(e);
+            this.setState(BFLowState.RUN_BFLOW_FAILED);
+            return null;
+        }
+    }
+
     isStateLoading() {
         return (
             this.state === BFLowState.CONNECTING ||
             this.state === BFLowState.LIST_AGENTS ||
             this.state === BFLowState.CONVERT_MARKDOC_ELEMENT_TO_BFLOW ||
-            this.state === BFLowState.CONVERT_BFLOW_TO_BFLOWVIZ
+            this.state === BFLowState.CONVERT_BFLOW_TO_BFLOWVIZ ||
+            this.state === BFLowState.RUN_BFLOW
         );
     };
 
@@ -162,7 +185,8 @@ export default class BFlowDataProvider {
             this.state === BFLowState.CONNECT_FAILED ||
             this.state === BFLowState.LIST_AGENTS_FAILED ||
             this.state === BFLowState.CONVERT_MARKDOC_ELEMENT_TO_BFLOW_FAILED ||
-            this.state === BFLowState.CONVERT_BFLOW_TO_BFLOWVIZ_FAILED
+            this.state === BFLowState.CONVERT_BFLOW_TO_BFLOWVIZ_FAILED ||
+            this.state === BFLowState.RUN_BFLOW_FAILED
         );
     };
 
@@ -171,7 +195,8 @@ export default class BFlowDataProvider {
             this.state === BFLowState.CONNECT_SUCCESS ||
             this.state === BFLowState.LIST_AGENTS_SUCCESS ||
             this.state === BFLowState.CONVERT_MARKDOC_ELEMENT_TO_BFLOW_SUCCESS ||
-            this.state === BFLowState.CONVERT_BFLOW_TO_BFLOWVIZ_SUCCESS
+            this.state === BFLowState.CONVERT_BFLOW_TO_BFLOWVIZ_SUCCESS ||
+            this.state === BFLowState.RUN_BFLOW_SUCCESS
         );
     };
 
