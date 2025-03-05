@@ -36,7 +36,7 @@ export default class BFlowRunnerAgent extends Agent<InPayload, OutPayload> {
         await this.runNode(payload.bflow.root);
         return {
             bflow: payload.bflow,
-            outs: this._outs
+            outs: Object.fromEntries(this._outs)
         }
     }
 
