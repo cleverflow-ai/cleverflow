@@ -4,12 +4,10 @@
   import * as m from "$lib/paraglide/messages.js";
   import MarkdocRendererController from "@cleverflow/cleverflow.core/webcomponents/markdoc-renderer-controller.js";
 
-
   const eventServer = "ws://localhost:8080";
   const eventServerToken = "76de3ba222bec3af21f9dbfb01f3197b";
-  
-  let markdocRendererController = $state(null);
 
+  let markdocRendererController = $state(null);
 
   let activeTab = $state("editor");
   let markdocEditorElement;
@@ -46,7 +44,9 @@
 
   onMount(async () => {
     await import("@cleverflow/cleverflow.core/webcomponents/markdoc-editor.js");
-    await import("@cleverflow/cleverflow.core/webcomponents/markdoc-renderer.js");
+    await import(
+      "@cleverflow/cleverflow.core/webcomponents/markdoc-renderer.js"
+    );
 
     markdocRendererController = new MarkdocRendererController(
       eventServer,
@@ -56,11 +56,11 @@
     markdocRendererController.setMarkdoc(markdoc);
   });
 
-  function switchToView() {
+  const switchToView = () => {
     markdoc = markdocEditorElement.getMarkdown();
     markdocRendererController.setMarkdoc(markdoc);
     activeTab = "view";
-  }
+  };
 </script>
 
 <div class="flex flex-col h-screen">
@@ -87,6 +87,11 @@
     >
       <Eye class="w-5 h-5" />
       <span>View</span>
+      {#if activeTab === "view"}
+        <span
+          class="absolute bottom-0 left-0 w-full h-[3px] bg-blue-500 rounded-full"
+        ></span>
+      {/if}
       <!-- {#if activeTab === "view"}
         <span
           class="absolute bottom-0 left-0 w-full h-[3px] bg-blue-500 rounded-full"
@@ -120,7 +125,8 @@
     {:else}
       <div class="w-full h-full">
         {#if markdocRendererController}
-            <markdoc-renderer controller={markdocRendererController} {markdoc}></markdoc-renderer>
+          <markdoc-renderer controller={markdocRendererController} {markdoc}
+          ></markdoc-renderer>
         {/if}
       </div>
     {/if}
