@@ -7,7 +7,7 @@ import JsV8VmRunner from "./JsV8VmRunner.js";
 export type InPayload = {
     description: string;
     config: string;
-    input: any;
+    inputs: any[];
 }
 
 export type OutPayload = {
@@ -53,12 +53,36 @@ export default class JsV8CodeGenerationAgent extends Agent<InPayload, OutPayload
             throw new Error('No VMRunner is assigned.');
         }
 
+        let instructions = ``;
+
+        if (payload.inputs) {
+            instructions += 'Given the Input Data:';
+
+            payload.inputs.forEach((input) => {
+                instructions += '\n';
+
+                if (typeof input === 'string') {
+                    instructions += input;
+                } else if (typeof input === 'object') {
+                    instructions += JSON.stringify(input, null, 2);
+                } 
+            });
+        }
+
+        if (payload.description) {
+            instructions += '\n\n';
+            instructions += payload.description;
+        }
+
+        if (payload.config) {
+            instructions += '\n\n';
+            instructions += payload.config;
+        }
+
+        console.log(instructions)
+
         const generated: JsV8Code = await b.GenerateJSV8Code(
-            `
-            ${payload.description}
-            ${payload.input}
-            ${payload.config}
-            `,
+            instructions,
             `
             log(): void                                     // For printing and debugging purpose.
             load(url: string): Promise<string>              // For downloading or fetching file with a given URL. Usage: await load(...).

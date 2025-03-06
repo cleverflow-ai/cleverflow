@@ -17,3 +17,13 @@ client<llm> Ollama_Tool {
     tempature 0
   }
 }
+
+client<llm> Ollama_Code {
+  provider "openai-generic"
+  options {
+    base_url env.BASE_URL
+    model "qwen2.5-coder:latest"
+    api_key "ollama"
+    tempature 0
+  }
+}

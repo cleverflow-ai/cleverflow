@@ -80,15 +80,16 @@ export default class BFlowRunnerAgent extends Agent<InPayload, OutPayload> {
 
         if (node.type === BFlowNodeType.ACTION || node.type === BFlowNodeType.CONDITION) {
             if (this.connection && node.agent) {
-                let inputData = '';
+                let inputs: any[] = [];
 
                 if (node.inputs) {
-                    // Each Input corresponds a Node Name
-                    for (const input of node.inputs) {
+                    // Each Input corresponds a Node Id
+                    for (const nodeId of node.inputs) {
                         // Get saved Output of required Node
-                        const out = this._outs.get(input);
-                        if (out) {
-                            inputData += typeof out === 'string' ? out : JSON.stringify(out);
+                        const out = this._outs.get(nodeId);
+                        const outResult = out?.result;
+                        if (outResult) {
+                            inputs.push(outResult);
                         }
                     }
                 }
@@ -99,8 +100,8 @@ export default class BFlowRunnerAgent extends Agent<InPayload, OutPayload> {
                     node.agent.name,
                     this.codec.encode({
                         description: node.description,
-                        config: node.config?.yaml,
-                        input: inputData,
+                        config: node.config,
+                        inputs: inputs,
                     }),
                     {
                         timeout: 1000 * 3600
