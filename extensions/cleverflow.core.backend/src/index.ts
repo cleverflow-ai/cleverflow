@@ -1,3 +1,7 @@
+import dotenvFlow from 'dotenv-flow';
+dotenvFlow.config();
+console.log('BAML Log Level:', process.env.BAML_LOG);
+
 import MonitorAgent from './common/MonitorAgent.js';
 import MarkdocCustomElementToBFlowAgent from './bflow/MarkdocCustomeElementToBFlowAgent.js';
 import BFlowToBFlowVizAgent from './bflow/BFlowToBFlowVizAgent.js';
