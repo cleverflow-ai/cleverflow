@@ -77,12 +77,13 @@ function ParseMarkdocBFlowElementToBFlow(text: string, agents: BFlowNodeAgent[])
         It is noted that:
         - If Markdoc entry name is not <% entry %>, <% fallback %>, <% sequence %>, <% parallel %>, or <% condition %>, then it is an ACTION node.
         - If there is any text locating before the Markdoc element, than extract it as the description of the corresponding node.
+        - The Tree / each Node needs a Unique Id. If there is no Id given in the Markdoc element, assign it with a unique Id which can be constructed with its name and its appearing sequennce.
         - If it is about ACTION node, the name of the node corresponds to the name of the Markdoc element.
            - For example: '<% get-text %>' must be converted to { type: "ACTION", name: "get-text" }
         - Each Markdoc element might contain YAML-based configuration between opening and closing tags: please extract the whole YAML as config of the corresponding node, no matter YAML contains only one key-value pair or multiple key-value pairs.
         - If markdoc element contains children, then they should be added to the 'goto' field of the nearest father node.
         - Each Node with type 'ACTION' or 'CONDITION' needs a corresponding Agent given in the Agents list. If you cannot decide which Agent to assign, just assign the default one.
-        - Go thruogh each Node, identity the names of other Nodes whose outputs are the inputs for it. Assign 'inputs' list with these Nodes names. 
+        - Go thruogh each Node, identity the names of other Nodes whose outputs are the inputs for it. Assign 'inputs' list with these Nodes' Ids. 
         - If Node doest not receive any input from another, just let its 'inputs' empty.
         ---
         Markdoc:
@@ -122,32 +123,31 @@ function ParseBFlowToBFlowViz2(bflow: string) -> BFlowViz {
     "#
 }
 
-test Test_WithEntry_ParseMarkdocBFlowElementToBFlow {
+test Test_WithoutAssignedIds_ParseMarkdocBFlowElementToBFlow {
     functions [ParseMarkdocBFlowElementToBFlow]
     args {
         text #"
-            {% b-flow id="choose_machine_models" %}
-                {% entry %}
-                {% /entry %}
-
+            {% b-flow %}
                 {% sequence %}
-                    1. Going through the Selection Process, which is described in the following Document.
-                    {% reason-with-bflow id="action_1" %}
-                        instructions: |
-                            Select corresponding Machine Models based on the requested Cake Types and the given Behavior Tree prepare_data.action_2.
-                    {% /reason-with-bflow %}
+                    1. Get List of all Machine Models and corresponding Infos:
+                    {% get-text %}
+                        url: https://raw.githubusercontent.com/cleverflow-ai/examples/refs/heads/main/machinery/machines-list.md
+                    {% /get-text %}
 
-                    2. Setting any filter rule e.g. filter out those Machine Models are not available
-                    {% filter id="action_2" %}
-                        instructions: |
-                            Use the data from prepare_data.action_1 and select the Machine Models which are given by choose_machine_model.action_1.
-                            Filter out the selected Machine Models with the given conditions.
-                            If there is no given condition, then we can skip this step.
-                    {% /filter %}
+                    2. Filter the List of Machines:
+                    {% filter-data %}
+                        filter: only lines having Availability as 'available'.
+                    {% /filter-data %}
 
-                    3. Displaying the result as Table. Each row contains a concrete Machine Model.
-                    {% display-table id="action_3" %}
-                    {% /display-table %}
+                    3. Get Machine Selection Processes:
+                    {% get-text %}
+                        url: https://raw.githubusercontent.com/cleverflow-ai/examples/refs/heads/main/machinery/machines-selection.md
+                    {% /get-text %}
+
+                    4. Select the best suitable Machines for Customer:
+                    {% select-machine %}
+                        conditions: can bake Brownies and Muffins.
+                    {% /select-machine %}
                 {% /sequence %}
             {% /b-flow %}
         "#,
@@ -164,24 +164,31 @@ test Test_WithEntry_ParseMarkdocBFlowElementToBFlow {
     }
 }
 
-test Test_WithoutEntry_ParseMarkdocBFlowElementToBFlow {
+test Test_WithAssignedIds_ParseMarkdocBFlowElementToBFlow {
     functions [ParseMarkdocBFlowElementToBFlow]
     args {
         text #"
-            {% b-flow id="prepare_data" %}
+            {% b-flow id="select_baking_machine" %}
                 {% sequence %}
-                    1. Getting List of all Machine Models and corresponding Infos.
+                    1. Get List of all Machine Models and corresponding Infos:
                     {% get-text id="action_1" %}
-                        url: https://cleverflow.ai/use-cases/machinery/machines-list.md
+                        url: https://raw.githubusercontent.com/cleverflow-ai/examples/refs/heads/main/machinery/machines-list.md
                     {% /get-text %}
 
-                    2. Converting Selection Logic to a Behavioral Flow to both 
-                    enable AI-based Decision Making, 
-                    and explain the Choices made to Human.
-                    {% get-bflow id="action_2" %}
-                        url: https://cleverflow.ai/use-cases/machinery/machines-selection.md
-                    {% /get-bflow %}
-                    
+                    2. Filter the List of Machines:
+                    {% filter-data id="action_2" %}
+                        filter: only lines having Availability as 'available'.
+                    {% /filter-data %}
+
+                    3. Get Machine Selection Processes:
+                    {% get-text id="action_3" %}
+                        url: https://raw.githubusercontent.com/cleverflow-ai/examples/refs/heads/main/machinery/machines-selection.md
+                    {% /get-text %}
+
+                    4. Select the best suitable Machines for Customer:
+                    {% select-machine id="action_4" %}
+                        conditions: can bake Brownies and Muffins.
+                    {% /select-machine %}
                 {% /sequence %}
             {% /b-flow %}
         "#

@@ -106,8 +106,8 @@ export default class BFlowRunnerAgent extends Agent<InPayload, OutPayload> {
                         timeout: 1000 * 3600
                     });
                 const result = this.codec.decode(reply.data);
-                if (node.name) {
-                    this._outs.set(node.name, result);
+                if (node.id) {
+                    this._outs.set(node.id, result);
                     node.state = BFlowNodeState.SUCCESS;
                     return node.state;
                 }
