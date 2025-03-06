@@ -13,7 +13,7 @@
   let markdocEditorElement;
 
   let bflowUrl = "https://cleverflow.ai/files/dummy.mdoc";
-  let markdoc = $state("");
+  let markdoc = $state(``);
 
   onMount(async () => {
     await import("@cleverflow/cleverflow.core/webcomponents/markdoc-editor.js");

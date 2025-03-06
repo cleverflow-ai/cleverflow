@@ -88,9 +88,13 @@
 <svelte:element this={"style"}>{@html xyflowCss}</svelte:element>
 <main class=" my-8">
 	<div class="flex items-center justify-between gap-2">
-		<span class="bg-blue-800 text-white px-3 py-1 text-sm font-semibold">
-			BFlow: {id}
-		</span>
+		{#if id}
+			<span
+				class="bg-blue-800 text-white px-3 py-1 text-sm font-semibold"
+			>
+				BFlow: {id}
+			</span>
+		{/if}
 		{#if controller.bflowviz}
 			{@const isBFlowRunning = controller.state === BFLowState.RUN_BFLOW}
 			{@const successfullyRanBFlow =
@@ -124,10 +128,11 @@
 					{#if isBFlowRunning}
 						<!-- <Loader class="animate-spin w-5 h-5" /> -->
 						<Flame class="text-white-700 animate-spin w-5 h-5" />
+						Running
 					{:else}
 						<Flame class="text-white-700 w-5 h-5" />
+						Run
 					{/if}
-					Run
 				</button>
 			</div>
 		{/if}

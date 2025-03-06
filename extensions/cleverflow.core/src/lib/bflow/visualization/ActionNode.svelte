@@ -1,11 +1,28 @@
 <script>
-	import { NodeToolbar, Handle, Position } from "@xyflow/svelte";
-	import { onMount, onDestroy } from "svelte";
+	import { Handle, Position } from "@xyflow/svelte";
 	import { Bot } from "lucide-svelte";
+	import { onMount } from "svelte";
+	import { BFlowNodeState } from "../agent/models/BFlowNodeState.js";
 
 	let { data } = $props();
 
-	console.log(data);
+	let borderColor = $state("border-black");
+	onMount(() => {
+		switch (data.state) {
+			case BFlowNodeState.SUCCESS:
+				borderColor = "border-green-500";
+				break;
+			case BFlowNodeState.RUNNING:
+				borderColor = "border-orange-500";
+				break;
+			case BFlowNodeState.FAILURE:
+				borderColor = "border-red-500";
+				break;
+			default:
+				borderColor = "border-black";
+				break;
+		}
+	});
 </script>
 
 <Handle type="target" position={Position.Top} />
@@ -13,7 +30,7 @@
 
 <div class="w-max-full w-full h-full flex flex-col items-start justify-between">
 	<div
-		class="w-full flex-1 border border-black flex items-center justify-center p-4"
+		class="w-full flex-1 border {borderColor} flex items-center justify-center p-4"
 	>
 		{#if data.name}
 			{data.name}

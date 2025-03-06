@@ -3,10 +3,15 @@
         w-full w-[50px] w-[100px] w-10
         h-full h-[50px] h-[500px] h-10
         rounded rounded-full rounded-md
-        border border-black border-gray-300 border-gray-400
+        border
         border-l-4
         border-t-2
         border-b
+        border-gray-300 border-gray-400
+        border-black
+        border-green-500
+        border-red-500
+        border-orange-500
         border-collapse
         flex items-center justify-center justify-between
         relative absolute fixed

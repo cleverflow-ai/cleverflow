@@ -8,6 +8,7 @@ export type InPayload = {
 
 export type OutPayload = {
     bflow: any;
+    outs: any;
 }
 
 /**
@@ -38,7 +39,6 @@ export default class BFlowRunnerAgentMessenger extends AgentMessenger<InPayload,
      * @async
      */
     public async request(payload: InPayload): Promise<OutPayload> {
-        console.log('BFlowRunnerAgentMessenger.request', payload);
         if (this.connection) {
             return await this.connection.sendRequest<OutPayload>({
                 subject: this.subject,

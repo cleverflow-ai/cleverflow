@@ -25,6 +25,7 @@ export default class BFlowController {
 
     public bflow: any;
     public bflowviz: any = $state(null);
+    public bflowRunResult: any = $state(null);
 
     private url: string | undefined;
     private text: string | undefined;
@@ -112,11 +113,9 @@ export default class BFlowController {
             });
             this.agents = result?.agents;
             this.setState(BFLowState.LIST_AGENTS_SUCCESS);
-            addToast("Agents loaded successfully", ToastType.SUCCESS)
         } catch (e: any) {
             console.log(">>>>> Error:", e);
             this.setState(BFLowState.LIST_AGENTS_FAILED);
-            addToast("Failed to load agents", ToastType.ERROR)
         }
     };
 
@@ -169,14 +168,42 @@ export default class BFlowController {
             const runningBflowResult = await this.bflowRunnerAgentMessenger?.request({
                 bflow: this.bflow,
             });
-            this.setState(BFLowState.RUN_BFLOW_SUCCESS);
-            addToast("Successfully ran BFlow", ToastType.SUCCESS)
-            return runningBflowResult;
+            if (runningBflowResult) {
+                this.bflow = runningBflowResult.bflow;
+                this.bflowRunResult = runningBflowResult.outs;
+                this.updateBFlowRunResult();
+                this.setState(BFLowState.RUN_BFLOW_SUCCESS);
+                addToast("Successfully ran BFlow", ToastType.SUCCESS)
+            } else {
+                this.setState(BFLowState.RUN_BFLOW_FAILED);
+                addToast("Failed to run BFlow", ToastType.ERROR)
+            }
         } catch (e: any) {
             console.error(e);
             this.setState(BFLowState.RUN_BFLOW_FAILED);
             addToast("Failed to run BFlow", ToastType.ERROR)
-            return null;
+        }
+    }
+
+    updateBFlowRunResult() {
+        if (!this.bflowRunResult) {
+            return;
+        }
+        const root = this.bflow?.root;
+        this.updateBFlowNodeResult(root);
+    }
+
+    updateBFlowNodeResult(node: any) {
+        const vizNode = _.find(this.bflowviz.nodes, (vizNode: any) => {
+            return node.id === vizNode.id;
+        });
+        if (vizNode) {
+            vizNode.data.state = node.state;
+        }
+        if (node.goto && node.goto.length > 0) {
+            _.forEach(node.goto, (childNode: any) => {
+                this.updateBFlowNodeResult(childNode);
+            });
         }
     }
 

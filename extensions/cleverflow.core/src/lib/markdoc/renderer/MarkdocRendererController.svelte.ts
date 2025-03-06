@@ -29,28 +29,22 @@ export default class MarkdocRendererController {
         return {
             'b-flow': {
                 render: 'BFlow',
-                attributes: { id: { type: String } },
-                children: ['sequence'], // Allow child elements
                 selfClosing: false
             },
             'sequence': {
                 render: 'Sequence',
-                children: ['get-text', 'filter-data', 'select-machine'], // Allow nested elements
                 selfClosing: false
             },
             'get-text': {
                 render: 'GetText',
-                attributes: { id: { type: String }, url: { type: String } },
                 selfClosing: false
             },
             'filter-data': {
                 render: 'FilterData',
-                attributes: { id: { type: String }, filter: { type: String } },
                 selfClosing: false
             },
             'select-machine': {
                 render: 'SelectMachine',
-                attributes: { id: { type: String }, conditions: { type: String } },
                 selfClosing: false
             }
         };
