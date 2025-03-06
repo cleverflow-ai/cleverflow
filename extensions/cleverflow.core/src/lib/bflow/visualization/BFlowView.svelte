@@ -1,5 +1,5 @@
 <script>
-	import { SvelteFlow, Controls, MiniMap, Background } from "@xyflow/svelte";
+	import { SvelteFlow, Controls, Background } from "@xyflow/svelte";
 	import "@xyflow/svelte/dist/style.css";
 	import { onMount, onDestroy } from "svelte";
 	import { writable, get } from "svelte/store";
@@ -28,7 +28,7 @@
 	<div class="w-full h-full">
 		<SvelteFlow {nodeTypes} {nodes} {edges} fitView>
 			<Controls />
-			<MiniMap zoomable pannable height={120} />
+			<!-- <MiniMap zoomable pannable height={120} /> -->
 			<Background patternColor="#aaa" gap={16} />
 		</SvelteFlow>
 	</div>

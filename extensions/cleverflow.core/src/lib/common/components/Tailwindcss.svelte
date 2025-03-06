@@ -10,9 +10,13 @@
         border-collapse
         flex items-center justify-center justify-between
         relative absolute fixed
-        bg-yellow-200
-        bg-gray-200 border-gray-300 bg-gray-900
+        bg-yellow-200 g-yellow-500
+        bg-gray-200 bg-gray-900
         bg-white
+        bg-green-500
+        bg-red-500
+        bg-blue-500
+        bg-gray-800 bg-gray-950
         text-left
         text-white
         text-red-500 text-red-700
@@ -27,7 +31,7 @@
         py-1 py-2
         pl-4
         my-4 my-8
-        gap-2
+        gap-1 gap-2
         cursor-pointer
         leading-normal leading-snug leading-tight leading-relaxed leading-loose
         ml-4 ml-6
@@ -35,5 +39,9 @@
         align-sub align-super
         overflow-x-auto
         top-4
+        shadow-lg
+        transition-opacity
+        duration-500
+        opacity-100
     "
 ></div>

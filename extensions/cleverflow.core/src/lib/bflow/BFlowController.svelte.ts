@@ -2,10 +2,12 @@ import AgentConnection from "../common/agent/AgentConnection.js";
 import MonitorAgentMessenger from "../common/agent/MonitorAgentMessenger.js";
 import MarkdocCustomeElementToBFlowAgentMessenger from "./agent/MarkdocCustomeElementToBFlowAgentMessenger.js";
 import BFlowToBFlowVizAgentMessenger from "./agent/BFlowToBFlowVizAgentMessenger.js";
-import type AgentInfo from "$lib/common/agent/AgentInfo.js";
+import type AgentInfo from "../common/agent/AgentInfo.js";
 import _ from "lodash";
 import { BFLowState } from "./BFlowState.js";
 import BFlowRunnerAgentMessenger from "./agent/BFlowRunnerAgentMessenger.js";
+import Styles from './Styles.js';
+import { addToast, ToastType } from '../common/components/toast/ToastStore.js';
 
 export default class BFlowController {
 
@@ -41,8 +43,8 @@ export default class BFlowController {
             this.agentConnection = new AgentConnection({ name: "bflow" });
 
             await this.agentConnection.connect({
-                servers: this.servers, // "ws://localhost:8080",
-                token: this.token, //"76de3ba222bec3af21f9dbfb01f3197b",
+                servers: this.servers,
+                token: this.token,
             });
 
             this.monitorAgentMessenger = new MonitorAgentMessenger({
@@ -110,9 +112,11 @@ export default class BFlowController {
             });
             this.agents = result?.agents;
             this.setState(BFLowState.LIST_AGENTS_SUCCESS);
+            addToast("Agents loaded successfully", ToastType.SUCCESS)
         } catch (e: any) {
             console.log(">>>>> Error:", e);
             this.setState(BFLowState.LIST_AGENTS_FAILED);
+            addToast("Failed to load agents", ToastType.ERROR)
         }
     };
 
@@ -156,16 +160,22 @@ export default class BFlowController {
     };
 
     async runBFlow() {
+        if (this.state === BFLowState.RUN_BFLOW) {
+            return;
+        }
+
         this.setState(BFLowState.RUN_BFLOW);
         try {
             const runningBflowResult = await this.bflowRunnerAgentMessenger?.request({
                 bflow: this.bflow,
             });
             this.setState(BFLowState.RUN_BFLOW_SUCCESS);
+            addToast("Successfully ran BFlow", ToastType.SUCCESS)
             return runningBflowResult;
         } catch (e: any) {
             console.error(e);
             this.setState(BFLowState.RUN_BFLOW_FAILED);
+            addToast("Failed to run BFlow", ToastType.ERROR)
             return null;
         }
     }
@@ -208,15 +218,19 @@ export default class BFlowController {
                     x: 0,
                     y: 0,
                 };
-                if (node.type === "SEQUENCE") {
+                if (node.type === "ENTRY" || node.type === "SEQUENCE") {
+                    node.width = Styles.NODE.DEFAULT.WIDTH;
+                    node.height = Styles.NODE.DEFAULT.HEIGHT;
                     node.dimension = {
-                        width: 50,
-                        height: 50,
+                        width: node.width,
+                        height: node.height,
                     };
                 } else {
+                    node.width = Styles.NODE.ACTION_NODE.WIDTH;
+                    node.height = Styles.NODE.ACTION_NODE.HEIGHT;
                     node.dimension = {
-                        width: 100,
-                        height: 50,
+                        width: node.width,
+                        height: node.height,
                     };
                 }
             });

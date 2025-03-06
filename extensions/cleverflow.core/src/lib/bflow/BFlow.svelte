@@ -4,7 +4,14 @@
 	import { onDestroy, onMount } from "svelte";
 	import css from "../../app.css?inline";
 	import xyflowCss from "@xyflow/svelte/dist/style.css?inline";
-	import { CircleX, RefreshCcw, Zap, Play, Flame } from "lucide-svelte";
+	import {
+		CircleX,
+		RefreshCcw,
+		Zap,
+		Play,
+		Flame,
+		Loader,
+	} from "lucide-svelte";
 	import type BFlowController from "./BFlowController.js";
 	import BFlowView from "./visualization/BFlowView.svelte";
 	// SMELL: This is a workaround to make TailwindCSS work in the web component.
@@ -12,6 +19,7 @@
 	import Tailwindcss from "../common/components/Tailwindcss.svelte";
 	import LoadingIndicator from "../common/components/LoadingIndicator.svelte";
 	import { BFLowState } from "./BFlowState.js";
+	import Toast from "../common/components/toast/Toast.svelte";
 
 	let props = $props();
 	let { url = "", text = "", id = null } = props;
@@ -84,21 +92,41 @@
 			BFlow: {id}
 		</span>
 		{#if controller.bflowviz}
+			{@const isBFlowRunning = controller.state === BFLowState.RUN_BFLOW}
+			{@const successfullyRanBFlow =
+				controller.state === BFLowState.RUN_BFLOW_SUCCESS}
+			{@const failedToRunBFlow =
+				controller.state === BFLowState.RUN_BFLOW_FAILED}
+
 			<div class="flex justify-end items-center gap-2">
 				{#if controller.isDocumentChanged(url, text)}
 					<button
-						class="flex items-center gap-2 cursor-pointer bg-blue-500 hover:bg-blue-600 text-white px-3 py-1  shadow-lg"
+						class="flex items-center gap-2 cursor-pointer bg-blue-500 hover:bg-blue-600 text-white px-3 py-1 shadow-lg"
 						onclick={async () => await reload()}
 					>
 						<Zap class="text-white-700 w-5 h-5" />
-						Document changed. Reload
+						BFlow changed. Reload
 					</button>
 				{/if}
 				<button
 					onclick={async () => await controller.runBFlow()}
-					class="flex items-center gap-2 cursor-pointer bg-green-500 hover:bg-green-600 text-white px-3 py-1 shadow-lg"
+					class="
+						flex items-center gap-2 cursor-pointer text-white px-3 py-1 shadow-lg
+						{isBFlowRunning
+						? 'bg-yellow-500 hover:bg-yellow-600'
+						: successfullyRanBFlow
+							? 'bg-green-500 hover:bg-green-600'
+							: failedToRunBFlow
+								? 'bg-red-500 hover:bg-red-600'
+								: 'bg-green-500 hover:bg-green-600'}
+					"
 				>
-					<Flame class="text-white-700 w-5 h-5" />
+					{#if isBFlowRunning}
+						<!-- <Loader class="animate-spin w-5 h-5" /> -->
+						<Flame class="text-white-700 animate-spin w-5 h-5" />
+					{:else}
+						<Flame class="text-white-700 w-5 h-5" />
+					{/if}
 					Run
 				</button>
 			</div>
@@ -171,3 +199,5 @@
 		{/key}
 	</div>
 </main>
+
+<Toast />

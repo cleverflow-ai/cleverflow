@@ -12,7 +12,6 @@
 
     let { controller }: { controller: MarkdocRendererController } = $props();
 
-
     const classes = {
         // Headings
         h1: "text-4xl font-bold leading-tight",
@@ -94,4 +93,3 @@
         {/each}
     {/if}
 </main>
-
