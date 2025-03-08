@@ -24,7 +24,6 @@
 </script>
 
 <main class="relative w-full h-full">
-	<button type="button" class="btn preset-filled-primary-500">Button</button>
 	<div class="w-full h-full">
 		<SvelteFlow {nodeTypes} {nodes} {edges} fitView>
 			<Controls />

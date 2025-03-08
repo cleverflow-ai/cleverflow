@@ -10,16 +10,16 @@
 	onMount(() => {
 		switch (data.state) {
 			case BFlowNodeState.SUCCESS:
-				borderColor = "border-green-500";
+				borderColor = "border-success-500";
 				break;
 			case BFlowNodeState.RUNNING:
-				borderColor = "border-orange-500";
+				borderColor = "border-warning-500";
 				break;
 			case BFlowNodeState.FAILURE:
-				borderColor = "border-red-500";
+				borderColor = "border-error-500";
 				break;
 			default:
-				borderColor = "border-black";
+				borderColor = "border-surface-500";
 				break;
 		}
 	});
@@ -30,7 +30,7 @@
 
 <div class="w-max-full w-full h-full flex flex-col items-start justify-between">
 	<div
-		class="w-full flex-1 border {borderColor} flex items-center justify-center p-4"
+		class="w-full flex-1 border-2 {borderColor} flex items-center justify-center p-4"
 	>
 		{#if data.name}
 			{data.name}

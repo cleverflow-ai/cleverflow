@@ -9,16 +9,16 @@
 	onMount(() => {
 		switch (data.state) {
 			case BFlowNodeState.SUCCESS:
-				borderColor = "border-green-500";
+				borderColor = "border-success-500";
 				break;
 			case BFlowNodeState.RUNNING:
-				borderColor = "border-orange-500";
+				borderColor = "border-warning-500";
 				break;
 			case BFlowNodeState.FAILURE:
-				borderColor = "border-red-500";
+				borderColor = "border-error-500";
 				break;
 			default:
-				borderColor = "border-black";
+				borderColor = "border-surface-500";
 				break;
 		}
 	});
@@ -27,7 +27,7 @@
 <Handle type="target" position={Position.Top} />
 <Handle type="source" position={Position.Bottom} />
 
-<div class="w-full h-full rounded-full border {borderColor} p-4"></div>
+<div class="w-full h-full rounded-full border-2 {borderColor} p-4"></div>
 
 <style>
 </style>

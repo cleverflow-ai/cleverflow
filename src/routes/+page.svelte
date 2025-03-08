@@ -7,36 +7,15 @@
   const eventServer = "ws://localhost:8080";
   const eventServerToken = "76de3ba222bec3af21f9dbfb01f3197b";
 
+  const currentTheme = "crimson";
   let tab = $state("editor");
 
   let markdocRendererController = $state(null);
 
-  let activeTab = $state("editor");
   // svelte-ignore non_reactive_update
   let markdocEditorElement: any;
 
-  let bflowUrl = "https://cleverflow.ai/files/dummy.mdoc";
-  let markdoc = $state(`
-  {% b-flow id="select-baking-machines" %}
-    {% sequence %}                    
-        {% get-text %}
-Get List of all Machines from: https://raw.githubusercontent.com/cleverflow-ai/examples/refs/heads/main/machinery/machines-list.md
-        {% /get-text %}
-
-        {% filter-data %}
-            Filter the List of Machines for having Availability as 'available'.
-        {% /filter-data %}
-
-        {% get-text %}
-            Get Machine Selection Processes from: https://raw.githubusercontent.com/cleverflow-ai/examples/refs/heads/main/machinery/machines-selection.md
-        {% /get-text %}
-
-        {% select-machine %}
-Select the best suitable Machines for Customer, based on the filtered Machines and the Selection Process: for baking Brownies and Muffins.
-        {% /select-machine %}
-    {% /sequence %}
-{% /b-flow %}
-  `);
+  let markdoc = $state(``);
 
   onMount(async () => {
     await import("@cleverflow/cleverflow.core/webcomponents/markdoc-editor.js");
@@ -55,7 +34,7 @@ Select the best suitable Machines for Customer, based on the filtered Machines a
   const switchToView = () => {
     markdoc = markdocEditorElement.getMarkdown();
     markdocRendererController.setMarkdoc(markdoc);
-    activeTab = "view";
+    tab = "viewer";
   };
 </script>
 
@@ -88,6 +67,7 @@ Select the best suitable Machines for Customer, based on the filtered Machines a
             <markdoc-editor
               name="mydoc.mdoc"
               text={markdoc}
+              theme={currentTheme}
               bind:this={markdocEditorElement}
             ></markdoc-editor>
           </div>
@@ -97,7 +77,8 @@ Select the best suitable Machines for Customer, based on the filtered Machines a
             {#if markdocRendererController}
               <markdoc-renderer
                 controller={markdocRendererController}
-                theme="vintage"
+                theme={currentTheme}
+                {markdoc}
               ></markdoc-renderer>
             {/if}
           </div>

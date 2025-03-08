@@ -10,16 +10,16 @@
 	onMount(() => {
 		switch (data.state) {
 			case BFlowNodeState.SUCCESS:
-				borderColor = "border-green-500";
+				borderColor = "border-success-500";
 				break;
 			case BFlowNodeState.RUNNING:
-				borderColor = "border-orange-500";
+				borderColor = "border-warning-500";
 				break;
 			case BFlowNodeState.FAILURE:
-				borderColor = "border-red-500";
+				borderColor = "border-error-500";
 				break;
 			default:
-				borderColor = "border-black";
+				borderColor = "border-surface-500";
 				break;
 		}
 	});
@@ -29,7 +29,7 @@
 <Handle type="source" position={Position.Bottom} />
 
 <div
-	class="w-full h-full border {borderColor} flex items-center justify-center p-4"
+	class="w-full h-full border-2 {borderColor} flex items-center justify-center p-4"
 >
 	<ArrowRight />
 </div>
