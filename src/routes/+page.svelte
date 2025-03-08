@@ -1,10 +1,13 @@
 <script lang="ts">
+  import { Tabs } from "@skeletonlabs/skeleton-svelte";
   import { Pencil, Eye, Loader, CircleX, Check, Zap } from "lucide-svelte";
   import { onMount } from "svelte";
   import MarkdocRendererController from "@cleverflow/cleverflow.core/webcomponents/markdoc-renderer-controller.js";
 
   const eventServer = "ws://localhost:8080";
   const eventServerToken = "76de3ba222bec3af21f9dbfb01f3197b";
+
+  let tab = $state("editor");
 
   let markdocRendererController = $state(null);
 
@@ -13,7 +16,27 @@
   let markdocEditorElement: any;
 
   let bflowUrl = "https://cleverflow.ai/files/dummy.mdoc";
-  let markdoc = $state(``);
+  let markdoc = $state(`
+  {% b-flow id="select-baking-machines" %}
+    {% sequence %}                    
+        {% get-text %}
+Get List of all Machines from: https://raw.githubusercontent.com/cleverflow-ai/examples/refs/heads/main/machinery/machines-list.md
+        {% /get-text %}
+
+        {% filter-data %}
+            Filter the List of Machines for having Availability as 'available'.
+        {% /filter-data %}
+
+        {% get-text %}
+            Get Machine Selection Processes from: https://raw.githubusercontent.com/cleverflow-ai/examples/refs/heads/main/machinery/machines-selection.md
+        {% /get-text %}
+
+        {% select-machine %}
+Select the best suitable Machines for Customer, based on the filtered Machines and the Selection Process: for baking Brownies and Muffins.
+        {% /select-machine %}
+    {% /sequence %}
+{% /b-flow %}
+  `);
 
   onMount(async () => {
     await import("@cleverflow/cleverflow.core/webcomponents/markdoc-editor.js");
@@ -36,85 +59,60 @@
   };
 </script>
 
-<div class="flex flex-col h-screen">
-  <!-- Tabs -->
-  <div
-    class="flex justify-center bg-gray-50 border-b border-gray-300 shadow-sm p-3 space-x-4"
-  >
-    <button
-      class="flex items-center gap-2 px-4 py-2 text-lg font-medium transition rounded-lg relative"
-      onclick={() => (activeTab = "editor")}
-    >
-      <Pencil class="w-5 h-5" />
-      <span>Editor</span>
-      {#if activeTab === "editor"}
-        <span
-          class="absolute bottom-0 left-0 w-full h-[3px] bg-blue-500 rounded-full"
-        ></span>
-      {/if}
-    </button>
-
-    <button
-      class="flex items-center gap-2 px-4 py-2 text-lg font-medium transition rounded-lg relative"
-      onclick={() => switchToView()}
-    >
-      <Eye class="w-5 h-5" />
-      <span>View</span>
-      {#if activeTab === "view"}
-        <span
-          class="absolute bottom-0 left-0 w-full h-[3px] bg-blue-500 rounded-full"
-        ></span>
-      {/if}
-      <!-- {#if activeTab === "view"}
-        <span
-          class="absolute bottom-0 left-0 w-full h-[3px] bg-blue-500 rounded-full"
-        ></span>
-      {:else}
-        {#key bflowState}
-          {#if bflowController.isDocumentChanged(bflowUrl, bflow)}
-            <Zap class="text-green-700 w-3 h-3" />
-          {:else if bflowController.isStateLoading()}
-            <Loader class="animate-spin w-3 h-3" />
-          {:else if bflowController.isFinishedState()}
-            <Check class="text-green-700 w-3 h-3" />
-          {:else if bflowController.isFailedState()}
-            <CircleX class="text-red-700 w-3 h-3" />
-          {/if}
-        {/key}
-      {/if} -->
-    </button>
+<main class="w-full h-full">
+  <div class="m-4">
+    <Tabs value={tab} onValueChange={(e) => (tab = e.value)}>
+      {#snippet list()}
+        <Tabs.Control
+          value="editor"
+          stateActive="border-b-primary-500 border-b-[3px]"
+        >
+          <div class="flex justify-center items-center gap-2">
+            <Pencil class="w-6 h-6" />
+            <span>Editor</span>
+          </div>
+        </Tabs.Control>
+        <Tabs.Control
+          value="viewer"
+          stateActive="border-b-primary-500 border-b-[3px]"
+        >
+          <div class="flex justify-center items-center gap-2">
+            <Eye class="w-6 h-6" />
+            <span>View</span>
+          </div>
+        </Tabs.Control>
+      {/snippet}
+      {#snippet content()}
+        <Tabs.Panel value="editor" base="my-4">
+          <div class="w-full h-full">
+            <markdoc-editor
+              name="mydoc.mdoc"
+              text={markdoc}
+              bind:this={markdocEditorElement}
+            ></markdoc-editor>
+          </div>
+        </Tabs.Panel>
+        <Tabs.Panel value="viewer" base="my-4">
+          <div class="w-full h-full">
+            {#if markdocRendererController}
+              <markdoc-renderer
+                controller={markdocRendererController}
+                theme="vintage"
+              ></markdoc-renderer>
+            {/if}
+          </div>
+        </Tabs.Panel>
+      {/snippet}
+    </Tabs>
   </div>
-
-  <!-- Content -->
-  <div class="flex-1 w-full">
-    {#if activeTab === "editor"}
-      <div class="w-full h-full">
-        <markdoc-editor
-          name="mydoc.mdoc"
-          text={markdoc}
-          bind:this={markdocEditorElement}
-        ></markdoc-editor>
-      </div>
-    {:else}
-      <div class="w-full h-full">
-        {#if markdocRendererController}
-          <markdoc-renderer
-            controller={markdocRendererController}
-            theme="vintage"
-          ></markdoc-renderer>
-        {/if}
-      </div>
-    {/if}
-  </div>
-
   <!-- Sticky button -->
-  {#if activeTab === "editor"}
+  {#if tab === "editor"}
     <button
-      class="fixed bottom-5 left-1/2 -translate-x-1/2 bg-blue-500 hover:bg-blue-600 text-white px-6 py-3 rounded-lg shadow-lg flex items-center gap-2 transition"
+      class="fixed bottom-5 left-1/2 -translate-x-1/2 transition btn preset-filled-primary-500"
       onclick={switchToView}
     >
       <Eye class="w-5 h-5" />
       Show
     </button>
   {/if}
-</div>
+</main>
