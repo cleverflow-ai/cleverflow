@@ -8,7 +8,6 @@
 
     // SMELL: This is a workaround to make TailwindCSS work in the web component.
     // IMPORTANT: this unuse import is required to make TailwindCSS work in the web component.
-    import Tailwindcss from "../../common/components/Tailwindcss.svelte";
 
     let { name = "dummy.mdoc", text = "" } = $props();
 

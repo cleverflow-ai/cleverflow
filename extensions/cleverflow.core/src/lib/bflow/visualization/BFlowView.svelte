@@ -24,11 +24,10 @@
 </script>
 
 <main class="relative w-full h-full">
-	<!-- <div style="height: calc(100vh - 6rem);"> -->
+	<button type="button" class="btn preset-filled-primary-500">Button</button>
 	<div class="w-full h-full">
 		<SvelteFlow {nodeTypes} {nodes} {edges} fitView>
 			<Controls />
-			<!-- <MiniMap zoomable pannable height={120} /> -->
 			<Background patternColor="#aaa" gap={16} />
 		</SvelteFlow>
 	</div>

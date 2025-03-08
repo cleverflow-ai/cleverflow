@@ -15,7 +15,6 @@ export default defineConfig({
             },
             fileName: (format, entryName) => `${entryName}.js`,
             formats: ['es'],
-
         },
         rollupOptions: {
             output: {
@@ -26,11 +25,11 @@ export default defineConfig({
     },
 
     plugins: [
-        svelte(),
         tailwindcss(),
+        svelte(),
         paraglide({
             project: "./project.inlang",
             outdir: "./src/lib/paraglide"
         })
-    ]
+    ],
 });

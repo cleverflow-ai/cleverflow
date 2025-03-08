@@ -1,28 +1,23 @@
-<svelte:options customElement="b-flow" />
+<svelte:options
+	customElement={{
+		tag: "b-flow",
+		shadow: "none",
+	}}
+/>
 
 <script lang="ts">
-	import { onDestroy, onMount } from "svelte";
+	import { onMount } from "svelte";
 	import css from "../../app.css?inline";
 	import xyflowCss from "@xyflow/svelte/dist/style.css?inline";
-	import {
-		CircleX,
-		RefreshCcw,
-		Zap,
-		Play,
-		Flame,
-		Loader,
-	} from "lucide-svelte";
+	import { CircleX, RefreshCcw, Zap, Play, Flame } from "lucide-svelte";
 	import type BFlowController from "./BFlowController.js";
 	import BFlowView from "./visualization/BFlowView.svelte";
-	// SMELL: This is a workaround to make TailwindCSS work in the web component.
-	// IMPORTANT: this unuse import is required to make TailwindCSS work in the web component.
-	import Tailwindcss from "../common/components/Tailwindcss.svelte";
 	import LoadingIndicator from "../common/components/LoadingIndicator.svelte";
 	import { BFLowState } from "./BFlowState.js";
 	import Toast from "../common/components/toast/Toast.svelte";
 
 	let props = $props();
-	let { url = "", text = "", id = null } = props;
+	let { url = "", text = "", id = null, theme = "crimson" } = props;
 	let { controller }: { controller: BFlowController } = props;
 
 	onMount(async () => {
@@ -34,7 +29,7 @@
 	const convertStateToMessage = (state: BFLowState) => {
 		switch (state) {
 			case BFLowState.NONE:
-				return "Not started. Please start it";
+				return "Not rendered. Please render it.";
 			case BFLowState.CONNECTING:
 				return "Connecting...";
 			case BFLowState.CONNECT_SUCCESS:
@@ -86,123 +81,127 @@
 
 <svelte:element this={"style"}>{@html css}</svelte:element>
 <svelte:element this={"style"}>{@html xyflowCss}</svelte:element>
-<main class=" my-8">
-	<div class="flex items-center justify-between gap-2">
-		{#if id}
-			<span
-				class="bg-blue-800 text-white px-3 py-1 text-sm font-semibold"
-			>
-				BFlow: {id}
-			</span>
-		{/if}
-		{#if controller.bflowviz}
-			{@const isBFlowRunning = controller.state === BFLowState.RUN_BFLOW}
-			{@const successfullyRanBFlow =
-				controller.state === BFLowState.RUN_BFLOW_SUCCESS}
-			{@const failedToRunBFlow =
-				controller.state === BFLowState.RUN_BFLOW_FAILED}
+<main data-theme={theme}>
+	<div class="my-8">
+		<div class="flex items-center justify-between gap-2">
+			{#if id}
+				<span
+					class="bg-blue-800 text-white px-3 py-1 text-sm font-semibold"
+				>
+					BFlow: {id}
+				</span>
+			{/if}
+			{#if controller.bflowviz}
+				{@const isBFlowRunning =
+					controller.state === BFLowState.RUN_BFLOW}
+				{@const successfullyRanBFlow =
+					controller.state === BFLowState.RUN_BFLOW_SUCCESS}
+				{@const failedToRunBFlow =
+					controller.state === BFLowState.RUN_BFLOW_FAILED}
 
-			<div class="flex justify-end items-center gap-2">
-				{#if controller.isDocumentChanged(url, text)}
-					<button
-						class="flex items-center gap-2 cursor-pointer bg-blue-500 hover:bg-blue-600 text-white px-3 py-1 shadow-lg"
-						onclick={async () => await reload()}
-					>
-						<Zap class="text-white-700 w-5 h-5" />
-						BFlow changed. Reload
-					</button>
-				{/if}
-				<button
-					onclick={async () => await controller.runBFlow()}
-					class="
-						flex items-center gap-2 cursor-pointer text-white px-3 py-1 shadow-lg
-						{isBFlowRunning
-						? 'bg-yellow-500 hover:bg-yellow-600'
-						: successfullyRanBFlow
-							? 'bg-green-500 hover:bg-green-600'
-							: failedToRunBFlow
-								? 'bg-red-500 hover:bg-red-600'
-								: 'bg-green-500 hover:bg-green-600'}
-					"
-				>
-					{#if isBFlowRunning}
-						<!-- <Loader class="animate-spin w-5 h-5" /> -->
-						<Flame class="text-white-700 animate-spin w-5 h-5" />
-						Running
-					{:else}
-						<Flame class="text-white-700 w-5 h-5" />
-						Run
+				<div class="flex justify-end items-center gap-2">
+					{#if controller.isDocumentChanged(url, text)}
+						<button
+							class="flex items-center gap-2 cursor-pointer bg-blue-500 hover:bg-blue-600 text-white px-3 py-1 shadow-lg"
+							onclick={async () => await reload()}
+						>
+							<Zap class="text-white-700 w-5 h-5" />
+							BFlow changed. Reload
+						</button>
 					{/if}
-				</button>
-			</div>
-		{/if}
-	</div>
-	<div class="w-full border border-gray-300 p-4 h-[500px]">
-		{#key controller.state}
-			{#if !url && !text}
-				<div
-					class="h-full w-full flex flex-col items-center justify-center gap-2"
-				>
-					<CircleX class="text-red-700 w-10 h-10" />
-					<div>No URL or text provided</div>
-				</div>
-			{:else if controller.bflowviz}
-				<div class="relative w-full h-full">
-					<div class="w-full h-full">
-						<BFlowView data={controller.bflowviz} />
-					</div>
-				</div>
-			{:else if controller.state == BFLowState.NONE || controller.state == BFLowState.CONNECT_FAILED}
-				<div
-					class="h-full w-full flex flex-col items-center justify-center gap-2"
-				>
-					<div>{convertStateToMessage(controller.state)}</div>
 					<button
-						class="cursor-pointer"
-						onclick={async () => await start()}
+						onclick={async () => await controller.runBFlow()}
+						class="
+							btn preset-filled-primary-500
+							{isBFlowRunning
+							? 'bg-yellow-500 hover:bg-yellow-600'
+							: successfullyRanBFlow
+								? 'bg-green-500 hover:bg-green-600'
+								: failedToRunBFlow
+									? 'bg-red-500 hover:bg-red-600'
+									: 'bg-green-500 hover:bg-green-600'}
+						"
 					>
-						<Play class="text-green-700 w-10 h-10" />
-					</button>
-				</div>
-			{:else if controller.state == BFLowState.NONE || controller.isStateLoading(controller.state) || controller.isFinishedState(controller.state)}
-				<div
-					class="h-full w-full flex flex-col items-center justify-center gap-2"
-				>
-					<LoadingIndicator
-						message={convertStateToMessage(controller.state)}
-					/>
-				</div>
-			{:else if controller.isFailedState(controller.state)}
-				<div
-					class="h-full w-full flex flex-col items-center justify-center gap-2"
-				>
-					<CircleX class="text-red-700 w-10 h-10" />
-					<div>{convertStateToMessage(controller.state)}</div>
-					<button
-						class="cursor-pointer"
-						onclick={async () => await reload()}
-					>
-						<RefreshCcw class="text-red-700 w-10 h-10" />
-					</button>
-				</div>
-			{:else}
-				<div
-					class="h-full w-full flex flex-col items-center justify-center gap-2"
-				>
-					<div>
-						An error occurred. Please click the refresh button below
-						to try again. Thank you for your patience.
-					</div>
-					<button
-						class="cursor-pointer"
-						onclick={async () => await reload()}
-					>
-						<RefreshCcw class="text-red-700 w-10 h-10" />
+						{#if isBFlowRunning}
+							<Flame
+								class="text-white-700 animate-spin w-5 h-5"
+							/>
+							Running
+						{:else}
+							<Flame class="text-white-700 w-5 h-5" />
+							Run
+						{/if}
 					</button>
 				</div>
 			{/if}
-		{/key}
+		</div>
+		<div class="w-full border border-gray-300 p-4 h-[500px]">
+			{#key controller.state}
+				{#if !url && !text}
+					<div
+						class="h-full w-full flex flex-col items-center justify-center gap-2"
+					>
+						<CircleX class="text-red-700 w-10 h-10" />
+						<div>No URL or text provided</div>
+					</div>
+				{:else if controller.bflowviz}
+					<div class="relative w-full h-full">
+						<div class="w-full h-full">
+							<BFlowView data={controller.bflowviz} />
+						</div>
+					</div>
+				{:else if controller.state == BFLowState.NONE || controller.state == BFLowState.CONNECT_FAILED}
+					<div
+						class="h-full w-full flex flex-col items-center justify-center gap-2"
+					>
+						<div>{convertStateToMessage(controller.state)}</div>
+						<button
+							class="cursor-pointer"
+							onclick={async () => await start()}
+						>
+							<Play class="text-primary-500 w-10 h-10" />
+						</button>
+					</div>
+				{:else if controller.state == BFLowState.NONE || controller.isStateLoading(controller.state) || controller.isFinishedState(controller.state)}
+					<div
+						class="h-full w-full flex flex-col items-center justify-center gap-2"
+					>
+						<LoadingIndicator
+							message={convertStateToMessage(controller.state)}
+						/>
+					</div>
+				{:else if controller.isFailedState(controller.state)}
+					<div
+						class="h-full w-full flex flex-col items-center justify-center gap-2"
+					>
+						<CircleX class="text-red-700 w-10 h-10" />
+						<div>{convertStateToMessage(controller.state)}</div>
+						<button
+							class="cursor-pointer"
+							onclick={async () => await reload()}
+						>
+							<RefreshCcw class="text-red-700 w-10 h-10" />
+						</button>
+					</div>
+				{:else}
+					<div
+						class="h-full w-full flex flex-col items-center justify-center gap-2"
+					>
+						<div>
+							An error occurred. Please click the refresh button
+							below to try again. Thank you for your patience.
+						</div>
+						<button
+							class="cursor-pointer"
+							onclick={async () => await reload()}
+						>
+							<RefreshCcw class="text-red-700 w-10 h-10" />
+						</button>
+					</div>
+				{/if}
+			{/key}
+		</div>
 	</div>
-</main>
 
-<Toast />
+	<Toast />
+</main>

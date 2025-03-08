@@ -1,7 +1,6 @@
 <script lang="ts">
   import { Pencil, Eye, Loader, CircleX, Check, Zap } from "lucide-svelte";
   import { onMount } from "svelte";
-  import * as m from "$lib/paraglide/messages.js";
   import MarkdocRendererController from "@cleverflow/cleverflow.core/webcomponents/markdoc-renderer-controller.js";
 
   const eventServer = "ws://localhost:8080";
@@ -10,7 +9,8 @@
   let markdocRendererController = $state(null);
 
   let activeTab = $state("editor");
-  let markdocEditorElement;
+  // svelte-ignore non_reactive_update
+  let markdocEditorElement: any;
 
   let bflowUrl = "https://cleverflow.ai/files/dummy.mdoc";
   let markdoc = $state(``);
@@ -98,7 +98,9 @@
     {:else}
       <div class="w-full h-full">
         {#if markdocRendererController}
-          <markdoc-renderer controller={markdocRendererController} {markdoc}
+          <markdoc-renderer
+            controller={markdocRendererController}
+            theme="vintage"
           ></markdoc-renderer>
         {/if}
       </div>
