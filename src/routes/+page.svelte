@@ -15,7 +15,7 @@
   // svelte-ignore non_reactive_update
   let markdocEditorElement: any;
 
-  let markdoc = $state(``);
+  let markdoc = $state("");
 
   onMount(async () => {
     await import("@cleverflow/cleverflow.core/webcomponents/markdoc-editor.js");
@@ -31,6 +31,10 @@
     markdocRendererController.setMarkdoc(markdoc);
   });
 
+  const switchToEditor = () => {
+    tab = "editor";
+  };
+
   const switchToView = () => {
     markdoc = markdocEditorElement.getMarkdown();
     markdocRendererController.setMarkdoc(markdoc);
@@ -38,9 +42,22 @@
   };
 </script>
 
-<main class="w-full h-full">
+<main class="w-full h-screen">
   <div class="m-4">
-    <Tabs value={tab} onValueChange={(e) => (tab = e.value)}>
+    <Tabs
+      fluid
+      listBorder="border-b-surface-500 border-b-[1px]"
+      listGap="gap-0"
+      value={tab}
+      onValueChange={(e) => {
+        // tab = e.value;
+        if (e.value === "viewer") {
+          switchToView();
+        } else {
+          switchToEditor();
+        }
+      }}
+    >
       {#snippet list()}
         <Tabs.Control
           value="editor"
@@ -62,7 +79,7 @@
         </Tabs.Control>
       {/snippet}
       {#snippet content()}
-        <Tabs.Panel value="editor" base="my-4">
+        <Tabs.Panel value="editor" base="my-4 h-full">
           <div class="w-full h-full">
             <markdoc-editor
               name="mydoc.mdoc"
@@ -72,14 +89,28 @@
             ></markdoc-editor>
           </div>
         </Tabs.Panel>
-        <Tabs.Panel value="viewer" base="my-4">
+        <Tabs.Panel value="viewer" base="my-4 h-full">
           <div class="w-full h-full">
-            {#if markdocRendererController}
+            {#if markdocRendererController && markdoc}
               <markdoc-renderer
                 controller={markdocRendererController}
                 theme={currentTheme}
-                {markdoc}
               ></markdoc-renderer>
+            {:else}
+              <div
+                class="h-screen w-full flex flex-col justify-center items-center gap-2"
+              >
+                <p class="text-surface-500">
+                  The provided Markdoc content is invalid.
+                </p>
+                <button
+                  class="mt-4 btn preset-tonal-surface"
+                  onclick={switchToEditor}
+                >
+                  <Pencil class="w-5 h-5" />
+                  Back to Editor
+                </button>
+              </div>
             {/if}
           </div>
         </Tabs.Panel>
@@ -92,8 +123,7 @@
       class="fixed bottom-5 left-1/2 -translate-x-1/2 transition btn preset-filled-primary-500"
       onclick={switchToView}
     >
-      <Eye class="w-5 h-5" />
-      Show
+      Render
     </button>
   {/if}
 </main>

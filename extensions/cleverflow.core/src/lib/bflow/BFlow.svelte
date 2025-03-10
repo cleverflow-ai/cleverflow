@@ -82,9 +82,9 @@
 <svelte:element this={"style"}>{@html css}</svelte:element>
 <svelte:element this={"style"}>{@html xyflowCss}</svelte:element>
 <main data-theme={theme}>
-	<div class="flex items-center justify-between gap-2">
+	<div class="flex items-end justify-between gap-2">
 		{#if id}
-			<span class="badge preset-filled-tertiary-500">BFlow: {id}</span>
+			<span class="badge preset-filled-surface-500">{id}</span>
 		{/if}
 		{#if controller.bflowviz}
 			{@const isBFlowRunning = controller.state === BFLowState.RUN_BFLOW}

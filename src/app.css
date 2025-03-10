@@ -4,3 +4,7 @@
 @import '@skeletonlabs/skeleton/themes/crimson';
 @import '@skeletonlabs/skeleton/themes/vintage';
 @source '../../../node_modules/@skeletonlabs/skeleton-svelte/dist';
+
+:root {
+    --radius-base: 0rem;
+}

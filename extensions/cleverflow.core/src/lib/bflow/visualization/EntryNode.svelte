@@ -5,7 +5,7 @@
 
 	let { data } = $props();
 
-	let borderColor = $state("border-black");
+	let borderColor = $state("border-surface-500");
 	onMount(() => {
 		switch (data.state) {
 			case BFlowNodeState.SUCCESS:

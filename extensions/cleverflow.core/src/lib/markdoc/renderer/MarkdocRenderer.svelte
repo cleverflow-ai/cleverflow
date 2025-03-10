@@ -3,6 +3,7 @@
 <script lang="ts">
     import css from "../../../app.css?inline";
     import BFlow from "../../bflow/BFlow.svelte";
+    import type MarkdocRendererController from "./MarkdocRendererController.svelte.js";
     import Self from "./Self.svelte";
 
     // let { controller }: { controller: MarkdocRendererController } = $props();

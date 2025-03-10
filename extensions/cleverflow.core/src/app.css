@@ -3,7 +3,16 @@
 @import '@skeletonlabs/skeleton/optional/presets';
 @import '@skeletonlabs/skeleton/themes/crimson';
 @import '@skeletonlabs/skeleton/themes/vintage';
+@import '@skeletonlabs/skeleton/themes/sahara';
+@import '@skeletonlabs/skeleton/themes/rocket';
 @source '../../../node_modules/@skeletonlabs/skeleton-svelte/dist';
+
+[data-theme='crimson'],
+[data-theme='vintage'],
+[data-theme='sahara'],
+[data-theme='rocket'] {
+    --radius-base: 0rem;
+}
 
 /* SMELL */
 @keyframes spin {
