@@ -29,3 +29,18 @@
 <svelte:element this={"style"}>{@html cartaCss}</svelte:element>
 
 <MarkdownEditor {carta} mode={"tabs"} bind:value={markdownValue} />
+
+<style>
+    :global(#preview-tab) {
+        display: none !important;
+    }
+
+    :global(
+            .carta-editor
+                .carta-toolbar
+                .carta-toolbar-left
+                .button[tabindex="1"]
+        ) {
+        display: none !important;
+    }
+</style>

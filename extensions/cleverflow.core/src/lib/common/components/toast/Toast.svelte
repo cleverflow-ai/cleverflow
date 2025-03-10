@@ -2,11 +2,11 @@
     import { toasts, removeToast } from "./toastStore.js";
 
     const toastTypes = {
-        success: "bg-green-500",
-        error: "bg-red-500",
-        warning: "bg-yellow-500",
-        info: "bg-blue-500",
-        fallback: "bg-gray-950",
+        success: "bg-success-500",
+        error: "bg-error-500",
+        warning: "bg-warning-500",
+        info: "bg-surface-500",
+        fallback: "bg-surface-500",
     };
 </script>
 

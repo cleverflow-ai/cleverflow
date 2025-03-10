@@ -1,8 +1,11 @@
-<script>
+<script lang="ts">
 	import { Handle, Position } from "@xyflow/svelte";
 	import { Bot } from "lucide-svelte";
 	import { onMount } from "svelte";
 	import { BFlowNodeState } from "../agent/models/BFlowNodeState.js";
+	import postal from "postal";
+
+	var channel = postal.channel("B-Flow");
 
 	let { data } = $props();
 
@@ -23,12 +26,21 @@
 				break;
 		}
 	});
+
+	const showRunResult = () => {
+		channel.publish("show-run-node-result", { id: data.id });
+	};
 </script>
 
 <Handle type="target" position={Position.Top} />
 <!-- <Handle type="source" position={Position.Bottom} /> -->
 
-<div class="w-max-full w-full h-full flex flex-col items-start justify-between">
+<!-- svelte-ignore a11y_click_events_have_key_events -->
+<!-- svelte-ignore a11y_no_static_element_interactions -->
+<div
+	class="w-max-full w-full h-full flex flex-col items-start justify-between cursor"
+	onclick={showRunResult}
+>
 	<div
 		class="w-full flex-1 border-2 {borderColor} flex items-center justify-center p-4"
 	>

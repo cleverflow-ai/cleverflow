@@ -1,6 +1,7 @@
 <svelte:options customElement="markdoc-renderer" />
 
 <script lang="ts">
+    import { Modal } from "@skeletonlabs/skeleton-svelte";
     import { onMount } from "svelte";
     import css from "../../../app.css?inline";
     import BFlow from "../../bflow/BFlow.svelte";
@@ -10,7 +11,6 @@
 
     // let { controller }: { controller: MarkdocRendererController } = $props();
     let { controller, theme = "crimson" } = $props();
-
     const classes = {
         // Headings
         h1: "text-4xl font-bold leading-tight",

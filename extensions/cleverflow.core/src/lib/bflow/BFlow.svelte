@@ -1,13 +1,7 @@
-<svelte:options
-	customElement={{
-		tag: "b-flow",
-		shadow: "none",
-	}}
-/>
+<svelte:options customElement="b-flow" />
 
 <script lang="ts">
 	import { onMount } from "svelte";
-	import { Modal } from "@skeletonlabs/skeleton-svelte";
 	import css from "../../app.css?inline";
 	import xyflowCss from "@xyflow/svelte/dist/style.css?inline";
 	import { CircleX, RefreshCcw, Zap, Play, Flame } from "lucide-svelte";
@@ -20,12 +14,6 @@
 	let props = $props();
 	let { url = "", text = "", id = null, theme = "crimson" } = props;
 	let { controller }: { controller: BFlowController } = props;
-
-	let drawerState = $state(false);
-
-	function drawerClose() {
-		drawerState = false;
-	}
 
 	onMount(async () => {
 		if ((url || text) && controller.state === BFLowState.CONNECT_SUCCESS) {
@@ -147,7 +135,10 @@
 			{:else if controller.bflowviz}
 				<div class="relative w-full h-full">
 					<div class="w-full h-full">
-						<BFlowView data={controller.bflowviz} />
+						<BFlowView
+							bflowRunResult={controller.bflowRunResult}
+							bflowviz={controller.bflowviz}
+						/>
 					</div>
 				</div>
 			{:else if controller.state == BFLowState.NONE || controller.state == BFLowState.CONNECT_FAILED}
@@ -203,36 +194,4 @@
 	</div>
 
 	<Toast />
-	<Modal
-		open={drawerState}
-		onOpenChange={(e) => (drawerState = e.open)}
-		triggerBase="btn preset-tonal"
-		contentBase="bg-surface-100-900 p-4 space-y-4 shadow-xl w-[480px] h-screen"
-		positionerJustify="justify-start"
-		positionerAlign=""
-		positionerPadding=""
-		transitionsPositionerIn={{ x: -480, duration: 200 }}
-		transitionsPositionerOut={{ x: -480, duration: 200 }}
-	>
-		{#snippet content()}
-			<header class="flex justify-between">
-				<h2 class="h2">Drawer Example</h2>
-			</header>
-			<article>
-				<p class="opacity-60">
-					Lorem ipsum dolor sit amet consectetur adipisicing elit.
-					Nam, ab adipisci. Libero cumque sunt quis error veritatis
-					amet, expedita voluptatem. Quos repudiandae consequuntur
-					voluptatem et dicta quas, reprehenderit velit excepturi?
-				</p>
-			</article>
-			<footer>
-				<button
-					type="button"
-					class="btn preset-filled"
-					onclick={drawerClose}>Close Drawer</button
-				>
-			</footer>
-		{/snippet}
-	</Modal>
 </main>
