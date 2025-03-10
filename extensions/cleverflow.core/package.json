@@ -66,6 +66,7 @@
 		"@xyflow/svelte": "^0.1.30",
 		"lucide-svelte": "^0.475.0",
 		"publint": "^0.3.5",
+		"shiki": "^3.1.0",
 		"svelte": "^5.0.0",
 		"svelte-check": "^4.0.0",
 		"tailwindcss": "^4.0.0",
@@ -77,6 +78,7 @@
 		"@markdoc/markdoc": "^0.5.1",
 		"@nats-io/nats-core": "^3.0.0-51",
 		"@skeletonlabs/skeleton": "^3.0.0-next.12",
+		"@types/js-beautify": "^1.14.3",
 		"@types/md5": "^2.3.5",
 		"@types/postal": "^1.0.35",
 		"autoprefixer": "^10.4.20",
@@ -87,7 +89,6 @@
 		"md5": "^2.3.0",
 		"nats": "^2.29.2",
 		"postal": "^2.0.6",
-		"postcss": "^8.5.3",
-		"prettier": "^3.5.3"
+		"postcss": "^8.5.3"
 	}
 }

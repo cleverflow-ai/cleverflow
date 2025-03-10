@@ -1,31 +1,19 @@
-<script>
-    import {onMount} from 'svelte';
+<script lang="ts">
+    import { onMount } from "svelte";
     import { Tabs } from "@skeletonlabs/skeleton-svelte";
     import { Carta, Markdown } from "carta-md";
     import DOMPurify from "isomorphic-dompurify";
     import { CodeXml, FileText } from "lucide-svelte";
-    import prettier from "prettier/standalone";
-    import parserBabel from "prettier/parser-babel";
+    import CodeBlock from "../../common/components/codeblock/CodeBlock.svelte";
 
     let { code = "", result = "" } = $props();
     let tab = $state("code");
     const carta = new Carta({
         sanitizer: DOMPurify.sanitize,
     });
-    
-    let value = $state(result);
-    let formattedCode = $state('');
 
-    onMount(async() => {
-        // formattedCode = await prettier.format(code ?? '', {
-        //     parser: "babel",
-        //     plugins: [parserBabel],
-        //     semi: true,
-        //     singleQuote: true,
-        //     tabWidth: 4
-        // });
-        formattedCode = code;
-    });
+    let value = $state(result);
+    let formattedCode = $state("");
 </script>
 
 <main class="w-full h-screen">
@@ -35,7 +23,7 @@
             listBorder="border-b-surface-500 border-b-[1px]"
             listGap="gap-0"
             value={tab}
-            onValueChange={(e) => (tab = e.value)}
+            onValueChange={(e: any) => (tab = e.value)}
         >
             {#snippet list()}
                 <Tabs.Control
@@ -58,18 +46,18 @@
                 </Tabs.Control>
             {/snippet}
             {#snippet content()}
-                <Tabs.Panel value="code" base="my-4 h-full">
-                    <div class="w-full h-full">
-                        <pre
-                            class="bg-gray-800 text-white p-4 rounded-lg overflow-x-auto">
-                            <code>
-                                {formattedCode}
-                            </code>
-                        </pre>
+                <Tabs.Panel
+                    value="code"
+                    base="my-4 h-full max-h-[calc(100vh-100px)] overflow-auto"
+                >
+                    <div class="w-full h-full space-y-4">
+                        <CodeBlock {code}></CodeBlock>
                     </div>
                 </Tabs.Panel>
                 <Tabs.Panel value="result" base="my-4 h-full">
-                    <div class="w-full h-full">
+                    <div
+                        class="w-full h-full max-h-[calc(100vh-100px)] overflow-auto"
+                    >
                         <Markdown {carta} {value} />
                     </div>
                 </Tabs.Panel>

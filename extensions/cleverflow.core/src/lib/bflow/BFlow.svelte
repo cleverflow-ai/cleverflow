@@ -4,7 +4,7 @@
 	import { onMount } from "svelte";
 	import css from "../../app.css?inline";
 	import xyflowCss from "@xyflow/svelte/dist/style.css?inline";
-	import { CircleX, RefreshCcw, Zap, Play, Flame } from "lucide-svelte";
+	import { CircleX, RefreshCcw, Zap, Network, Flame } from "lucide-svelte";
 	import type BFlowController from "./BFlowController.js";
 	import BFlowView from "./visualization/BFlowView.svelte";
 	import LoadingIndicator from "../common/components/LoadingIndicator.svelte";
@@ -150,7 +150,7 @@
 						class="cursor-pointer"
 						onclick={async () => await start()}
 					>
-						<Play class="text-primary-500 w-10 h-10" />
+						<Network class="text-primary-500 w-10 h-10" />
 					</button>
 				</div>
 			{:else if controller.state == BFLowState.NONE || controller.isStateLoading(controller.state) || controller.isFinishedState(controller.state)}

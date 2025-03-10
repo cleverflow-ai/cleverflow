@@ -11,7 +11,24 @@
 [data-theme='vintage'],
 [data-theme='sahara'],
 [data-theme='rocket'] {
+
     --radius-base: 0rem;
+
+    ::selection {
+        background-color: var(--color-primary-500);
+        color: var(--color-primary-contrast-500);
+        font-weight: bolder;
+    }
+
+    pre {
+        background-color: var(--color-surface-950) !important;
+        /* color: var(--color-surface-contrast-500); */
+    }
+
+    /* code {
+        white-space: pre-wrap;
+        word-wrap: break-word;
+    } */
 }
 
 /* SMELL */
