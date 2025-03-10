@@ -1,10 +1,12 @@
 <svelte:options customElement="markdoc-renderer" />
 
 <script lang="ts">
+    import { onMount } from "svelte";
     import css from "../../../app.css?inline";
     import BFlow from "../../bflow/BFlow.svelte";
     import type MarkdocRendererController from "./MarkdocRendererController.svelte.js";
     import Self from "./Self.svelte";
+    import md5 from "md5";
 
     // let { controller }: { controller: MarkdocRendererController } = $props();
     let { controller, theme = "crimson" } = $props();
@@ -58,36 +60,38 @@
 </script>
 
 <svelte:element this={"style"}>{@html css}</svelte:element>
-<main data-theme={theme}>
-    {#if controller && controller.astContent && controller.astContent.children}
-        {#each controller.astContent.children as child}
-            {#if child.name === "BFlow"}
-                {@const id = child.attributes.id}
-                {@const node = controller.findBFlowNode(id)}
-                {@const text = controller.reconstructMarkdoc(node)}
-                {@const bflowController = controller.getBFlowController(id)}
-                <BFlow
-                    {...child.attributes}
-                    controller={bflowController}
-                    {theme}
-                    {id}
-                    {text}
-                ></BFlow>
-            {:else}
-                <svelte:element
-                    this={child.name}
-                    {...child.attributes}
-                    class={classes[child.name] || ""}
-                >
-                    {#if child.children}
-                        <Self children={child.children} {classes} />
-                    {/if}
-                </svelte:element>
-            {/if}
+{#key md5(controller.markdoc)}
+    <main data-theme={theme}>
+        {#if controller && controller.astContent && controller.astContent.children}
+            {#each controller.astContent.children as child}
+                {#if child.name === "BFlow"}
+                    {@const id = child.attributes.id}
+                    {@const node = controller.findBFlowNode(id)}
+                    {@const text = controller.reconstructMarkdoc(node)}
+                    {@const bflowController = controller.getBFlowController(id)}
+                    <BFlow
+                        {...child.attributes}
+                        controller={bflowController}
+                        {theme}
+                        {id}
+                        {text}
+                    ></BFlow>
+                {:else}
+                    <svelte:element
+                        this={child.name}
+                        {...child.attributes}
+                        class={classes[child.name] || ""}
+                    >
+                        {#if child.children}
+                            <Self children={child.children} {classes} />
+                        {/if}
+                    </svelte:element>
+                {/if}
 
-            {#if typeof child === "string"}
-                {child}
-            {/if}
-        {/each}
-    {/if}
-</main>
+                {#if typeof child === "string"}
+                    {child}
+                {/if}
+            {/each}
+        {/if}
+    </main>
+{/key}

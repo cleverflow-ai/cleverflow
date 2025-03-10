@@ -77,11 +77,13 @@
 		"@markdoc/markdoc": "^0.5.1",
 		"@nats-io/nats-core": "^3.0.0-51",
 		"@skeletonlabs/skeleton": "^3.0.0-next.12",
+		"@types/md5": "^2.3.5",
 		"autoprefixer": "^10.4.20",
 		"carta-md": "^4.7.0",
 		"isomorphic-dompurify": "^2.22.0",
 		"js-yaml": "^4.1.0",
 		"lodash": "^4.17.21",
+		"md5": "^2.3.0",
 		"nats": "^2.29.2",
 		"postcss": "^8.5.3"
 	}

@@ -7,9 +7,9 @@ export default class MarkdocRendererController {
     servers: string | string[] = "";
     token: string = "";
 
-    markdoc: string | undefined;
-    ast: any;
-    astContent: any;
+    markdoc: string | undefined = $state("");
+    ast: any = $state(null);
+    astContent: any = $state(null);
     bflowControllers: Map<string, BFlowController> = new Map();
 
     constructor(servers: string | string[], token: string) {
