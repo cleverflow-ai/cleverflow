@@ -23,7 +23,7 @@
 
     onMount(() => {
         const child = mainElement.querySelector(
-            '.carta-editor .carta-toolbar .carta-toolbar-left .button[tabindex="1"]',
+            ".carta-editor .carta-toolbar .button",
         );
         if (child) {
             console.log(`>>> found`);

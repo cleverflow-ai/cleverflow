@@ -1,5 +1,4 @@
 <script lang="ts">
-	import { Modal } from "@skeletonlabs/skeleton-svelte";
 	import { SvelteFlow, Controls, Background } from "@xyflow/svelte";
 	import "@xyflow/svelte/dist/style.css";
 	import { writable } from "svelte/store";
@@ -12,6 +11,7 @@
 		addToast,
 		ToastType,
 	} from "../../common/components/toast/ToastStore.js";
+	import Drawer from "../../common/components/Drawer.svelte";
 	import RunNodeResult from "./RunNodeResult.svelte";
 
 	const channel = postal.channel("B-Flow");
@@ -27,7 +27,7 @@
 	const nodes = writable(bflowviz.nodes);
 	const edges = writable(bflowviz.edges);
 
-	let drawerState = $state(false);
+	let drawerElement: any;
 
 	let runNodeResult: any = $state(null);
 
@@ -42,12 +42,7 @@
 		showRunNodeResultSubscriber.unsubscribe();
 	});
 
-	const drawerClose = () => {
-		drawerState = false;
-	};
-
 	const showRunNodeResult = (nodeId: string) => {
-		console.log(bflowRunResult);
 		if (!bflowRunResult) {
 			addToast(
 				"BFlow has not been run yet. Please run it first.",
@@ -65,7 +60,7 @@
 		}
 
 		runNodeResult = bflowRunResult[nodeId];
-		drawerState = true;
+		drawerElement?.show();
 	};
 </script>
 
@@ -77,26 +72,9 @@
 		</SvelteFlow>
 	</div>
 </main>
-<Modal
-	open={drawerState}
-	onOpenChange={(e) => (drawerState = e.open)}
-	triggerBase="btn preset-tonal"
-	contentBase="fixed top-0 left-0 bg-surface-100-900 p-4 space-y-4 shadow-xl w-[480px] h-screen"
-	positionerJustify="justify-start"
-	positionerAlign=""
-	positionerPadding=""
-	transitionsPositionerIn={{ x: -480, duration: 200 }}
-	transitionsPositionerOut={{ x: -480, duration: 200 }}
->
-	{#snippet content()}
+<Drawer bind:this={drawerElement} position="right">
+	{#snippet modalContent()}
 		<RunNodeResult code={runNodeResult?.code} result={runNodeResult?.result}
 		></RunNodeResult>
-		<footer>
-			<button
-				type="button"
-				class="btn preset-filled"
-				onclick={drawerClose}>Close Drawer</button
-			>
-		</footer>
 	{/snippet}
-</Modal>
+</Drawer>

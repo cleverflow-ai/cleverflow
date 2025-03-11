@@ -20,16 +20,16 @@ export default class AgentConnection {
      * The NATS connection instance.
      */
     protected connection: NatsConnection | null | undefined;
-    
+
     /**
      * Constructs an AgentConnection instance.
      * 
      * @param {Partial<{ name: string }>} config - Configuration object containing the agent's name.
      */
     constructor(config: Partial<{ name: string }>) {
-        this.name = config.name;    
+        this.name = config.name;
     }
-    
+
     /**
      * Establishes a connection to the NATS server.
      * 
@@ -41,7 +41,6 @@ export default class AgentConnection {
             servers: config.servers,
             token: config.token
         });
-        console.log(`connected`);
 
         return this.connection;
     }
@@ -67,7 +66,7 @@ export default class AgentConnection {
      * @throws {Error} - Throws an error if the connection or subject is not provided.
      */
     public async subscribe(config: Partial<{ subject: string }>): Promise<Subscription> {
-        if(!this.connection){
+        if (!this.connection) {
             throw new Error('Connection is required to subscribe.');
         }
         if (config.subject) {
@@ -86,16 +85,16 @@ export default class AgentConnection {
      * @throws {Error} - Throws an error if the connection or subject is not provided.
      */
     public async sendRequest<T>(config: Partial<{ subject: string, payload: Payload, options: RequestOptions }>): Promise<T> {
-        if(!this.connection){
+        if (!this.connection) {
             throw new Error('Connection is required to subscribe.');
         }
-        if(!config.subject){
+        if (!config.subject) {
             throw new Error('Subject is required to request.');
         }
 
         const reply = await this.connection.request(
-            config.subject, 
-            config.payload, 
+            config.subject,
+            config.payload,
             config.options,
         );
         return JSONCodec<T>().decode(reply.data);
