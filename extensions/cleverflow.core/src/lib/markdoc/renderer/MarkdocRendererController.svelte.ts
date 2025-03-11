@@ -1,6 +1,5 @@
 import BFlowController from "../../bflow/BFlowController.svelte.js";
 import Markdoc from "@markdoc/markdoc";
-import yaml from "js-yaml";
 
 export default class MarkdocRendererController {
 
@@ -31,32 +30,28 @@ export default class MarkdocRendererController {
                 render: 'BFlow',
                 selfClosing: false
             },
-            'sequence': {
-                render: 'Sequence',
-                selfClosing: false
-            },
-            'get-text': {
-                render: 'GetText',
-                selfClosing: false
-            },
-            'filter-data': {
-                render: 'FilterData',
-                selfClosing: false
-            },
-            'select-machine': {
-                render: 'SelectMachine',
-                selfClosing: false
-            }
+            // 'sequence': {
+            //     render: 'Sequence',
+            //     selfClosing: false
+            // },
+            // 'get-text': {
+            //     render: 'GetText',
+            //     selfClosing: false
+            // },
+            // 'filter-data': {
+            //     render: 'FilterData',
+            //     selfClosing: false
+            // },
+            // 'select-machine': {
+            //     render: 'SelectMachine',
+            //     selfClosing: false
+            // }
         };
     }
 
 
     convertToMarkdocStringForTransform(markdoc: string) {
         return markdoc.split("\n").map(line => line.replace(/^\s+/, "")).join("\n");
-    }
-
-    getFrontmatter(frontmatter: string) {
-        return yaml.load(frontmatter);
     }
 
     findBFlowNode(bflowId: string): any {

@@ -8,6 +8,7 @@ import { BFLowState } from "./BFlowState.js";
 import BFlowRunnerAgentMessenger from "./agent/BFlowRunnerAgentMessenger.js";
 import Styles from './Styles.js';
 import { addToast, ToastType } from '../common/components/toast/ToastStore.js';
+import Markdoc from "@markdoc/markdoc";
 
 export default class BFlowController {
 
@@ -20,9 +21,9 @@ export default class BFlowController {
     private bflowToBFlowVizAgentMessenger?: BFlowToBFlowVizAgentMessenger;
     private bflowRunnerAgentMessenger?: BFlowRunnerAgentMessenger;
 
-    private agents: AgentInfo[] | undefined = [];
     public state: BFLowState = $state(BFLowState.NONE);
 
+    private agents: AgentInfo[] | undefined = [];
     public bflow: any;
     public bflowviz: any = $state(null);
     public bflowRunResult: any = $state(null);
@@ -97,12 +98,87 @@ export default class BFlowController {
         this.url = url;
         this.text = text;
         this.bflowviz = null;
-        await this.loadAgents();
-        this.bflow = await this.convertMarkdocCustomElementToBFlow(url, text);
-        if (this.bflow) {
-            this.bflowviz = await this.convertBFlowToBFlowViz(this.bflow);
+
+        const result = this.extractGeneratedData(text);
+
+        if (result.agents) {
+            this.agents = result.agents;
+            this.setState(BFLowState.LIST_AGENTS_SUCCESS);
+        } else {
+            this.agents = await this.loadAgents();
+        }
+
+        if (result.bflow) {
+            this.bflow = result.bflow;
+            this.setState(BFLowState.CONVERT_MARKDOC_ELEMENT_TO_BFLOW_SUCCESS);
+        } else {
+            this.bflow = await this.convertMarkdocCustomElementToBFlow(url, text);
+        }
+
+        if (result.bflowviz) {
+            this.addDataPropertyToNodes(result.bflowviz.nodes);
+            const tree = this.buildTree(result.bflowviz.nodes);
+            this.calculatePositions(tree);
+            this.bflowviz = result.bflowviz;
+            this.setState(BFLowState.CONVERT_BFLOW_TO_BFLOWVIZ_SUCCESS);
+        } else {
+            if (this.bflow) {
+                this.bflowviz = await this.convertBFlowToBFlowViz(this.bflow);
+            }
+        }
+
+        if (this.bflowviz && result.outs) {
+            this.bflowRunResult = result.outs;
+            this.updateBFlowRunResult();
+            this.setState(BFLowState.RUN_BFLOW_SUCCESS);
         }
     };
+
+    private extractGeneratedData(content: string): any {
+        const result = {
+            agents: null,
+            bflow: null,
+            bflowviz: null,
+            outs: null,
+        };
+        try {
+            const ast = Markdoc.parse(content);
+
+            const agents = this.findNodeByTag(ast, 'agents');
+            const agentsContent = this.extractNodeContent(agents);
+            if (agentsContent) {
+                result.agents = JSON.parse(agentsContent);
+            }
+
+            const bflow = this.findNodeByTag(ast, 'bflow');
+            const bflowContent = this.extractNodeContent(bflow);
+            if (bflowContent) {
+                result.bflow = JSON.parse(bflowContent);
+            }
+
+            const bflowviz = this.findNodeByTag(ast, 'bflowviz');
+            const bflowvizContent = this.extractNodeContent(bflowviz);
+            if (bflowvizContent) {
+                result.bflowviz = JSON.parse(bflowvizContent);
+            }
+
+            const outs = this.findNodeByTag(ast, 'outs');
+            console.log(outs);
+            let outsContent = this.extractNodeContent(outs);
+            if (outsContent) {
+                // outsContent = outsContent.replaceAll('\linebreak', '\n')
+
+                console.log('>>>> outsContent');
+                console.log(outsContent);
+                result.outs = JSON.parse(outsContent);
+                console.log(result.outs);
+            }
+        } catch (exception) {
+
+            console.log(exception);
+        }
+        return result;
+    }
 
     async loadAgents() {
         this.setState(BFLowState.LIST_AGENTS);
@@ -111,8 +187,9 @@ export default class BFlowController {
             const result = await this.monitorAgentMessenger?.request({
                 query: "list",
             });
-            this.agents = result?.agents;
+
             this.setState(BFLowState.LIST_AGENTS_SUCCESS);
+            return result?.agents;
         } catch (e: any) {
             console.log(">>>>> Error:", e);
             this.setState(BFLowState.LIST_AGENTS_FAILED);
@@ -331,5 +408,44 @@ export default class BFlowController {
         }
 
         nodes.forEach((node: any) => layout(node));
+    }
+
+    findNodeByTag(node: any, tag: string): any {
+        if (node.type === 'tag' && node.tag === tag) {
+            return node;
+        }
+        if (node.children) {
+            for (const child of node.children) {
+                const found = this.findNodeByTag(child, tag);
+                if (found) {
+                    return found;
+                }
+            }
+        }
+        return null;
+    }
+
+    extractNodeContent(node: any) {
+        if (!node) {
+            return null;
+        }
+        let result = {
+            text: '',
+        };
+        this.scanNodeContent(node, result);
+        return result.text;
+    }
+
+    scanNodeContent(node: any, result: any): any {
+
+        if (node.type === 'text' && node.attributes && node.attributes.content) {
+            result.text += node.attributes.content;
+        }
+
+        if (node.children) {
+            for (const child of node.children) {
+                this.scanNodeContent(child, result);
+            }
+        }
     }
 }

@@ -30,12 +30,12 @@ export default class JsV8CodeGenerationAgent extends Agent<InPayload, OutPayload
      * @param config - Partial configuration object containing an optional JsV8VmRunner instance.
      */
     constructor(config: Partial<{ vmRunner: JsV8VmRunner }>) {
-        super({ 
+        super({
             name: 'js-v8-code-generation',
             description: `
                 Generate Javascript (V8) code for executing Task ad hoc.
                 Can be used as default Agent.
-            ` 
+            `
         });
 
         this._vmRunner = config.vmRunner;
@@ -65,7 +65,7 @@ export default class JsV8CodeGenerationAgent extends Agent<InPayload, OutPayload
                     instructions += input;
                 } else if (typeof input === 'object') {
                     instructions += JSON.stringify(input, null, 2);
-                } 
+                }
             });
         }
 
@@ -87,16 +87,20 @@ export default class JsV8CodeGenerationAgent extends Agent<InPayload, OutPayload
             log(): void                                     // For printing and debugging purpose.
             load(url: string): Promise<string>              // For downloading or fetching file with a given URL. Usage: await load(...).
             save(url: string, data: string): Promise<void>  // For saving file with a given destination URL. Usage: await save(...).
-            `, 
-            { 
-            clientRegistry: new Clients({ primary: Clients.OllamaCode }).registry 
+            `,
+            {
+                clientRegistry: new Clients({ primary: Clients.OllamaCode }).registry
             }
         );
 
         if (generated?.code) {
-            const result = await this._vmRunner.runIsolatedCode(generated.code);
+            try {
+                const result = await this._vmRunner.runIsolatedCode(generated.code);
+                return { code: generated.code, result: result };
+            } catch (exception) {
+                return { code: generated.code, result: exception };
+            }
 
-            return { code: generated.code, result: result };
         }
 
         return { code: '', result: null };

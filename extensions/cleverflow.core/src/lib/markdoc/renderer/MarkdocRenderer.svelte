@@ -1,7 +1,6 @@
 <svelte:options customElement="markdoc-renderer" />
 
 <script lang="ts">
-    import { Modal } from "@skeletonlabs/skeleton-svelte";
     import { onMount } from "svelte";
     import css from "../../../app.css?inline";
     import BFlow from "../../bflow/BFlow.svelte";
