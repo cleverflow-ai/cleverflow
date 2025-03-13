@@ -8,7 +8,8 @@ import { BFLowState } from "./BFlowState.js";
 import BFlowRunnerAgentMessenger from "./agent/BFlowRunnerAgentMessenger.js";
 import Styles from './Styles.js';
 import { addToast, ToastType } from '../common/components/toast/ToastStore.js';
-import Markdoc from "@markdoc/markdoc";
+import * as MarkocNodeUtil from '../common/utils/MarkdocNodeUtil.js';
+import * as JsonUtil from '../common/utils/JsonUtil.js';
 
 export default class BFlowController {
 
@@ -142,39 +143,33 @@ export default class BFlowController {
             outs: null,
         };
         try {
-            const ast = Markdoc.parse(content);
+            const generatedData = MarkocNodeUtil.getNodeByName(content, 'generated-data');
+            if (!generatedData) {
+                return result;
+            }
 
-            const agents = this.findNodeByTag(ast, 'agents');
-            const agentsContent = this.extractNodeContent(agents);
+            let agentsContent = MarkocNodeUtil.extractNodeContent(generatedData, 'agents');
+            agentsContent = JsonUtil.fixJsonString(agentsContent ?? '');
+
             if (agentsContent) {
                 result.agents = JSON.parse(agentsContent);
             }
 
-            const bflow = this.findNodeByTag(ast, 'bflow');
-            const bflowContent = this.extractNodeContent(bflow);
+            const bflowContent = JsonUtil.fixJsonString(MarkocNodeUtil.extractNodeContent(generatedData, 'bflow') ?? '');
             if (bflowContent) {
                 result.bflow = JSON.parse(bflowContent);
             }
 
-            const bflowviz = this.findNodeByTag(ast, 'bflowviz');
-            const bflowvizContent = this.extractNodeContent(bflowviz);
+            const bflowvizContent = JsonUtil.fixJsonString(MarkocNodeUtil.extractNodeContent(generatedData, 'bflowviz') ?? '');
             if (bflowvizContent) {
                 result.bflowviz = JSON.parse(bflowvizContent);
             }
 
-            const outs = this.findNodeByTag(ast, 'outs');
-            console.log(outs);
-            let outsContent = this.extractNodeContent(outs);
+            let outsContent = JsonUtil.fixJsonString(MarkocNodeUtil.extractNodeContent(generatedData, 'outs') ?? '');
             if (outsContent) {
-                // outsContent = outsContent.replaceAll('\linebreak', '\n')
-
-                console.log('>>>> outsContent');
-                console.log(outsContent);
                 result.outs = JSON.parse(outsContent);
-                console.log(result.outs);
             }
         } catch (exception) {
-
             console.log(exception);
         }
         return result;
@@ -408,44 +403,5 @@ export default class BFlowController {
         }
 
         nodes.forEach((node: any) => layout(node));
-    }
-
-    findNodeByTag(node: any, tag: string): any {
-        if (node.type === 'tag' && node.tag === tag) {
-            return node;
-        }
-        if (node.children) {
-            for (const child of node.children) {
-                const found = this.findNodeByTag(child, tag);
-                if (found) {
-                    return found;
-                }
-            }
-        }
-        return null;
-    }
-
-    extractNodeContent(node: any) {
-        if (!node) {
-            return null;
-        }
-        let result = {
-            text: '',
-        };
-        this.scanNodeContent(node, result);
-        return result.text;
-    }
-
-    scanNodeContent(node: any, result: any): any {
-
-        if (node.type === 'text' && node.attributes && node.attributes.content) {
-            result.text += node.attributes.content;
-        }
-
-        if (node.children) {
-            for (const child of node.children) {
-                this.scanNodeContent(child, result);
-            }
-        }
     }
 }

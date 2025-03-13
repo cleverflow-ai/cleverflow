@@ -65,8 +65,7 @@
             {#each controller.astContent.children as child}
                 {#if child.name === "BFlow"}
                     {@const id = child.attributes.id}
-                    {@const node = controller.findBFlowNode(id)}
-                    {@const text = controller.reconstructMarkdoc(node)}
+                    {@const text = controller.getBFlowById(id)}
                     {@const bflowController = controller.getBFlowController(id)}
                     <BFlow
                         {...child.attributes}
