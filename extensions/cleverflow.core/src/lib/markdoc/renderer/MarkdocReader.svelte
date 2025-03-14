@@ -6,14 +6,12 @@
     import * as MarkdocNodeUtil from "../../common/utils/MarkdocNodeUtil.js";
     import css from "../../../app.css?inline";
     import Self from "./Self.svelte";
-    import Base64Reader from "./Base64Reader.svelte";
     import classes from "../../common/utils/StylesUtil.js";
 
     let { markdoc, theme = "crimson" } = $props();
     let astContent: any = $state(null);
 
     onMount(() => {
-        console.log(">>> onMount");
         const ast = Markdoc.parse(
             markdoc
                 .split("\n")
@@ -40,8 +38,7 @@
                     markdoc,
                     "agents",
                 )}
-                <Base64Reader {...child.attributes} {theme} {text}
-                ></Base64Reader>
+                <div {...child.attributes} {theme} {text}></div>
             {:else}
                 <svelte:element
                     this={child.name}

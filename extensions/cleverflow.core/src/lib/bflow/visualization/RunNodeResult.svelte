@@ -5,6 +5,7 @@
     import DOMPurify from "isomorphic-dompurify";
     import { CodeXml, FileText } from "lucide-svelte";
     import CodeBlock from "../../common/components/codeblock/CodeBlock.svelte";
+    import * as JsonUtil from "../../common/utils/JsonUtil.js";
 
     let { code, result } = $props();
     let tab = $state("code");
@@ -62,7 +63,7 @@
                 base="my-4 w-full h-full max-h-[calc(100%-100px)] overflow-auto"
             >
                 <div class="w-full h-full space-y-4">
-                    <CodeBlock {code}></CodeBlock>
+                    <CodeBlock code={JsonUtil.showLineBreak(code)}></CodeBlock>
                 </div>
             </Tabs.Panel>
         {/if}
@@ -71,7 +72,7 @@
                 <div
                     class="w-full h-full max-h-[calc(100%-100px)] overflow-auto"
                 >
-                    <Markdown {carta} {value} />
+                    <Markdown {carta} value={JsonUtil.showLineBreak(value)} />
                 </div>
             </Tabs.Panel>
         {/if}
