@@ -5,9 +5,8 @@ dotenv.config({ path: '../../.env' });
 const result = await RepositoryService.createFile({
     owner: 'admin',
     repo: 'test',
-    filePath: 'demo/readme.md',
-    fileContent: '### This is a header',
-    message: 'Test api.'
+    filePath: 'demo/subfolder/sub_readme.md',
+    fileContent: '### This file in the sub folder.',
 });
 
 console.log('>>>> result: ', result);
