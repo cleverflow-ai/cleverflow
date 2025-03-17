@@ -16,18 +16,18 @@ import { JSONCodec } from "nats";
  * @template Out - The type of the outgoing message payload.
  */
 
- /**
-    * Abstract class representing an agent messenger that handles connections and message processing.
-    * 
-    * @template In - The type of the incoming message payload.
-    * @template Out - The type of the outgoing message payload.
-    */
+/**
+   * Abstract class representing an agent messenger that handles connections and message processing.
+   * 
+   * @template In - The type of the incoming message payload.
+   * @template Out - The type of the outgoing message payload.
+   */
 export default abstract class AgentMessenger<In extends object, Out extends object> {
-    public readonly subject: string | undefined;
+    public subject: string | undefined;
 
     protected connection: AgentConnection | null | undefined;
     protected subscription: Subscription | null | undefined;
-    
+
     /**
      * Constructs an Agent instance.
      * 
@@ -35,7 +35,7 @@ export default abstract class AgentMessenger<In extends object, Out extends obje
      */
     constructor(config: Partial<{ connection: AgentConnection, subject: string }>) {
         this.connection = config.connection;
-        this.subject = config.subject;    
+        this.subject = config.subject;
     }
 
     /**
@@ -54,7 +54,7 @@ export default abstract class AgentMessenger<In extends object, Out extends obje
             console.log(`Agent ${this.subject} was disconnected.`);
         }
     }
-    
+
     /**
      * Subscribes to a subject to start processing messages.
      * 
@@ -66,22 +66,22 @@ export default abstract class AgentMessenger<In extends object, Out extends obje
         if (!this.connection) {
             throw new Error('Connection is not established');
         }
+
         await this.stop();
 
         if (this.subject) {
-            this.subscription = await this.connection.subscribe({subject: this.subject});
+            this.subscription = await this.connection.subscribe({ subject: this.subject });
             console.log(`Agent is now listening to ${this.subject}.`);
         } else {
             throw new Error('Subject is required to subscribe.');
         }
 
-        if (this.subscription) { 
-            for await (const message of this.subscription) {
+        if (this.subscription) {
+            this.subscription.callback = (err, message) => {
                 const inPayload = JSONCodec<In>().decode(message.data);
                 console.log(`Agent ${this.subject} received: ${JSON.stringify(inPayload)}.`);
-        
-                await this.process(inPayload);
-            }
+                this.process(inPayload);
+            };
         }
     }
 
@@ -95,11 +95,32 @@ export default abstract class AgentMessenger<In extends object, Out extends obje
     protected abstract process(payload: In): Promise<Out>;
 
     /**
-     * Abstract method to send a request. Must be implemented by subclasses.
+     * Sends a request with the specified payload and returns the response.
      * 
-     * @abstract
-     * @param {In} payload - The input for request.
-     * @returns {Promise<Out>}
+     * This method utilizes an established connection to send a request to a remote service.
+     * The payload is encoded using the connection's codec before being sent. The method
+     * also specifies a timeout of 1 hour for the request.
+     * 
+     * @template In - The type of the input payload.
+     * @template Out - The type of the expected response.
+     * 
+     * @param {In} payload - The data to be sent with the request.
+     * @returns {Promise<Out>} A promise that resolves with the response of type `Out`.
+     * 
+     * @throws {Error} Throws an error if the connection is not established.
      */
-    public abstract request(payload: In): Promise<Out>;
+    public async request(payload: In): Promise<Out> {
+        if (this.connection) {
+            console.log(`Agent ${this.subject} requested: ${JSON.stringify(payload)}.`);
+            return await this.connection.sendRequest<Out>({
+                subject: this.subject,
+                payload: this.connection.codec.encode(payload),
+                options: {
+                    timeout: 3600 * 1000 // 1 hour 
+                },
+            });
+        } else {
+            throw new Error('Connection is not established');
+        }
+    }
 }

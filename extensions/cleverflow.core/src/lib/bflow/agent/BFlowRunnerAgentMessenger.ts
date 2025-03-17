@@ -2,13 +2,20 @@ import { JSONCodec } from "nats";
 import AgentConnection from "../../common/agent/AgentConnection.js";
 import AgentMessenger from "../../common/agent/AgentMessager.js";
 
+enum ACTION {
+    CREATE = 'create',
+    RUN = 'run',
+}
+
 export type InPayload = {
-    bflow: any
+    action: ACTION,
+    bflow?: any
 }
 
 export type OutPayload = {
-    bflow: any;
-    outs: any;
+    subject?: string,
+    bflow?: any;
+    outs?: any;
 }
 
 /**
@@ -21,35 +28,30 @@ export type OutPayload = {
  */
 export default class BFlowRunnerAgentMessenger extends AgentMessenger<InPayload, OutPayload> {
 
+    private onProcess: (payload: any) => void;
     /**
      * Initializes a new instance of the BFlowRunnerAgentMessenger class.
      * Sets the agent subject to 'bflow-to-bflowviz'.
      * 
      * @param {Partial<{ connection: AgentConnection }>} config - The configuration object containing the agent connection.
      */
-    constructor(config: Partial<{ connection: AgentConnection }>) {
-        super({ connection: config.connection, subject: 'bflow-runner' });
+    constructor(config: Partial<{ connection: AgentConnection, subject?: string, onProcess: (payload: any) => void }>) {
+        super({ connection: config.connection, subject: config.subject ?? 'bflow-runner' });
+        this.onProcess = config.onProcess ?? (() => { });
     }
 
-    /**
-     * Sends a request to the BFlow service to convert BFlow data to BFlowViz format.
-     * 
-     * @param {InPayload} payload - The input payload containing the BFlow data to be processed.
-     * @returns {Promise<OutPayload>} - A promise that resolves to the output payload containing the BFlowViz data.
-     * @async
-     */
-    public async request(payload: InPayload): Promise<OutPayload> {
-        if (this.connection) {
-            return await this.connection.sendRequest<OutPayload>({
-                subject: this.subject,
-                payload: JSONCodec<InPayload>().encode(payload),
-                options: {
-                    timeout: 3600 * 1000 // 1 hour 
-                },
-            });
-        } else {
-            throw new Error('Connection is not established');
-        }
+    public async create(): Promise<string | null | undefined> {
+        const result = await this.request({
+            action: ACTION.CREATE,
+        });
+        return result?.subject;
+    }
+
+    public async run(bflow: any): Promise<OutPayload> {
+        return await this.request({
+            action: ACTION.RUN,
+            bflow: bflow,
+        });
     }
 
     /**
@@ -61,7 +63,7 @@ export default class BFlowRunnerAgentMessenger extends AgentMessenger<InPayload,
      * @protected
      */
     protected async process(payload: InPayload): Promise<OutPayload> {
-        throw new Error("Method not implemented.");
+        this.onProcess(payload);
+        return {};
     }
-
 }

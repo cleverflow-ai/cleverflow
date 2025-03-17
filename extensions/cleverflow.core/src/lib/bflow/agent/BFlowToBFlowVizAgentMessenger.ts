@@ -41,7 +41,7 @@ export type OutPayload = {
  * @protected
  */
 export default class BFlowToBFlowVizAgentMessenger extends AgentMessenger<InPayload, OutPayload> {
-    
+
     /**
      * Initializes a new instance of the BFlowToBFlowVizAgentMessenger class.
      * Sets the agent subject to 'bflow-to-bflowviz'.
@@ -51,7 +51,7 @@ export default class BFlowToBFlowVizAgentMessenger extends AgentMessenger<InPayl
     constructor(config: Partial<{ connection: AgentConnection }>) {
         super({ connection: config.connection, subject: 'bflow-to-bflowviz' });
     }
-    
+
     /**
      * Sends a request to the BFlow service to convert BFlow data to BFlowViz format.
      * 
@@ -60,17 +60,7 @@ export default class BFlowToBFlowVizAgentMessenger extends AgentMessenger<InPayl
      * @async
      */
     public async request(payload: InPayload): Promise<OutPayload> {
-        if(this.connection){
-            return await this.connection.sendRequest<OutPayload>({
-                subject: this.subject,
-                payload: JSONCodec<InPayload>().encode(payload),
-                options: {
-                    timeout: 3600*1000 // 1 hour 
-                }, 
-            });
-        } else {
-            throw new Error('Connection is not established');
-        }
+        return await super.request(payload);
     }
 
     /**

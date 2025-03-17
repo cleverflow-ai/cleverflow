@@ -56,17 +56,7 @@ export default class MarkdocCustomeElementToBFlowAgentMessenger extends AgentMes
      * @protected
      */
     public async request(payload: InPayload): Promise<OutPayload> {
-        if (this.connection) {
-            return await this.connection.sendRequest<OutPayload>({
-                subject: this.subject,
-                payload: JSONCodec<InPayload>().encode(payload),
-                options: {
-                    timeout: 3600 * 1000 // 1 hour 
-                },
-            });
-        } else {
-            throw new Error('Connection is not established');
-        }
+        return await super.request(payload);
     }
 
 

@@ -1,5 +1,5 @@
 import { JSONCodec } from 'nats/lib/nats-base-client/codec.js';
-import { connect, NatsConnection, Subscription } from 'nats';
+import { connect, NatsConnection, PublishOptions, Subscription } from 'nats';
 import AgentInfo from './AgentInfo.js';
 
 /**
@@ -17,20 +17,20 @@ import AgentInfo from './AgentInfo.js';
  * @implements {AgentInfo}
  */
 export default abstract class Agent<In extends object, Out extends object> implements AgentInfo {
-    public readonly name: string | undefined;
+    public name: string | undefined;
     public readonly description: string | undefined;
 
     protected connection: NatsConnection | null | undefined;
     protected subscription: Subscription | null | undefined;
     protected readonly codec = JSONCodec();
-    
+
     /**
      * Constructs an Agent instance.
      * 
      * @param {Partial<{ name: string, description: string }>} config - Configuration object containing the agent's name and description.
      */
     constructor(config: Partial<{ name: string, description: string }>) {
-        this.name = config.name;    
+        this.name = config.name;
         this.description = config.description;
     }
 
@@ -53,28 +53,33 @@ export default abstract class Agent<In extends object, Out extends object> imple
             this.connection = await this.connect(config);
             console.log(`Agent ${this.name} was connected.`);
         }
-        
+
         if (!this.subscription) {
             if (config.subject) {
-                this.subscription = this.connection.subscribe(config.subject);
+                this.subscription = this.connection.subscribe(`${config.subject}.server`);
                 console.log(`Agent ${this.name} is now listening to ${config.subject}.`);
             } else {
                 throw new Error('Subject is required to subscribe.');
             }
 
-            if (this.subscription) { 
-                for await (const message of this.subscription) {
-                    const inPayload = this.codec.decode(message.data) as In;
-                    console.log(`[Agent ${this.name} received]:`);
-                    console.log(JSON.stringify(inPayload));
-            
-                    const outPayload: Out = await this.process(inPayload);
-                    
-                    const encodedOutPayload = this.codec.encode(outPayload);
-                    message.respond(encodedOutPayload);
-                    console.log(`[Agent ${this.name} replied]:`);
-                    console.log(JSON.stringify(outPayload));
-                }
+            if (this.subscription) {
+                this.subscription.callback = async (err, message) => {
+                    if (err) {
+                        console.error(`Agent ${this.name} Error receiving message:`, err);
+                    } else {
+                        // process messages
+                        const inPayload = this.codec.decode(message.data) as In;
+                        console.log(`[Agent ${this.name} received]:`);
+                        console.log(JSON.stringify(inPayload));
+
+                        const outPayload: Out = await this.process(inPayload);
+
+                        const encodedOutPayload = this.codec.encode(outPayload);
+                        message.respond(encodedOutPayload);
+                        console.log(`[Agent ${this.name} replied]:`);
+                        console.log(JSON.stringify(outPayload));
+                    }
+                };
             }
         }
     }
@@ -110,7 +115,33 @@ export default abstract class Agent<In extends object, Out extends object> imple
      * @returns {Promise<Out>}
      */
     public abstract process(payload: In): Promise<Out>;
-    
+
+
+    /**
+     * Publishes a message to a specified subject using the underlying connection.
+     *
+     * @param subject - The subject or topic to which the message will be published.
+     * @param payload - (Optional) The data or message payload to be sent. This will be encoded using the codec.
+     * @param options - (Optional) Additional options for publishing, such as headers or delivery settings.
+     *
+     * @remarks
+     * This method uses the `connection` object to publish the message. If the connection is not established,
+     * the method will not perform any action. The `codec` is used to encode the payload before sending.
+     *
+     * @throws {Error} If encoding the payload fails or if the connection encounters an issue during publishing.
+     *
+     * @example
+     * ```typescript
+     * const agent = new Agent();
+     * agent.publish('my.subject', { key: 'value' }, { headers: { 'custom-header': 'header-value' } });
+     * ```
+     */
+    public publish(payload?: any, options?: PublishOptions): void {
+        console.log(`[Agent ${this.name} published]:`);
+        console.log(JSON.stringify(payload));
+        this.connection?.publish(`${this.name}.client`, this.codec.encode(payload), options);
+    }
+
     /**
      * Establishes a connection to the NATS server.
      * 
@@ -124,5 +155,5 @@ export default abstract class Agent<In extends object, Out extends object> imple
         });
 
         return nc;
-    }   
+    }
 }

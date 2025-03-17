@@ -2,14 +2,15 @@ import dotenvFlow from 'dotenv-flow';
 dotenvFlow.config();
 console.log('BAML Log Level:', process.env.BAML_LOG);
 
-import MonitorAgent from './common/MonitorAgent.js';
+import monitorAgent from './common/MonitorAgent.js';
 import MarkdocCustomElementToBFlowAgent from './bflow/MarkdocCustomeElementToBFlowAgent.js';
 import BFlowToBFlowVizAgent from './bflow/BFlowToBFlowVizAgent.js';
 import JsV8VmRunner from './common/JsV8VmRunner.js';
 import JsV8CodeGenerationAgent from './common/JsV8CodeGenerationAgent.js';
 import BFlowRunnerAgent from './bflow/BFlowRunnerAgent.js';
 
-const monitorAgent = new MonitorAgent();
+const eventsServer = process.env.EVENTS_SERVER;
+const eventsToken = process.env.EVENTS_TOKEN;
 
 const markdocCustomElementToBFlowAgent = new MarkdocCustomElementToBFlowAgent();
 monitorAgent.register(markdocCustomElementToBFlowAgent);
@@ -25,25 +26,25 @@ const bflowRunnerAgent = new BFlowRunnerAgent();
 monitorAgent.register(bflowRunnerAgent);
 
 await Promise.all([
-    monitorAgent.run({ 
-        servers: 'localhost:4222', 
-        token: '76de3ba222bec3af21f9dbfb01f3197b'
+    monitorAgent.run({
+        servers: eventsServer,
+        token: eventsToken
     }),
-    markdocCustomElementToBFlowAgent.run({ 
-        servers: 'localhost:4222', 
-        token: '76de3ba222bec3af21f9dbfb01f3197b'
+    markdocCustomElementToBFlowAgent.run({
+        servers: eventsServer,
+        token: eventsToken
     }),
-    bflowToBFlowVizAgent.run({ 
-        servers: 'localhost:4222', 
-        token: '76de3ba222bec3af21f9dbfb01f3197b'
+    bflowToBFlowVizAgent.run({
+        servers: eventsServer,
+        token: eventsToken
     }),
-    jsV8CodeGenerationAgent.run({ 
-        servers: 'localhost:4222', 
-        token: '76de3ba222bec3af21f9dbfb01f3197b'
+    jsV8CodeGenerationAgent.run({
+        servers: eventsServer,
+        token: eventsToken
     }),
-    bflowRunnerAgent.run({ 
-        servers: 'localhost:4222', 
-        token: '76de3ba222bec3af21f9dbfb01f3197b'
+    bflowRunnerAgent.run({
+        servers: eventsServer,
+        token: eventsToken
     }),
 ]);
 

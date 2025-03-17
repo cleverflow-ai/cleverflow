@@ -1,6 +1,7 @@
 import { JSONCodec } from 'nats/lib/nats-base-client/codec.js';
 import { wsconnect } from "@nats-io/nats-core";
 import type { NatsConnection, Subscription, Payload, RequestOptions } from "@nats-io/nats-core";
+import type { Msg } from 'nats';
 
 /**
  * The Agent class is class for creating agents that connect to a NATS server
@@ -20,6 +21,8 @@ export default class AgentConnection {
      * The NATS connection instance.
      */
     protected connection: NatsConnection | null | undefined;
+
+    public readonly codec = JSONCodec();
 
     /**
      * Constructs an AgentConnection instance.
@@ -67,11 +70,10 @@ export default class AgentConnection {
      */
     public async subscribe(config: Partial<{ subject: string }>): Promise<Subscription> {
         if (!this.connection) {
-            throw new Error('Connection is required to subscribe.');
+            throw new Error('[Subscribe failure] Connection is required to subscribe.');
         }
         if (config.subject) {
-            const subscription = this.connection.subscribe(config.subject);
-            return subscription;
+            return this.connection.subscribe(`${config.subject}.client`);
         } else {
             throw new Error('Subject is required to subscribe.');
         }
@@ -86,17 +88,17 @@ export default class AgentConnection {
      */
     public async sendRequest<T>(config: Partial<{ subject: string, payload: Payload, options: RequestOptions }>): Promise<T> {
         if (!this.connection) {
-            throw new Error('Connection is required to subscribe.');
+            throw new Error('[SendRequest failure] Connection is required to subscribe.');
         }
         if (!config.subject) {
             throw new Error('Subject is required to request.');
         }
 
         const reply = await this.connection.request(
-            config.subject,
+            `${config.subject}.server`,
             config.payload,
             config.options,
         );
-        return JSONCodec<T>().decode(reply.data);
+        return this.codec.decode(reply.data) as T;
     }
 }

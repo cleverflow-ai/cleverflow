@@ -23,6 +23,7 @@ export default class BFlowController {
     private bflowRunnerAgentMessenger?: BFlowRunnerAgentMessenger;
 
     public state: BFLowState = $state(BFLowState.NONE);
+    public stateKey = $state(0);
 
     private agents: AgentInfo[] | undefined = [];
     public bflow: any;
@@ -31,9 +32,6 @@ export default class BFlowController {
 
     private url: string | undefined;
     private text: string | undefined;
-
-    private onStateChanged: (state: BFLowState) => void = () => { };
-
 
     constructor(servers: string | string[], token: string) {
         this.servers = servers;
@@ -84,7 +82,7 @@ export default class BFlowController {
 
     setState(state: BFLowState) {
         this.state = state;
-        this.onStateChanged(state);
+        this.stateKey += 1;
     }
 
 
@@ -230,22 +228,46 @@ export default class BFlowController {
         }
     };
 
+    async createBFlowRunnerAgent() {
+        let creatingBFlowRunnerAgentMessenger: BFlowRunnerAgentMessenger | null = new BFlowRunnerAgentMessenger({
+            connection: this.agentConnection,
+        });
+        const subject = await creatingBFlowRunnerAgentMessenger.create();
+
+        this.bflowRunnerAgentMessenger = new BFlowRunnerAgentMessenger({
+            connection: this.agentConnection,
+            subject: subject ?? undefined, // ?
+            onProcess: (payload) => {
+                this.bflow = payload.bflow;
+                this.bflowRunResult = payload.outs;
+                this.updateBFlowRunResult();
+                this.setState(BFLowState.RUN_BFLOW_IN_PROGRESS);
+                addToast("BFlow is running", ToastType.WARNING);
+            }
+        });
+
+        await this.bflowRunnerAgentMessenger.start();
+
+        creatingBFlowRunnerAgentMessenger = null;
+    }
+
     async runBFlow() {
         if (this.state === BFLowState.RUN_BFLOW) {
             return;
         }
 
+        await this.createBFlowRunnerAgent();
+
         this.setState(BFLowState.RUN_BFLOW);
+
         try {
-            const runningBflowResult = await this.bflowRunnerAgentMessenger?.request({
-                bflow: this.bflow,
-            });
+            const runningBflowResult = await this.bflowRunnerAgentMessenger?.run(this.bflow);
             if (runningBflowResult) {
                 this.bflow = runningBflowResult.bflow;
                 this.bflowRunResult = runningBflowResult.outs;
                 this.updateBFlowRunResult();
                 this.setState(BFLowState.RUN_BFLOW_SUCCESS);
-                addToast("Successfully ran BFlow", ToastType.SUCCESS)
+                addToast("Successfully ran BFlow", ToastType.SUCCESS);
             } else {
                 this.setState(BFLowState.RUN_BFLOW_FAILED);
                 addToast("Failed to run BFlow", ToastType.ERROR)

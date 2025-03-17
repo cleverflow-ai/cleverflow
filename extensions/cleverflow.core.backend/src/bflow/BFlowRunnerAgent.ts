@@ -1,13 +1,21 @@
+import { createInbox } from 'nats';
 import { BFlow, BFlowNode, BFlowNodeState, BFlowNodeType } from "../baml_client/types.js";
 import Agent from "../common/Agent.js";
 
+enum ACTION {
+    CREATE = 'create',
+    RUN = 'run',
+}
+
 export type InPayload = {
-    bflow: BFlow;
+    action: ACTION,
+    bflow?: BFlow;
 }
 
 export type OutPayload = {
-    bflow: BFlow;
-    outs: {}
+    subject?: string,
+    bflow?: BFlow;
+    outs?: {}
 }
 
 /**
@@ -20,9 +28,9 @@ export default class BFlowRunnerAgent extends Agent<InPayload, OutPayload> {
     /**
      * Constructs a new BFlowRunnerAgent instance.
      */
-    constructor() {
+    constructor(config?: { name?: string }) {
         super({
-            name: 'bflow-runner',
+            name: config?.name ?? 'bflow-runner',
             description: 'Run the given B-Flow.'
         });
     }
@@ -33,10 +41,34 @@ export default class BFlowRunnerAgent extends Agent<InPayload, OutPayload> {
      * @returns The output payload containing the B-Flow and the outputs of the nodes.
      */
     public async process(payload: InPayload): Promise<OutPayload> {
-        await this.runNode(payload.bflow.root);
-        return {
-            bflow: payload.bflow,
-            outs: Object.fromEntries(this._outs)
+        switch (payload.action) {
+            case ACTION.CREATE:
+                const bflowRunnerAgent = new BFlowRunnerAgent({ name: `bflow-runner.${createInbox()}` });
+                await bflowRunnerAgent.run({
+                    servers: process.env.EVENTS_SERVER,
+                    token: process.env.EVENTS_TOKEN,
+                });
+                return {
+                    subject: bflowRunnerAgent.name,
+                };
+            case ACTION.RUN:
+            default:
+                if (payload.bflow) {
+                    const onRunNodeProgress = async () => {
+                        this.publish({
+                            bflow: payload.bflow,
+                            outs: Object.fromEntries(this._outs)
+                        });
+                    };
+                    await this.runNode(payload.bflow.root, onRunNodeProgress);
+
+                    return {
+                        bflow: payload.bflow,
+                        outs: Object.fromEntries(this._outs)
+                    }
+                } else {
+                    return {};
+                }
         }
     }
 
@@ -45,36 +77,40 @@ export default class BFlowRunnerAgent extends Agent<InPayload, OutPayload> {
      * @param node - The B-Flow node to be run.
      * @returns The state of the node after execution.
      */
-    public async runNode(node: BFlowNode): Promise<BFlowNodeState> {
+    public async runNode(node: BFlowNode, onProgress: () => Promise<void>): Promise<BFlowNodeState> {
         if (node.type === BFlowNodeType.ENTRY) {
             for (const child of node.goto!) {
-                const status = await this.runNode(child);
+                const status = await this.runNode(child, onProgress);
             }
         }
 
         if (node.type === BFlowNodeType.FALLBACK) {
             for (const child of node.goto!) {
-                const status = await this.runNode(child);
+                const status = await this.runNode(child, onProgress);
                 if (status === BFlowNodeState.SUCCESS) {
-                    node.state = BFlowNodeState.SUCCESS
+                    node.state = BFlowNodeState.SUCCESS;
+                    await onProgress();
                     return node.state;
                 }
             }
 
             node.state = BFlowNodeState.FAILURE;
+            await onProgress();
             return node.state;
         }
 
         if (node.type === BFlowNodeType.SEQUENCE) {
             for (const child of node.goto!) {
-                const status = await this.runNode(child);
+                const status = await this.runNode(child, onProgress);
                 if (status === BFlowNodeState.FAILURE) {
                     node.state = BFlowNodeState.FAILURE;
+                    await onProgress();
                     return node.state;
                 }
             }
 
             node.state = BFlowNodeState.SUCCESS;
+            await onProgress();
             return node.state;
         }
 
@@ -95,9 +131,10 @@ export default class BFlowRunnerAgent extends Agent<InPayload, OutPayload> {
                 }
 
                 node.state = BFlowNodeState.RUNNING;
+                await onProgress();
 
                 const reply = await this.connection.request(
-                    node.agent.name,
+                    `${node.agent.name}.server`,
                     this.codec.encode({
                         description: node.description,
                         config: node.config,
@@ -110,6 +147,7 @@ export default class BFlowRunnerAgent extends Agent<InPayload, OutPayload> {
                 if (node.id) {
                     this._outs.set(node.id, result);
                     node.state = BFlowNodeState.SUCCESS;
+                    await onProgress();
                     return node.state;
                 }
             }

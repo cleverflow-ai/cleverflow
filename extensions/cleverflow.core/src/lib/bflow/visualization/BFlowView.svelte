@@ -13,6 +13,8 @@
 	} from "../../common/components/toast/ToastStore.js";
 	import Drawer from "../../common/components/Drawer.svelte";
 	import RunNodeResult from "./RunNodeResult.svelte";
+	import _ from "lodash";
+	import { BFlowNodeState } from "../agent/models/BFlowNodeState.js";
 
 	const channel = postal.channel("B-Flow");
 
@@ -24,10 +26,11 @@
 		ACTION: ActionNode,
 	};
 
-	const nodes = writable(bflowviz.nodes);
-	const edges = writable(bflowviz.edges);
+	let isInitialize = $state(false);
+	let nodes = $state(writable([]));
+	let edges = $state(writable([]));
 
-	let drawerElement: any;
+	let drawerElement: any = $state();
 
 	let runNodeResult: any = $state(null);
 
@@ -37,6 +40,29 @@
 			showRunNodeResult(payload.id);
 		},
 	);
+
+	onMount(() => {
+		_.forEach(bflowviz.edges, (edge: any) => {
+			edge.animated = false;
+		});
+		const runningNode = _.find(bflowviz.nodes, (node: any) => {
+			return node?.data?.state === BFlowNodeState.RUNNING;
+		});
+		if (runningNode) {
+			const edge = _.find(bflowviz.edges, (edge: any) => {
+				return (
+					edge.source === runningNode.parentNodeId &&
+					edge.target === runningNode.id
+				);
+			});
+			if (edge) {
+				edge.animated = true;
+			}
+		}
+		nodes = writable(bflowviz.nodes);
+		edges = writable(bflowviz.edges);
+		isInitialize = true;
+	});
 
 	onDestroy(() => {
 		showRunNodeResultSubscriber.unsubscribe();
@@ -64,17 +90,21 @@
 	};
 </script>
 
-<main class="relative w-full h-full">
-	<div class="w-full h-full">
-		<SvelteFlow {nodeTypes} {nodes} {edges} fitView>
-			<Controls />
-			<Background patternColor="#aaa" gap={16} />
-		</SvelteFlow>
-	</div>
-</main>
-<Drawer bind:this={drawerElement} position="right">
-	{#snippet modalContent()}
-		<RunNodeResult code={runNodeResult?.code} result={runNodeResult?.result}
-		></RunNodeResult>
-	{/snippet}
-</Drawer>
+{#if isInitialize}
+	<main class="relative w-full h-full">
+		<div class="w-full h-full">
+			<SvelteFlow {nodeTypes} {nodes} {edges} fitView>
+				<Controls />
+				<Background patternColor="#aaa" gap={16} />
+			</SvelteFlow>
+		</div>
+	</main>
+	<Drawer bind:this={drawerElement} position="right">
+		{#snippet modalContent()}
+			<RunNodeResult
+				code={runNodeResult?.code}
+				result={runNodeResult?.result}
+			></RunNodeResult>
+		{/snippet}
+	</Drawer>
+{/if}

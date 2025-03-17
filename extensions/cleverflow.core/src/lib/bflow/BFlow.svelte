@@ -51,6 +51,8 @@
 				return "Failed to convert BFlow to BFlowViz";
 			case BFLowState.RUN_BFLOW:
 				return "Running BFlow...";
+			case BFLowState.RUN_BFLOW_IN_PROGRESS:
+				return "BFlow is running";
 			case BFLowState.RUN_BFLOW_SUCCESS:
 				return "Successfully ran BFlow";
 			case BFLowState.RUN_BFLOW_FAILED:
@@ -82,7 +84,9 @@
 			<span class="badge preset-filled-surface-500">{id}</span>
 		{/if}
 		{#if controller.bflowviz}
-			{@const isBFlowRunning = controller.state === BFLowState.RUN_BFLOW}
+			{@const isBFlowRunning =
+				controller.state === BFLowState.RUN_BFLOW ||
+				controller.state === BFLowState.RUN_BFLOW_IN_PROGRESS}
 			{@const successfullyRanBFlow =
 				controller.state === BFLowState.RUN_BFLOW_SUCCESS}
 			{@const failedToRunBFlow =
@@ -124,7 +128,7 @@
 		{/if}
 	</div>
 	<div class="w-full border border-gray-300 p-4 h-[500px]">
-		{#key controller.state}
+		{#key controller.stateKey}
 			{#if !url && !text}
 				<div
 					class="h-full w-full flex flex-col items-center justify-center gap-2"

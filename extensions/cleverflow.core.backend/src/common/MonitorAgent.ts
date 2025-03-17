@@ -3,7 +3,7 @@ import Agent from "./Agent.js";
 import AgentInfo from "./AgentInfo.js";
 
 export type InPayload = {
-    query: 'list' | 'logs' 
+    query: 'list' | 'logs'
 }
 
 export type OutPayload = {
@@ -16,19 +16,19 @@ export type OutPayload = {
  * @template InPayload - The type of the input payload.
  * @template OutPayload - The type of the output payload.
  */
-export default class MonitorAgent extends Agent<InPayload, OutPayload> {
+class MonitorAgent extends Agent<InPayload, OutPayload> {
     private _agents: AgentInfo[] = [];
 
     /**
      * Constructs a new MonitorAgent instance with a predefined name and description.
      */
     constructor() {
-        super({ 
+        super({
             name: 'monitor-all-agents',
-            description: 'Monitor all available, registred Agents.' 
+            description: 'Monitor all available, registred Agents.'
         });
     }
-    
+
     /**
      * Registers a new agent by adding it to the internal list of agents.
      * 
@@ -49,7 +49,7 @@ export default class MonitorAgent extends Agent<InPayload, OutPayload> {
         if (payload.query === 'list') {
             // SMELL: 
             // return { agents: this._agents };
-            return { 
+            return {
                 agents: _.map(this._agents, (agent: AgentInfo) => {
                     return {
                         name: agent.name,
@@ -63,3 +63,6 @@ export default class MonitorAgent extends Agent<InPayload, OutPayload> {
         }
     }
 }
+const monitorAgent = new MonitorAgent();
+
+export default monitorAgent;
