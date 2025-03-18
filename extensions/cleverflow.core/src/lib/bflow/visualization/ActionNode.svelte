@@ -10,6 +10,7 @@
 	let { data } = $props();
 
 	let borderColor = $state("border-surface-500");
+
 	onMount(() => {
 		switch (data.state) {
 			case BFlowNodeState.SUCCESS:
@@ -44,12 +45,16 @@
 >
 	<div
 		class="w-full flex-1 border-2 {borderColor} flex items-center justify-center p-4
-		{data.state === BFlowNodeState.RUNNING
-			? 'animate-border-glow border-dotted animate-pulse'
-			: ''}"
+		{data.state === BFlowNodeState.RUNNING ? 'border-dotted' : ''}"
 	>
 		{#if data.name}
-			{data.name}
+			<div
+				class={data.state === BFlowNodeState.RUNNING
+					? "animate-bounce"
+					: ""}
+			>
+				{data.name}
+			</div>
 		{/if}
 	</div>
 	{#if data.agent}
@@ -61,19 +66,3 @@
 		</div>
 	{/if}
 </div>
-
-<style>
-	@keyframes borderGlow {
-		0%,
-		100% {
-			filter: drop-shadow(0 0 5px var(--color-warning-500));
-		}
-		50% {
-			filter: drop-shadow(0 0 25px var(--color-warning-300));
-		}
-	}
-
-	.animate-border-glow {
-		animation: borderGlow 1.5s ease-in-out infinite alternate;
-	}
-</style>
