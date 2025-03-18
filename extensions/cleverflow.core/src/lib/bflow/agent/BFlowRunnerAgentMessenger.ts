@@ -9,7 +9,8 @@ enum ACTION {
 
 export type InPayload = {
     action: ACTION,
-    bflow?: any
+    bflow?: any,
+    outs?: any;
 }
 
 export type OutPayload = {
@@ -47,10 +48,11 @@ export default class BFlowRunnerAgentMessenger extends AgentMessenger<InPayload,
         return result?.subject;
     }
 
-    public async run(bflow: any): Promise<OutPayload> {
+    public async run(bflow: any, outs?: any): Promise<OutPayload> {
         return await this.request({
             action: ACTION.RUN,
             bflow: bflow,
+            outs: outs,
         });
     }
 

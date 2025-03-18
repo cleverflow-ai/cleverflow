@@ -79,7 +79,8 @@ export default class JsV8CodeGenerationAgent extends Agent<InPayload, OutPayload
             instructions += payload.config;
         }
 
-        console.log(instructions)
+        console.log('>>>>> instructions');
+        console.log(instructions);
 
         const generated: JsV8Code = await b.GenerateJSV8Code(
             instructions,

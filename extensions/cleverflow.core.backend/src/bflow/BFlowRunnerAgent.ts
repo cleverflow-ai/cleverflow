@@ -10,6 +10,7 @@ enum ACTION {
 export type InPayload = {
     action: ACTION,
     bflow?: BFlow;
+    outs?: {},
 }
 
 export type OutPayload = {
@@ -53,6 +54,9 @@ export default class BFlowRunnerAgent extends Agent<InPayload, OutPayload> {
                 };
             case ACTION.RUN:
             default:
+                if (payload.outs) {
+                    this._outs = new Map(Object.entries(payload.outs));
+                }
                 if (payload.bflow) {
                     const onRunNodeProgress = async () => {
                         this.publish({
@@ -60,7 +64,9 @@ export default class BFlowRunnerAgent extends Agent<InPayload, OutPayload> {
                             outs: Object.fromEntries(this._outs)
                         });
                     };
-                    await this.runNode(payload.bflow.root, onRunNodeProgress);
+                    await this.runNode(payload.bflow.root, {
+                        onProgress: onRunNodeProgress,
+                    });
 
                     return {
                         bflow: payload.bflow,
@@ -77,48 +83,78 @@ export default class BFlowRunnerAgent extends Agent<InPayload, OutPayload> {
      * @param node - The B-Flow node to be run.
      * @returns The state of the node after execution.
      */
-    public async runNode(node: BFlowNode, onProgress: () => Promise<void>): Promise<BFlowNodeState> {
-        if (node.type === BFlowNodeType.ENTRY) {
-            for (const child of node.goto!) {
-                const status = await this.runNode(child, onProgress);
-            }
+    public async runNode(node: BFlowNode, config: {
+        onProgress: () => Promise<void>,
+    }): Promise<BFlowNodeState> {
+
+        if (node.state === BFlowNodeState.SUCCESS) {
+            return node.state;
         }
 
-        if (node.type === BFlowNodeType.FALLBACK) {
+        if (node.type === BFlowNodeType.ENTRY) {
+
             for (const child of node.goto!) {
-                const status = await this.runNode(child, onProgress);
+                const status = await this.runNode(child, config);
+                if (status === BFlowNodeState.WAITING_FOR_CLIENT) {
+                    return BFlowNodeState.WAITING_FOR_CLIENT;
+                }
+            }
+
+        } else if (node.type === BFlowNodeType.FALLBACK) {
+
+            for (const child of node.goto!) {
+                const status = await this.runNode(child, config);
                 if (status === BFlowNodeState.SUCCESS) {
                     node.state = BFlowNodeState.SUCCESS;
-                    await onProgress();
+                    await config.onProgress();
                     return node.state;
+                } else if (status === BFlowNodeState.WAITING_FOR_CLIENT) {
+                    return BFlowNodeState.WAITING_FOR_CLIENT;
                 }
             }
 
             node.state = BFlowNodeState.FAILURE;
-            await onProgress();
+            await config.onProgress();
             return node.state;
-        }
 
-        if (node.type === BFlowNodeType.SEQUENCE) {
+        } else if (node.type === BFlowNodeType.SEQUENCE) {
+
             for (const child of node.goto!) {
-                const status = await this.runNode(child, onProgress);
+                const status = await this.runNode(child, config);
                 if (status === BFlowNodeState.FAILURE) {
                     node.state = BFlowNodeState.FAILURE;
-                    await onProgress();
+                    await config.onProgress();
                     return node.state;
+                } else if (status === BFlowNodeState.WAITING_FOR_CLIENT) {
+                    return BFlowNodeState.WAITING_FOR_CLIENT;
                 }
             }
 
             node.state = BFlowNodeState.SUCCESS;
-            await onProgress();
+            await config.onProgress();
             return node.state;
-        }
 
-        if (node.type === BFlowNodeType.ACTION || node.type === BFlowNodeType.CONDITION) {
+        } else if (node.type === BFlowNodeType.ACTION || node.type === BFlowNodeType.CONDITION) {
+
+            if (this.isClientActionRequired(node)) {
+                // this._outs.set(node.id ?? '', {
+                //     result: 'https://raw.githubusercontent.com/cleverflow-ai/examples/refs/heads/main/machinery/machines-list.md',
+                // });
+                if (this.hasNodeResult(node)) {
+                    node.state = BFlowNodeState.SUCCESS;
+                } else {
+                    node.state = BFlowNodeState.WAITING_FOR_CLIENT;
+                }
+                return node.state;
+            }
+
             if (this.connection && node.agent) {
                 let inputs: any[] = [];
 
                 if (node.inputs) {
+                    console.log('>>>>> node.inputs');
+                    console.log(node.inputs);
+
                     // Each Input corresponds a Node Id
                     for (const nodeId of node.inputs) {
                         // Get saved Output of required Node
@@ -131,7 +167,7 @@ export default class BFlowRunnerAgent extends Agent<InPayload, OutPayload> {
                 }
 
                 node.state = BFlowNodeState.RUNNING;
-                await onProgress();
+                await config.onProgress();
 
                 const reply = await this.connection.request(
                     `${node.agent.name}.server`,
@@ -147,7 +183,7 @@ export default class BFlowRunnerAgent extends Agent<InPayload, OutPayload> {
                 if (node.id) {
                     this._outs.set(node.id, result);
                     node.state = BFlowNodeState.SUCCESS;
-                    await onProgress();
+                    await config.onProgress();
                     return node.state;
                 }
             }
@@ -156,5 +192,19 @@ export default class BFlowRunnerAgent extends Agent<InPayload, OutPayload> {
         }
 
         return BFlowNodeState.FAILURE;
+    }
+
+    private isClientActionRequired(node: BFlowNode): boolean {
+        if (node.name) {
+            return ['upload-file'].includes(node.name);
+        }
+        return false;
+    }
+
+    private hasNodeResult(node: BFlowNode) {
+        if (node.id) {
+            return this._outs.get(node.id);
+        }
+        return false;
     }
 }

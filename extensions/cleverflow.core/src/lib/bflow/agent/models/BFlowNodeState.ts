@@ -2,4 +2,5 @@ export enum BFlowNodeState {
     RUNNING = "RUNNING",
     SUCCESS = "SUCCESS",
     FAILURE = "FAILURE",
+    WAITING_FOR_CLIENT = "WAITING_FOR_CLIENT"
 }

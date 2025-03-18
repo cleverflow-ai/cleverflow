@@ -10,6 +10,8 @@ import Styles from './Styles.js';
 import { addToast, ToastType } from '../common/components/toast/ToastStore.js';
 import * as MarkocNodeUtil from '../common/utils/MarkdocNodeUtil.js';
 import * as JsonUtil from '../common/utils/JsonUtil.js';
+import { BFlowNodeState } from "./agent/models/BFlowNodeState.js";
+import postal from "postal";
 
 export default class BFlowController {
 
@@ -27,11 +29,14 @@ export default class BFlowController {
 
     private agents: AgentInfo[] | undefined = [];
     public bflow: any;
+    public rawBFlow: any;
     public bflowviz: any = $state(null);
     public bflowRunResult: any = $state(null);
 
     private url: string | undefined;
     private text: string | undefined;
+
+    private bflowPostalChannel = postal.channel("B-Flow");
 
     constructor(servers: string | string[], token: string) {
         this.servers = servers;
@@ -112,6 +117,10 @@ export default class BFlowController {
             this.setState(BFLowState.CONVERT_MARKDOC_ELEMENT_TO_BFLOW_SUCCESS);
         } else {
             this.bflow = await this.convertMarkdocCustomElementToBFlow(url, text);
+        }
+
+        if (this.bflow) {
+            this.rawBFlow = JSON.parse(JSON.stringify(this.bflow));
         }
 
         if (result.bflowviz) {
@@ -261,13 +270,9 @@ export default class BFlowController {
         this.setState(BFLowState.RUN_BFLOW);
 
         try {
-            const runningBflowResult = await this.bflowRunnerAgentMessenger?.run(this.bflow);
+            const runningBflowResult = await this.bflowRunnerAgentMessenger?.run(this.rawBFlow);
             if (runningBflowResult) {
-                this.bflow = runningBflowResult.bflow;
-                this.bflowRunResult = runningBflowResult.outs;
-                this.updateBFlowRunResult();
-                this.setState(BFLowState.RUN_BFLOW_SUCCESS);
-                addToast("Successfully ran BFlow", ToastType.SUCCESS);
+                this.onRunBFlowFinished(runningBflowResult);
             } else {
                 this.setState(BFLowState.RUN_BFLOW_FAILED);
                 addToast("Failed to run BFlow", ToastType.ERROR)
@@ -276,6 +281,45 @@ export default class BFlowController {
             console.error(e);
             this.setState(BFLowState.RUN_BFLOW_FAILED);
             addToast("Failed to run BFlow", ToastType.ERROR)
+        }
+    }
+
+    async resumeBFlow() {
+        if (this.state === BFLowState.RUN_BFLOW) {
+            return;
+        }
+
+        this.setState(BFLowState.RUN_BFLOW);
+
+        try {
+
+            const runningBflowResult = await this.bflowRunnerAgentMessenger?.run(this.bflow, this.bflowRunResult);
+            if (runningBflowResult) {
+                this.onRunBFlowFinished(runningBflowResult);
+            } else {
+                this.setState(BFLowState.RUN_BFLOW_FAILED);
+                addToast("Failed to run BFlow", ToastType.ERROR)
+            }
+        } catch (e: any) {
+            console.error(e);
+            this.setState(BFLowState.RUN_BFLOW_FAILED);
+            addToast("Failed to run BFlow", ToastType.ERROR)
+        }
+    }
+
+    onRunBFlowFinished(runningBflowResult: any) {
+        this.bflow = runningBflowResult.bflow;
+        this.bflowRunResult = runningBflowResult.outs;
+        this.updateBFlowRunResult();
+
+        const clientActionRequiredNode = this.findClientActionRequiredNode(runningBflowResult.bflow.root);
+        if (clientActionRequiredNode) {
+            this.setState(BFLowState.RUN_BFLOW_IN_PROGRESS);
+            addToast("Server requires an action from you", ToastType.WARNING);
+            this.doActionRequired(clientActionRequiredNode);
+        } else {
+            this.setState(BFLowState.RUN_BFLOW_SUCCESS);
+            addToast("Successfully ran BFlow", ToastType.SUCCESS);
         }
     }
 
@@ -301,13 +345,51 @@ export default class BFlowController {
         }
     }
 
+    findClientActionRequiredNode(node: any): any {
+        if (node.state === BFlowNodeState.WAITING_FOR_CLIENT) {
+            return node;
+        }
+        if (node.goto && node.goto.length > 0) {
+            for (let i = 0; i < node.goto.length; i++) {
+                const foundNode = this.findClientActionRequiredNode(node.goto[i]);
+                if (foundNode) {
+                    return foundNode;
+                }
+            }
+        }
+        return null;
+    }
+
+    doActionRequired(node: any) {
+        switch (node.name.toLowerCase()) {
+            case 'upload-file':
+                this.bflowPostalChannel.publish("upload-file", {
+                    node
+                });
+                break;
+        }
+    }
+
+    addNodeResult(node: any, data: any) {
+        if (!this.bflowRunResult) {
+            this.bflowRunResult = {};
+        }
+
+        const input: any = {};
+        input[node.id] = {
+            result: data,
+        };
+        this.bflowRunResult = { ...this.bflowRunResult, ...input };
+    }
+
     isStateLoading() {
         return (
             this.state === BFLowState.CONNECTING ||
             this.state === BFLowState.LIST_AGENTS ||
             this.state === BFLowState.CONVERT_MARKDOC_ELEMENT_TO_BFLOW ||
             this.state === BFLowState.CONVERT_BFLOW_TO_BFLOWVIZ ||
-            this.state === BFLowState.RUN_BFLOW
+            this.state === BFLowState.RUN_BFLOW ||
+            this.state === BFLowState.RUN_BFLOW_IN_PROGRESS
         );
     };
 

@@ -1,24 +1,59 @@
 <svelte:options customElement="b-flow" />
 
 <script lang="ts">
-	import { onMount } from "svelte";
+	import { onMount, onDestroy } from "svelte";
 	import css from "../../app.css?inline";
 	import xyflowCss from "@xyflow/svelte/dist/style.css?inline";
-	import { CircleX, RefreshCcw, Zap, Network, Flame } from "lucide-svelte";
+	import {
+		CircleX,
+		RefreshCcw,
+		Zap,
+		Network,
+		Flame,
+		FileUp,
+	} from "lucide-svelte";
 	import type BFlowController from "./BFlowController.js";
 	import BFlowView from "./visualization/BFlowView.svelte";
 	import LoadingIndicator from "../common/components/LoadingIndicator.svelte";
 	import { BFLowState } from "./BFlowState.js";
 	import Toast from "../common/components/toast/Toast.svelte";
+	import Modal from "../common/components/Modal.svelte";
+	import postal from "postal";
+	import {
+		addToast,
+		ToastType,
+	} from "../common/components/toast/ToastStore.js";
+
+	const bflowPostalChannel = postal.channel("B-Flow");
 
 	let props = $props();
 	let { url = "", text = "", id = null, theme = "crimson" } = props;
 	let { controller }: { controller: BFlowController } = props;
 
+	let uploadFileElement: any = $state();
+	let filePathToUpload = $state("");
+
+	let nodeRequireClientAction: any = $state(null);
+
+	const showRunNodeResultSubscriber = bflowPostalChannel.subscribe(
+		"upload-file",
+		(payload: any) => {
+			console.log(">>>> payload");
+			console.log(payload);
+			nodeRequireClientAction = payload.node;
+			uploadFileElement?.setData(payload.node);
+			uploadFileElement?.show();
+		},
+	);
+
 	onMount(async () => {
 		if ((url || text) && controller.state === BFLowState.CONNECT_SUCCESS) {
 			await controller.loadBFlowViz(url, text);
 		}
+	});
+
+	onDestroy(() => {
+		showRunNodeResultSubscriber.unsubscribe();
 	});
 
 	const convertStateToMessage = (state: BFLowState) => {
@@ -74,56 +109,104 @@
 	const reload = async () => {
 		await controller.loadBFlowViz(url, text);
 	};
+
+	const uploadFile = async () => {
+		if (!filePathToUpload) {
+			addToast("Please select a file to upload", ToastType.ERROR);
+			return;
+		}
+
+		uploadFileElement?.hide();
+		nodeRequireClientAction = null;
+
+		controller.addNodeResult(
+			uploadFileElement?.getData(),
+			filePathToUpload,
+		);
+
+		await controller.resumeBFlow();
+	};
 </script>
 
 <svelte:element this={"style"}>{@html css}</svelte:element>
 <svelte:element this={"style"}>{@html xyflowCss}</svelte:element>
+
+{#snippet reloadBFlowButton()}
+	<button
+		type="button"
+		class="btn preset-tonal-primary"
+		onclick={async () => await reload()}
+	>
+		<Zap class="w-5 h-5" />
+		BFlow changed. Reload
+	</button>
+{/snippet}
+
+{#snippet runBFlowButton()}
+	{#if controller.state === BFLowState.RUN_BFLOW || controller.state === BFLowState.RUN_BFLOW_IN_PROGRESS}
+		<button class="btn preset-filled-warning-500">
+			<Flame class="animate-spin w-5 h-5" />
+			Running
+		</button>
+	{:else if controller.state === BFLowState.RUN_BFLOW_SUCCESS}
+		<button
+			onclick={async () => await controller.runBFlow()}
+			class="btn preset-filled-success-500"
+		>
+			<Flame class="text-white-700 w-5 h-5" />
+			Run
+		</button>
+	{:else if controller.state === BFLowState.RUN_BFLOW_FAILED}
+		<button
+			onclick={async () => await controller.runBFlow()}
+			class="btn preset-filled-error-500"
+		>
+			<Flame class="text-white-700 w-5 h-5" />
+			Run
+		</button>
+	{:else}
+		<button
+			onclick={async () => await controller.runBFlow()}
+			class="btn preset-filled-primary-500"
+		>
+			<Flame class="text-white-700 w-5 h-5" />
+			Run
+		</button>
+	{/if}
+{/snippet}
+
+{#snippet requiredActionButton()}
+	{#if nodeRequireClientAction.name === "upload-file"}
+		<div class="flex flex-col items-end gap-1">
+			<div class="text-error-500 bold animate-bounce">
+				Action required
+			</div>
+			<button
+				onclick={async () => await controller.runBFlow()}
+				class="btn preset-filled-primary-500"
+			>
+				<FileUp class="text-white-700 w-5 h-5" />
+				Upload File
+			</button>
+		</div>
+	{/if}
+{/snippet}
+
 <main data-theme={theme}>
 	<div class="flex items-end justify-between gap-2">
 		{#if id}
 			<span class="badge preset-filled-surface-500">{id}</span>
 		{/if}
 		{#if controller.bflowviz}
-			{@const isBFlowRunning =
-				controller.state === BFLowState.RUN_BFLOW ||
-				controller.state === BFLowState.RUN_BFLOW_IN_PROGRESS}
-			{@const successfullyRanBFlow =
-				controller.state === BFLowState.RUN_BFLOW_SUCCESS}
-			{@const failedToRunBFlow =
-				controller.state === BFLowState.RUN_BFLOW_FAILED}
-
 			<div class="flex justify-end items-center gap-2">
 				{#if controller.isDocumentChanged(url, text)}
-					<button
-						type="button"
-						class="btn preset-tonal-primary"
-						onclick={async () => await reload()}
-					>
-						<Zap class="w-5 h-5" />
-						BFlow changed. Reload
-					</button>
+					{@render reloadBFlowButton()}
 				{/if}
-				<button
-					onclick={async () => await controller.runBFlow()}
-					class="
-							btn
-							{isBFlowRunning
-						? 'preset-filled-warning-500'
-						: successfullyRanBFlow
-							? 'preset-filled-success-500'
-							: failedToRunBFlow
-								? 'preset-filled-error-500'
-								: 'preset-filled-primary-500'}
-						"
-				>
-					{#if isBFlowRunning}
-						<Flame class="animate-spin w-5 h-5" />
-						Running
-					{:else}
-						<Flame class="text-white-700 w-5 h-5" />
-						Run
-					{/if}
-				</button>
+				{#if nodeRequireClientAction}
+					{@render requiredActionButton()}
+				{:else}
+					{@render runBFlowButton()}
+				{/if}
 			</div>
 		{/if}
 	</div>
@@ -198,4 +281,40 @@
 	</div>
 
 	<Toast />
+	<Modal bind:this={uploadFileElement}>
+		{#snippet modalContent()}
+			<div class="max-w-md mx-auto p-6 bg-white">
+				<h2 class="text-xl font-semibold text-gray-700 mb-4">
+					Upload Your File for Processing
+				</h2>
+				<p class="text-gray-600 mb-4">
+					Please upload the required file to continue processing your
+					request.
+				</p>
+
+				<form>
+					<div class="mb-4">
+						<label
+							for="file-input"
+							class="block text-sm font-medium text-gray-700"
+							>Choose a file</label
+						>
+						<input
+							class="input mt-1 w-full"
+							type="text "
+							bind:value={filePathToUpload}
+						/>
+					</div>
+
+					<button
+						type="button"
+						onclick={() => uploadFile()}
+						class="btn preset-filled-primary-500 w-full py-2 hover:preset-filled-primary-300 transition"
+					>
+						Upload File
+					</button>
+				</form>
+			</div>
+		{/snippet}
+	</Modal>
 </main>

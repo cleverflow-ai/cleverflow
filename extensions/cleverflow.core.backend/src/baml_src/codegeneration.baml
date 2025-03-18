@@ -1,5 +1,5 @@
 class JsV8Code {
-    code string
+  code string
 }
 
 function GenerateJSV8Code(instructions: string, utilities: string?) -> JsV8Code {

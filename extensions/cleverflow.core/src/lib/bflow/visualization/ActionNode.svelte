@@ -5,7 +5,7 @@
 	import { BFlowNodeState } from "../agent/models/BFlowNodeState.js";
 	import postal from "postal";
 
-	var channel = postal.channel("B-Flow");
+	const channel = postal.channel("B-Flow-View");
 
 	let { data } = $props();
 
@@ -16,6 +16,7 @@
 				borderColor = "border-success-500";
 				break;
 			case BFlowNodeState.RUNNING:
+			case BFlowNodeState.WAITING_FOR_CLIENT:
 				borderColor = "border-warning-500";
 				break;
 			case BFlowNodeState.FAILURE:
@@ -44,7 +45,7 @@
 	<div
 		class="w-full flex-1 border-2 {borderColor} flex items-center justify-center p-4
 		{data.state === BFlowNodeState.RUNNING
-			? 'animate-border-glow border-dotted'
+			? 'animate-border-glow border-dotted animate-pulse'
 			: ''}"
 	>
 		{#if data.name}

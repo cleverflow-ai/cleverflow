@@ -18,6 +18,7 @@ enum BFlowNodeState {
     RUNNING
     SUCCESS
     FAILURE
+    WAITING_FOR_CLIENT
 }
 
 class BFlowNodeAgent {

@@ -99,6 +99,11 @@ export default class AgentConnection {
             config.payload,
             config.options,
         );
-        return this.codec.decode(reply.data) as T;
+
+        const payload = this.codec.decode(reply.data) as T;
+
+        console.log(`Agent ${config.subject} received: ${JSON.stringify(payload)}.`);
+
+        return payload;
     }
 }
