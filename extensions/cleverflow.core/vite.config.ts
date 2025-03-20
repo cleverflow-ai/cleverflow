@@ -13,6 +13,7 @@ export default defineConfig({
                 'markdoc-reader': 'src/lib/markdoc/renderer/MarkdocReader.ts',
                 'b-flow': 'src/lib/bflow/BFlow.ts',
                 'b-flow-controller': 'src/lib/bflow/BFlowController.svelte.ts',
+                'file-uploader': 'src/lib/common/file-uploader/FileUploader.ts',
             },
             fileName: (format, entryName) => `${entryName}.js`,
             formats: ['es'],

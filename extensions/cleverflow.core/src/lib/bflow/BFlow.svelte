@@ -1,7 +1,7 @@
 <svelte:options customElement="b-flow" />
 
 <script lang="ts">
-	import { onMount, onDestroy } from "svelte";
+	import { onMount, onDestroy, createRawSnippet, type Snippet } from "svelte";
 	import css from "../../app.css?inline";
 	import xyflowCss from "@xyflow/svelte/dist/style.css?inline";
 	import {
@@ -24,7 +24,7 @@
 		ToastType,
 	} from "../common/components/toast/ToastStore.js";
 
-	const bflowPostalChannel = postal.channel("B-Flow");
+	const bflowPostalChannel = postal.channel("b-flow");
 
 	let props = $props();
 	let { url = "", text = "", id = null, theme = "crimson" } = props;
@@ -47,6 +47,7 @@
 	);
 
 	onMount(async () => {
+		await import("../../../dist-webcomponents/file-uploader.js");
 		if ((url || text) && controller.state === BFLowState.CONNECT_SUCCESS) {
 			await controller.loadBFlowViz(url, text);
 		}

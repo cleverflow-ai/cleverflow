@@ -2,6 +2,7 @@ import AgentConnection from "../common/agent/AgentConnection.js";
 import MonitorAgentMessenger from "../common/agent/MonitorAgentMessenger.js";
 import MarkdocCustomeElementToBFlowAgentMessenger from "./agent/MarkdocCustomeElementToBFlowAgentMessenger.js";
 import BFlowToBFlowVizAgentMessenger from "./agent/BFlowToBFlowVizAgentMessenger.js";
+import FileUploadAgentMessenger, { type OutPayload } from "../common/file-uploader/FileUploadAgentMessenger.js";
 import type AgentInfo from "../common/agent/AgentInfo.js";
 import _ from "lodash";
 import { BFLowState } from "./BFlowState.js";
@@ -23,6 +24,7 @@ export default class BFlowController {
     private markdocCustomeElementToBFlowAgentMessenger?: MarkdocCustomeElementToBFlowAgentMessenger;
     private bflowToBFlowVizAgentMessenger?: BFlowToBFlowVizAgentMessenger;
     private bflowRunnerAgentMessenger?: BFlowRunnerAgentMessenger;
+    private fileUploadAgentMessenger?: FileUploadAgentMessenger;
 
     public state: BFLowState = $state(BFLowState.NONE);
     public stateKey = $state(0);
@@ -36,7 +38,7 @@ export default class BFlowController {
     private url: string | undefined;
     private text: string | undefined;
 
-    private bflowPostalChannel = postal.channel("B-Flow");
+    private bflowPostalChannel = postal.channel("b-flow");
 
     constructor(servers: string | string[], token: string) {
         this.servers = servers;
@@ -68,6 +70,17 @@ export default class BFlowController {
                 connection: this.agentConnection,
             });
 
+            this.fileUploadAgentMessenger = new FileUploadAgentMessenger({
+                connection: this.agentConnection,
+                onProcess(payload) {
+                    console.log('>>>> received');
+                    console.log(payload);
+                    return {} as OutPayload;
+                },
+            });
+
+            await this.fileUploadAgentMessenger.start();
+
             this.setState(BFLowState.CONNECT_SUCCESS);
         } catch (exception) {
             this.setState(BFLowState.CONNECT_FAILED);
@@ -83,6 +96,12 @@ export default class BFlowController {
         } catch { }
 
         this.setState(BFLowState.NONE);
+    }
+
+    testFileUploader() {
+        this.fileUploadAgentMessenger?.publish({
+            data: "what is this"
+        });
     }
 
     setState(state: BFLowState) {

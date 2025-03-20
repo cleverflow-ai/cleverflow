@@ -1,4 +1,5 @@
 @import 'tailwindcss';
+/* SMELL: MarkdocEditor worked incorrectly if @tailwindcss/forms has been imported */
 /* @plugin '@tailwindcss/forms'; */
 @import '@skeletonlabs/skeleton';
 @import '@skeletonlabs/skeleton/optional/presets';

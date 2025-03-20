@@ -16,7 +16,7 @@
 	import _ from "lodash";
 	import { BFlowNodeState } from "../agent/models/BFlowNodeState.js";
 
-	const channel = postal.channel("B-Flow-View");
+	const channel = postal.channel("b-flow-view");
 
 	const { bflowRunResult, bflowviz } = $props();
 

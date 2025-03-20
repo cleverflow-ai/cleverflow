@@ -5,7 +5,7 @@
 	import { BFlowNodeState } from "../agent/models/BFlowNodeState.js";
 	import postal from "postal";
 
-	const channel = postal.channel("B-Flow-View");
+	const channel = postal.channel("b-flow-view");
 
 	let { data } = $props();
 

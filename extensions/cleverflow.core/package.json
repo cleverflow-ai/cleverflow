@@ -48,6 +48,10 @@
 		"./webcomponents/b-flow-controller.js": {
 			"import": "./dist-webcomponents/b-flow-controller.js",
 			"require": "./dist-webcomponents/b-flow-controller.js"
+		},
+		"./webcomponents/file-uploader.js": {
+			"import": "./dist-webcomponents/file-uploader.js",
+			"require": "./dist-webcomponents/file-uploader.js"
 		}
 	},
 	"sideEffects": [

@@ -78,9 +78,9 @@ export default abstract class AgentMessenger<In extends object, Out extends obje
 
         if (this.subscription) {
             this.subscription.callback = (err, message) => {
-                const inPayload = JSONCodec<In>().decode(message.data);
+                const inPayload = this.connection?.codec.decode(message.data);
                 console.log(`Agent ${this.subject} received: ${JSON.stringify(inPayload)}.`);
-                this.process(inPayload);
+                this.process(inPayload as In);
             };
         }
     }
@@ -118,6 +118,23 @@ export default abstract class AgentMessenger<In extends object, Out extends obje
                 options: {
                     timeout: 3600 * 1000 // 1 hour 
                 },
+            });
+        } else {
+            throw new Error('Connection is not established');
+        }
+    }
+
+    /**
+     * Publishes a message to the specified subject using the established connection.
+     *
+     * @param payload - The message payload to be published. It is encoded using the connection's codec.
+     * @throws {Error} Throws an error if the connection is not established.
+     */
+    public publish(payload: In): void {
+        if (this.connection) {
+            this.connection.publish({
+                subject: this.subject ?? '',
+                payload: payload,
             });
         } else {
             throw new Error('Connection is not established');
