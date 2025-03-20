@@ -3,11 +3,11 @@ import { AgentConnection } from "./AgentConnection.js";
 import type { AgentInfo } from "./AgentInfo.js";
 import { AgentMessenger } from "./AgentMessager.js";
 
-export type InPayload = {
+export type MonitorAgentMessengerInPayload = {
     query: string,
 }
 
-export type OutPayload = {
+export type MonitorAgentMessengerOutPayload = {
     agents: AgentInfo[];
 }
 
@@ -59,7 +59,7 @@ export type OutPayload = {
 * 
 * @throws {Error} Throws an error if the connection is not established.
 */
-export class MonitorAgentMessenger extends AgentMessenger<InPayload, OutPayload> {
+export class MonitorAgentMessenger extends AgentMessenger<MonitorAgentMessengerInPayload, MonitorAgentMessengerOutPayload> {
 
     /**
      * Initializes a new instance of the MarkdocCustomElementToBFlowAgent class.
@@ -77,11 +77,11 @@ export class MonitorAgentMessenger extends AgentMessenger<InPayload, OutPayload>
      * @async
      * @protected
      */
-    public async request(payload: InPayload): Promise<OutPayload> {
+    public async request(payload: MonitorAgentMessengerInPayload): Promise<MonitorAgentMessengerOutPayload> {
         if (this.connection) {
-            return await this.connection.sendRequest<OutPayload>({
+            return await this.connection.sendRequest<MonitorAgentMessengerOutPayload>({
                 subject: this.subject,
-                payload: JSONCodec<InPayload>().encode(payload),
+                payload: JSONCodec<MonitorAgentMessengerInPayload>().encode(payload),
                 options: {
                     timeout: 3600 * 1000 // 1 hour 
                 },
@@ -92,7 +92,7 @@ export class MonitorAgentMessenger extends AgentMessenger<InPayload, OutPayload>
     }
 
 
-    protected async process(payload: InPayload): Promise<OutPayload> {
+    protected async process(payload: MonitorAgentMessengerInPayload): Promise<MonitorAgentMessengerOutPayload> {
         throw new Error("Method not implemented.");
     }
 

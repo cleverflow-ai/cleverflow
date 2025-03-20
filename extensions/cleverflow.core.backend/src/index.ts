@@ -2,10 +2,9 @@ import dotenvFlow from 'dotenv-flow';
 dotenvFlow.config();
 console.log('BAML Log Level:', process.env.BAML_LOG);
 
-import monitorAgent from './common/MonitorAgent.js';
+import { monitorAgent, JsV8VmRunner } from '@cleverflow/cleverflow.core';
 import MarkdocCustomElementToBFlowAgent from './bflow/MarkdocCustomeElementToBFlowAgent.js';
 import BFlowToBFlowVizAgent from './bflow/BFlowToBFlowVizAgent.js';
-import JsV8VmRunner from './common/JsV8VmRunner.js';
 import JsV8CodeGenerationAgent from './common/JsV8CodeGenerationAgent.js';
 import BFlowRunnerAgent from './bflow/BFlowRunnerAgent.js';
 import FileUploaderAgent from './file-uploader/FileUploaderAgent.js';

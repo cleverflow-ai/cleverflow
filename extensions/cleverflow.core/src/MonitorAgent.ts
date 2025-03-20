@@ -1,12 +1,12 @@
 import _ from "lodash";
-import Agent from "./Agent.js";
-import AgentInfo from "./AgentInfo.js";
+import { Agent } from "./Agent.js";
+import { AgentInfo } from "./AgentInfo.js";
 
-export type InPayload = {
+export type MonitorAgentInPayload = {
     query: 'list' | 'logs'
 }
 
-export type OutPayload = {
+export type MonitorAgentOutPayload = {
     agents: AgentInfo[];
 }
 
@@ -16,7 +16,7 @@ export type OutPayload = {
  * @template InPayload - The type of the input payload.
  * @template OutPayload - The type of the output payload.
  */
-class MonitorAgent extends Agent<InPayload, OutPayload> {
+class MonitorAgent extends Agent<MonitorAgentInPayload, MonitorAgentOutPayload> {
     private _agents: AgentInfo[] = [];
 
     /**
@@ -45,7 +45,7 @@ class MonitorAgent extends Agent<InPayload, OutPayload> {
      * @returns A promise that resolves to the output payload.
      * @throws Will throw an error if the query is not supported.
      */
-    public async process(payload: InPayload): Promise<OutPayload> {
+    public async process(payload: MonitorAgentInPayload): Promise<MonitorAgentOutPayload> {
         if (payload.query === 'list') {
             // SMELL: 
             // return { agents: this._agents };
@@ -63,6 +63,4 @@ class MonitorAgent extends Agent<InPayload, OutPayload> {
         }
     }
 }
-const monitorAgent = new MonitorAgent();
-
-export default monitorAgent;
+export const monitorAgent = new MonitorAgent();

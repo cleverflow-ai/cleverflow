@@ -1,5 +1,5 @@
 import { createInbox } from 'nats';
-import Agent from "../common/Agent.js";
+import { Agent } from "@cleverflow/cleverflow.core";
 
 
 export type InPayload = {

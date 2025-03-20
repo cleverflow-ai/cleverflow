@@ -1,6 +1,6 @@
 import { b } from '../baml_client/async_client.js';
 import { BFlow, BFlowViz } from '../baml_client/types.js';
-import Agent from "../common/Agent.js";
+import { Agent } from "@cleverflow/cleverflow.core";
 import Clients from '../baml/Clients.js';
 
 export type InPayload = {

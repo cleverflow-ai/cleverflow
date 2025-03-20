@@ -1,6 +1,6 @@
 import { createInbox } from 'nats';
 import { BFlow, BFlowNode, BFlowNodeState, BFlowNodeType } from "../baml_client/types.js";
-import Agent from "../common/Agent.js";
+import { Agent } from "@cleverflow/cleverflow.core";
 
 enum ACTION {
     CREATE = 'create',
@@ -62,7 +62,7 @@ export default class BFlowRunnerAgent extends Agent<InPayload, OutPayload> {
                         this.publish({
                             bflow: payload.bflow,
                             outs: Object.fromEntries(this._outs)
-                        });
+                        }, {});
                     };
                     await this.runNode(payload.bflow.root, {
                         onProgress: onRunNodeProgress,

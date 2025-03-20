@@ -12,6 +12,7 @@
     "typescript": "^5.7.3"
   },
   "dependencies": {
+    "@cleverflow/cleverflow.core": "file:../cleverflow.core",
     "@boundaryml/baml": "^0.78.0",
     "@nats-io/nats-core": "^3.0.0-51",
     "@nats-io/transport-node": "^3.0.0-36",

@@ -10,7 +10,7 @@ import vm from 'vm';
  * @class JsV8VmRunner
  * @description The `JsV8VmRunner` class provides methods to run isolated JavaScript code in a secure sandboxed environment. It also allows adding custom utility functions to the sandbox.
  */
-export default class JsV8VmRunner {
+export class JsV8VmRunner {
     /**
      * @property {Record<string, Function>} utilities
      * @description A collection of utility functions that can be used within the sandboxed environment.
@@ -39,8 +39,8 @@ export default class JsV8VmRunner {
                     url,
                     {
                         headers: {
-                          "Cache-Control": "no-cache",
-                          "Access-Control-Allow-Origin": "*"
+                            "Cache-Control": "no-cache",
+                            "Access-Control-Allow-Origin": "*"
                         },
                     }
                 );

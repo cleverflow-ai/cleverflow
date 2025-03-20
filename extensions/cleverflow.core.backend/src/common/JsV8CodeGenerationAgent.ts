@@ -1,8 +1,7 @@
 import Clients from "../baml/Clients.js";
 import { b } from "../baml_client/async_client.js";
 import { JsV8Code } from "../baml_client/types.js";
-import Agent from "./Agent.js";
-import JsV8VmRunner from "./JsV8VmRunner.js";
+import { Agent, JsV8VmRunner } from "@cleverflow/cleverflow.core";
 
 export type InPayload = {
     description: string;

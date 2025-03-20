@@ -1,6 +1,6 @@
 import { JSONCodec } from 'nats/lib/nats-base-client/codec.js';
 import { connect, NatsConnection, PublishOptions, Subscription } from 'nats';
-import AgentInfo from './AgentInfo.js';
+import { AgentInfo } from './AgentInfo.js';
 
 /**
  * The Agent class is an abstract base class for creating agents that connect to a NATS server,
@@ -16,7 +16,7 @@ import AgentInfo from './AgentInfo.js';
  * 
  * @implements {AgentInfo}
  */
-export default abstract class Agent<In extends object, Out extends object> implements AgentInfo {
+export abstract class Agent<In extends object, Out extends object> implements AgentInfo {
     public name: string | undefined;
     public readonly description: string | undefined;
 

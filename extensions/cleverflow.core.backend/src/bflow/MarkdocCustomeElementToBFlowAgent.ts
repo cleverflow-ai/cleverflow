@@ -1,8 +1,7 @@
 import { b } from '../baml_client/async_client.js';
 import { BFlow, BFlowNodeAgent } from '../baml_client/types.js';
-import Agent from "../common/Agent.js";
+import { Agent, type AgentInfo } from "@cleverflow/cleverflow.core";
 import Clients from '../baml/Clients.js';
-import AgentInfo from '../common/AgentInfo.js';
 
 export type InPayload = {
     text: string;
@@ -43,9 +42,9 @@ export default class MarkdocCustomElementToBFlowAgent extends Agent<InPayload, O
      * Sets the agent name to 'markdoc-custom-element-to-bflow'.
      */
     constructor() {
-        super({ 
+        super({
             name: 'markdoc-custom-element-to-bflow',
-            description: 'Parse given Markdoc Custome Element (as Text) to B-Flow.'  
+            description: 'Parse given Markdoc Custome Element (as Text) to B-Flow.'
         });
     }
 
@@ -59,12 +58,12 @@ export default class MarkdocCustomElementToBFlowAgent extends Agent<InPayload, O
      */
     public async process(payload: InPayload): Promise<OutPayload> {
         const bflow = await b.ParseMarkdocBFlowElementToBFlow(
-            payload.text, 
+            payload.text,
             payload.agents,
-            { 
-                clientRegistry: new Clients({ primary: Clients.OllamaTool }).registry 
+            {
+                clientRegistry: new Clients({ primary: Clients.OllamaTool }).registry
             });
-        
+
         return { bflow: bflow };
     }
 }
