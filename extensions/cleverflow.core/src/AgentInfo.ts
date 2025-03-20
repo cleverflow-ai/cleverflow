@@ -2,7 +2,7 @@
 /**
  * Represents information about an agent.
  */
-export default class AgentInfo {
+export class AgentInfo {
     /**
      * The name of the agent.
      */

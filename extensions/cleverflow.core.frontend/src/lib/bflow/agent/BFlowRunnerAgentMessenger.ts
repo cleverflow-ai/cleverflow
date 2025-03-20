@@ -1,6 +1,4 @@
-import { JSONCodec } from "nats";
-import AgentConnection from "../../common/agent/AgentConnection.js";
-import AgentMessenger from "../../common/agent/AgentMessager.js";
+import { AgentConnection, AgentMessenger } from "@cleverflow/cleverflow.core";
 
 enum ACTION {
     CREATE = 'create',

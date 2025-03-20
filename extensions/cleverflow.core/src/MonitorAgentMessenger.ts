@@ -1,7 +1,7 @@
 import { JSONCodec } from "nats";
-import AgentConnection from "./AgentConnection.js";
-import type AgentInfo from "./AgentInfo.js";
-import AgentMessenger from "./AgentMessager.js";
+import { AgentConnection } from "./AgentConnection.js";
+import type { AgentInfo } from "./AgentInfo.js";
+import { AgentMessenger } from "./AgentMessager.js";
 
 export type InPayload = {
     query: string,
@@ -43,24 +43,24 @@ export type OutPayload = {
  * @module MonitorAgentMessenger
  */
 
- /**
- * @class MonitorAgentMessenger
- * @extends {AgentMessenger<InPayload, OutPayload>}
- * @classdesc The MonitorAgentMessenger class is responsible for sending requests to the BFlow service to convert Markdoc custom elements to BFlow format.
- * 
- * @template InPayload - The type of the input payload.
- * @template OutPayload - The type of the output payload.
- * 
- * @example
- * const messenger = new MonitorAgentMessenger({ connection: agentConnection });
- * const result = await messenger.request(inputPayload);
- * 
- * @param {Partial<{ connection: AgentConnection }>} config - The configuration object containing the agent connection.
- * 
- * @throws {Error} Throws an error if the connection is not established.
- */
-export default class MonitorAgentMessenger extends AgentMessenger<InPayload, OutPayload> {
-    
+/**
+* @class MonitorAgentMessenger
+* @extends {AgentMessenger<InPayload, OutPayload>}
+* @classdesc The MonitorAgentMessenger class is responsible for sending requests to the BFlow service to convert Markdoc custom elements to BFlow format.
+* 
+* @template InPayload - The type of the input payload.
+* @template OutPayload - The type of the output payload.
+* 
+* @example
+* const messenger = new MonitorAgentMessenger({ connection: agentConnection });
+* const result = await messenger.request(inputPayload);
+* 
+* @param {Partial<{ connection: AgentConnection }>} config - The configuration object containing the agent connection.
+* 
+* @throws {Error} Throws an error if the connection is not established.
+*/
+export class MonitorAgentMessenger extends AgentMessenger<InPayload, OutPayload> {
+
     /**
      * Initializes a new instance of the MarkdocCustomElementToBFlowAgent class.
      * Sets the agent name to 'markdoc-custom-element-to-bflow'.
@@ -68,7 +68,7 @@ export default class MonitorAgentMessenger extends AgentMessenger<InPayload, Out
     constructor(config: Partial<{ connection: AgentConnection }>) {
         super({ connection: config.connection, subject: 'monitor-all-agents' });
     }
-    
+
     /**
      * Send a request to the BFlow service to convert Markdoc custom elements to BFlow format.
      * 
@@ -78,15 +78,15 @@ export default class MonitorAgentMessenger extends AgentMessenger<InPayload, Out
      * @protected
      */
     public async request(payload: InPayload): Promise<OutPayload> {
-        if(this.connection){
+        if (this.connection) {
             return await this.connection.sendRequest<OutPayload>({
                 subject: this.subject,
                 payload: JSONCodec<InPayload>().encode(payload),
                 options: {
-                    timeout: 3600*1000 // 1 hour 
-                }, 
+                    timeout: 3600 * 1000 // 1 hour 
+                },
             });
-        }else {
+        } else {
             throw new Error('Connection is not established');
         }
     }

@@ -3,8 +3,6 @@
   import { Pencil, Eye, Loader, CircleX, Check, Zap } from "lucide-svelte";
   import { onMount } from "svelte";
   import MarkdocRendererController from "@cleverflow/cleverflow.core.frontend/webcomponents/markdoc-renderer-controller.js";
-  import * as MarkocNodeUtil from "../../extensions/cleverflow.core.frontend/src/lib/common/utils/MarkdocNodeUtil.js";
-  import * as JsonUtil from "../../extensions/cleverflow.core.frontend/src/lib/common/utils/JsonUtil.js";
 
   const eventServer = "ws://localhost:8080";
   const eventServerToken = "76de3ba222bec3af21f9dbfb01f3197b";

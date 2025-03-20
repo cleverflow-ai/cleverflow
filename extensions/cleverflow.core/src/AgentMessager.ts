@@ -1,6 +1,5 @@
 import type { Subscription } from "@nats-io/nats-core";
-import AgentConnection from './AgentConnection.js';
-import { JSONCodec } from "nats";
+import { AgentConnection } from './AgentConnection.js';
 
 /**
  * The Agent class is an abstract base class for creating agents that connect to a NATS server,
@@ -22,7 +21,7 @@ import { JSONCodec } from "nats";
    * @template In - The type of the incoming message payload.
    * @template Out - The type of the outgoing message payload.
    */
-export default abstract class AgentMessenger<In extends object, Out extends object> {
+export abstract class AgentMessenger<In extends object, Out extends object> {
     public subject: string | undefined;
 
     protected connection: AgentConnection | null | undefined;

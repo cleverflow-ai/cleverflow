@@ -47,7 +47,6 @@
 	);
 
 	onMount(async () => {
-		await import("../../../dist-webcomponents/file-uploader.js");
 		if ((url || text) && controller.state === BFLowState.CONNECT_SUCCESS) {
 			await controller.loadBFlowViz(url, text);
 		}
