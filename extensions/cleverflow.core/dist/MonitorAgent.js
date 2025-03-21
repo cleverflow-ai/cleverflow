@@ -9,6 +9,7 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
 };
 import _ from "lodash";
 import { Agent } from "./Agent.js";
+import { JSONCodec } from "nats";
 /**
  * MonitorAgent class extends the Agent class to monitor and manage registered agents.
  *
@@ -47,7 +48,7 @@ class MonitorAgent extends Agent {
                 // SMELL: 
                 // return { agents: this._agents };
                 return {
-                    agents: _.map(this._agents, (agent) => {
+                    agents: _.map(_.filter(this._agents, (agent) => !agent.isExternal), (agent) => {
                         return {
                             name: agent.name,
                             description: agent.description,
@@ -56,8 +57,72 @@ class MonitorAgent extends Agent {
                     })
                 };
             }
+            else if (payload.query === 'register') {
+                this._agents.push(payload.data);
+                return {};
+            }
+            else if (payload.query === 'get') {
+                const action = payload.data;
+                const agent = _.find(this._agents, (agent) => {
+                    if (agent.actions && agent.actions.includes(action)) {
+                        return true;
+                    }
+                    return false;
+                });
+                if (agent) {
+                    return {
+                        agents: [
+                            {
+                                name: agent.name,
+                                description: agent.description,
+                                isExternal: agent.isExternal,
+                                guiEnabled: agent.guiEnabled,
+                            }
+                        ]
+                    };
+                }
+                else {
+                    return {};
+                }
+            }
             else {
                 throw new Error(`${payload.query} is still not supported.`);
+            }
+        });
+    }
+    createNotificationSubject() {
+        return __awaiter(this, arguments, void 0, function* (config = {}) {
+            const subject = 'monitor.agents.notifications.server';
+            const defaultConfig = {
+                servers: 'localhost:4222',
+                token: '76de3ba222bec3af21f9dbfb01f3197b',
+            };
+            config = Object.assign(Object.assign({}, defaultConfig), config);
+            if (!this.connection) {
+                this.connection = yield this.connect(config);
+                console.log(`Agent ${this.name} was connected.`);
+            }
+            if (!this._notificationSubscription) {
+                this._notificationSubscription = this.connection.subscribe(`${subject}`);
+                console.log(`Agent ${this.name} is now listening to ${subject}.`);
+                if (this._notificationSubscription) {
+                    this._notificationSubscription.callback = (err, message) => __awaiter(this, void 0, void 0, function* () {
+                        if (err) {
+                            console.error(`Agent ${this.name} Error receiving message from ${subject}:`, err);
+                        }
+                        else {
+                            // process messages
+                            const inPayload = JSONCodec().decode(message.data);
+                            console.log(`[Agent ${this.name} received] from ${subject}:`);
+                            console.log(JSON.stringify(inPayload));
+                            _.forEach(this._agents, (agent) => {
+                                if (agent.onNotify) {
+                                    agent.onNotify(inPayload);
+                                }
+                            });
+                        }
+                    });
+                }
             }
         });
     }

@@ -131,6 +131,72 @@ export class Agent {
         (_a = this.connection) === null || _a === void 0 ? void 0 : _a.publish(`${this.name}.client`, this.codec.encode(payload), options);
     }
     /**
+     * Sends a notification to a specified subject with an optional payload and publishing options.
+     *
+     * @param subject - The subject or channel to which the notification will be sent.
+     * @param payload - (Optional) The data to be sent along with the notification. This can be any serializable object.
+     * @param options - (Optional) Additional options for publishing the notification, such as headers or delivery settings.
+     *
+     * @remarks
+     * - The method logs the notification details to the console for debugging purposes.
+     * - The payload is encoded using the codec before being published.
+     * - If the connection is not established (`this.connection` is undefined), the notification will not be sent.
+     *
+     * @example
+     * ```typescript
+     * const agent = new Agent("exampleAgent");
+     * const payload = { message: "Hello, World!" };
+     * const options: PublishOptions = { headers: { priority: "high" } };
+     *
+     * agent.notify("example.subject", payload, options);
+     * ```
+     */
+    notify(subject, payload, options) {
+        var _a;
+        console.log(`[Agent ${this.name} notify to ${subject}]:`);
+        console.log(JSON.stringify(payload));
+        (_a = this.connection) === null || _a === void 0 ? void 0 : _a.publish(`${subject}`, this.codec.encode(payload), options);
+    }
+    request(config) {
+        return __awaiter(this, void 0, void 0, function* () {
+            var _a, _b, _c;
+            const subjectToSendRequest = (_b = (_a = config.subject) !== null && _a !== void 0 ? _a : this.name) !== null && _b !== void 0 ? _b : '';
+            console.log(`Agent ${this.name} requested to ${subjectToSendRequest}: ${JSON.stringify(config.payload)}.`);
+            const msg = yield ((_c = this.connection) === null || _c === void 0 ? void 0 : _c.request(subjectToSendRequest, JSONCodec().encode(config.payload), {
+                timeout: 3600 * 1000 // 1 hour 
+            }));
+            if (msg) {
+                return JSONCodec().decode(msg.data);
+            }
+            return null;
+        });
+    }
+    /**
+     * Handles notifications with the provided payload.
+     *
+     * @param payload - The data associated with the notification.
+     *                  This can be of any type and is expected to contain
+     *                  the information necessary for processing the notification.
+     *
+     * @remarks
+     * This method is intended to be overridden by subclasses to implement
+     * specific notification handling logic. By default, it does not perform
+     * any operations.
+     *
+     * @example
+     * ```typescript
+     * class CustomAgent extends Agent {
+     *     public onNotify(payload: any) {
+     *         console.log('Notification received:', payload);
+     *     }
+     * }
+     *
+     * const agent = new CustomAgent();
+     * agent.onNotify({ message: 'Hello, world!' });
+     * ```
+     */
+    onNotify(payload) { }
+    /**
      * Establishes a connection to the NATS server.
      *
      * @param {Partial<{ servers: string | string[], token: string }>} config - Configuration object containing server details and token.

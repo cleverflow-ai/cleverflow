@@ -10,7 +10,7 @@ const __filename = fileURLToPath(import.meta.url);
 const ___dirname = path.dirname(__filename);
 
 export type InPayload = {
-    action: 'loadGUI' | 'upload',
+    query: 'loadGUI' | 'upload',
     name?: string,
     data?: any
 }
@@ -24,17 +24,24 @@ export default class FileUploaderAgent extends Agent<InPayload, OutPayload> {
 
     constructor() {
         super({
-            name: 'file-uploader',
+            name: 'file-up',
             description: 'This Agent facilitates file uploads by requesting files from the client and saving them to its designated workspace.'
         });
     }
 
     public async process(payload: InPayload): Promise<OutPayload> {
-        if (payload.action === 'loadGUI') {
+        if (payload.query === 'loadGUI') {
             return {
-                data: this.loadGUIBinary()
+                data: {
+                    webcomponent: 'file-uploader',
+                    attributes: {
+                        servers: "ws://localhost:8080",
+                        token: "76de3ba222bec3af21f9dbfb01f3197b",
+                    },
+                    buffer: this.loadGUIBinary(),
+                },
             };
-        } else if (payload.action === 'upload') {
+        } else if (payload.query === 'upload') {
 
             const filePath = path.resolve(___dirname, '..', '_workspace/upload', `${uuidv4()}_${payload.name}`);
             const dirPath = path.dirname(filePath);
@@ -47,10 +54,36 @@ export default class FileUploaderAgent extends Agent<InPayload, OutPayload> {
             const decompressedData = inflateSync(compressedData);
             fs.writeFileSync(filePath, decompressedData);
 
+            this.notify('monitor.agents.notifications.server', {
+                agentName: this.name,
+                action: 'processed',
+                session: '',
+                time: new Date(),
+                data: {
+                    filePath
+                }
+            }, {});
+
             return {};
         } else {
-            throw new Error(`${payload.action} is still not supported.`);
+            throw new Error(`${payload.query} is still not supported.`);
         }
+    }
+
+    public async register() {
+        await this.request({
+            subject: 'monitor-all-agents.server',
+            payload: {
+                query: 'register',
+                data: {
+                    name: 'file-up',
+                    description: 'This Agent facilitates file uploads by requesting files from the client and saving them to its designated workspace.',
+                    isExternal: true,
+                    actions: ['upload-file'],
+                    guiEnabled: true,
+                }
+            }
+        });
     }
 
     private loadGUIBinary(): Buffer {

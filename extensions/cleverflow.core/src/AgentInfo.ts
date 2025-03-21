@@ -9,4 +9,8 @@
 export interface AgentInfo {
     name: string | undefined;
     description: string | undefined;
+    isExternal?: boolean | undefined,
+    actions?: string[] | undefined,
+    guiEnabled?: boolean | undefined,
+    onNotify?: (payload: any) => void
 }

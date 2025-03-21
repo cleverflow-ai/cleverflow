@@ -11,3 +11,5 @@ await fileUploaderAgent.run({
     servers: eventsServer,
     token: eventsToken
 });
+
+await fileUploaderAgent.register();

@@ -1,14 +1,9 @@
 import { createInbox } from 'nats';
 import { BFlow, BFlowNode, BFlowNodeState, BFlowNodeType } from "../baml_client/types.js";
-import { Agent } from "@cleverflow/cleverflow.core";
-
-enum ACTION {
-    CREATE = 'create',
-    RUN = 'run',
-}
+import { Agent, type AgentInfo } from "@cleverflow/cleverflow.core";
 
 export type InPayload = {
-    action: ACTION,
+    query: 'create' | 'run' | 'loadGUI',
     bflow?: BFlow;
     outs?: {},
 }
@@ -16,7 +11,8 @@ export type InPayload = {
 export type OutPayload = {
     subject?: string,
     bflow?: BFlow;
-    outs?: {}
+    outs?: {},
+    gui?: any,
 }
 
 /**
@@ -34,6 +30,13 @@ export default class BFlowRunnerAgent extends Agent<InPayload, OutPayload> {
             name: config?.name ?? 'bflow-runner',
             description: 'Run the given B-Flow.'
         });
+
+        // setTimeout(async () => {
+        //     const agent = await this.getAgentForAction('upload-file');
+        //     if (agent) {
+        //         await this.loadAgentGUI(agent);
+        //     }
+        // }, 10000);
     }
 
     /**
@@ -42,8 +45,17 @@ export default class BFlowRunnerAgent extends Agent<InPayload, OutPayload> {
      * @returns The output payload containing the B-Flow and the outputs of the nodes.
      */
     public async process(payload: InPayload): Promise<OutPayload> {
-        switch (payload.action) {
-            case ACTION.CREATE:
+        switch (payload.query) {
+            case 'loadGUI':
+                const agent = await this.getAgentForAction('upload-file');
+                if (agent) {
+                    const gui = await this.loadAgentGUI(agent);
+                    return {
+                        gui: gui,
+                    };
+                }
+                return {};
+            case 'create':
                 const bflowRunnerAgent = new BFlowRunnerAgent({ name: `bflow-runner.${createInbox()}` });
                 await bflowRunnerAgent.run({
                     servers: process.env.EVENTS_SERVER,
@@ -52,7 +64,7 @@ export default class BFlowRunnerAgent extends Agent<InPayload, OutPayload> {
                 return {
                     subject: bflowRunnerAgent.name,
                 };
-            case ACTION.RUN:
+            case 'run':
             default:
                 if (payload.outs) {
                     this._outs = new Map(Object.entries(payload.outs));
@@ -76,6 +88,10 @@ export default class BFlowRunnerAgent extends Agent<InPayload, OutPayload> {
                     return {};
                 }
         }
+    }
+
+    public onNotify(payload: any) {
+        console.log(`>>>> BFlowRunnerAgent got a notification: `);
     }
 
     /**
@@ -137,9 +153,12 @@ export default class BFlowRunnerAgent extends Agent<InPayload, OutPayload> {
         } else if (node.type === BFlowNodeType.ACTION || node.type === BFlowNodeType.CONDITION) {
 
             if (this.isClientActionRequired(node)) {
-                // this._outs.set(node.id ?? '', {
-                //     result: 'https://raw.githubusercontent.com/cleverflow-ai/examples/refs/heads/main/machinery/machines-list.md',
-                // });
+                // TODO: save current state to db
+                const candidateAgent = await this.getAgentForAction(node.name ?? '');
+                if (candidateAgent && candidateAgent.guiEnabled) {
+                    // const gui
+                }
+
                 if (this.hasNodeResult(node)) {
                     node.state = BFlowNodeState.SUCCESS;
                 } else {
@@ -152,9 +171,6 @@ export default class BFlowRunnerAgent extends Agent<InPayload, OutPayload> {
                 let inputs: any[] = [];
 
                 if (node.inputs) {
-                    console.log('>>>>> node.inputs');
-                    console.log(node.inputs);
-
                     // Each Input corresponds a Node Id
                     for (const nodeId of node.inputs) {
                         // Get saved Output of required Node
@@ -206,5 +222,31 @@ export default class BFlowRunnerAgent extends Agent<InPayload, OutPayload> {
             return this._outs.get(node.id);
         }
         return false;
+    }
+
+    private async getAgentForAction(action: string): Promise<AgentInfo> {
+        const result = await this.request({
+            subject: 'monitor-all-agents.server',
+            payload: {
+                query: 'get',
+                data: action,
+            },
+        });
+
+        if (result && result.agents && result.agents.length > 0) {
+            return result.agents[0];
+        }
+        return null;
+    }
+
+    private async loadAgentGUI(agent: AgentInfo) {
+        const result = await this.request({
+            subject: `${agent.name}.server`,
+            payload: {
+                query: 'loadGUI'
+            }
+        });
+
+        return result.data;
     }
 }

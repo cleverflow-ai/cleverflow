@@ -116,7 +116,6 @@ export abstract class Agent<In extends object, Out extends object> implements Ag
      */
     public abstract process(payload: In): Promise<Out>;
 
-
     /**
      * Publishes a message to a specified subject using the underlying connection.
      *
@@ -141,6 +140,78 @@ export abstract class Agent<In extends object, Out extends object> implements Ag
         console.log(JSON.stringify(payload));
         this.connection?.publish(`${this.name}.client`, this.codec.encode(payload), options);
     }
+
+    /**
+     * Sends a notification to a specified subject with an optional payload and publishing options.
+     *
+     * @param subject - The subject or channel to which the notification will be sent.
+     * @param payload - (Optional) The data to be sent along with the notification. This can be any serializable object.
+     * @param options - (Optional) Additional options for publishing the notification, such as headers or delivery settings.
+     *
+     * @remarks
+     * - The method logs the notification details to the console for debugging purposes.
+     * - The payload is encoded using the codec before being published.
+     * - If the connection is not established (`this.connection` is undefined), the notification will not be sent.
+     *
+     * @example
+     * ```typescript
+     * const agent = new Agent("exampleAgent");
+     * const payload = { message: "Hello, World!" };
+     * const options: PublishOptions = { headers: { priority: "high" } };
+     *
+     * agent.notify("example.subject", payload, options);
+     * ```
+     */
+    public notify(subject: string, payload?: any, options?: PublishOptions): void {
+        console.log(`[Agent ${this.name} notify to ${subject}]:`);
+        console.log(JSON.stringify(payload));
+        this.connection?.publish(`${subject}`, this.codec.encode(payload), options);
+    }
+
+    public async request(config: {
+        subject?: string,
+        payload: In
+    }): Promise<Out | null> {
+        const subjectToSendRequest = config.subject ?? this.name ?? '';
+        console.log(`Agent ${this.name} requested to ${subjectToSendRequest}: ${JSON.stringify(config.payload)}.`);
+        const msg = await this.connection?.request(
+            subjectToSendRequest,
+            JSONCodec<In>().encode(config.payload),
+            {
+                timeout: 3600 * 1000 // 1 hour 
+            },
+        );
+        if (msg) {
+            return JSONCodec<Out>().decode(msg.data);
+        }
+        return null;
+    }
+
+    /**
+     * Handles notifications with the provided payload.
+     *
+     * @param payload - The data associated with the notification. 
+     *                  This can be of any type and is expected to contain 
+     *                  the information necessary for processing the notification.
+     *
+     * @remarks
+     * This method is intended to be overridden by subclasses to implement
+     * specific notification handling logic. By default, it does not perform
+     * any operations.
+     *
+     * @example
+     * ```typescript
+     * class CustomAgent extends Agent {
+     *     public onNotify(payload: any) {
+     *         console.log('Notification received:', payload);
+     *     }
+     * }
+     *
+     * const agent = new CustomAgent();
+     * agent.onNotify({ message: 'Hello, world!' });
+     * ```
+     */
+    public onNotify(payload: any) { }
 
     /**
      * Establishes a connection to the NATS server.

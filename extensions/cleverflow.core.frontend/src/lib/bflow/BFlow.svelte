@@ -1,7 +1,7 @@
 <svelte:options customElement="b-flow" />
 
 <script lang="ts">
-	import { onMount, onDestroy, createRawSnippet, type Snippet } from "svelte";
+	import { onMount, onDestroy } from "svelte";
 	import css from "../../app.css?inline";
 	import xyflowCss from "@xyflow/svelte/dist/style.css?inline";
 	import {

@@ -3,6 +3,7 @@ import { AgentConnection, AgentMessenger } from "@cleverflow/cleverflow.core";
 enum ACTION {
     CREATE = 'create',
     RUN = 'run',
+    LOAD_GUI = 'loadGUI',
 }
 
 export type InPayload = {

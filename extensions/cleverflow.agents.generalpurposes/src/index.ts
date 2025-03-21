@@ -7,7 +7,6 @@ import MarkdocCustomElementToBFlowAgent from './bflow/MarkdocCustomeElementToBFl
 import BFlowToBFlowVizAgent from './bflow/BFlowToBFlowVizAgent.js';
 import JsV8CodeGenerationAgent from './common/JsV8CodeGenerationAgent.js';
 import BFlowRunnerAgent from './bflow/BFlowRunnerAgent.js';
-import FileUploaderAgent from './file-uploader/FileUploaderAgent.js';
 
 const eventsServer = process.env.EVENTS_SERVER;
 const eventsToken = process.env.EVENTS_TOKEN;
@@ -24,9 +23,6 @@ monitorAgent.register(jsV8CodeGenerationAgent);
 
 const bflowRunnerAgent = new BFlowRunnerAgent();
 monitorAgent.register(bflowRunnerAgent);
-
-const fileUploaderAgent = new FileUploaderAgent();
-monitorAgent.register(fileUploaderAgent);
 
 await Promise.all([
     monitorAgent.run({
@@ -49,7 +45,7 @@ await Promise.all([
         servers: eventsServer,
         token: eventsToken
     }),
-    fileUploaderAgent.run({
+    monitorAgent.createNotificationSubject({
         servers: eventsServer,
         token: eventsToken
     }),

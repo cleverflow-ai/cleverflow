@@ -10,12 +10,17 @@ export default defineConfig({
                 'file-uploader': 'src/lib/FileUploader.ts',
             },
             fileName: (format, entryName) => `${entryName}.js`,
-            formats: ['es'],
+            formats: ['iife'],
+            name: "FileUploader",
+            // formats: ['es'],
         },
         rollupOptions: {
-            external: ['@cleverflow/cleverflow.core'],
+            external: [],
             output: {
-                inlineDynamicImports: false,
+                inlineDynamicImports: true,
+                globals: {
+                    '@cleverflow/cleverflow.core': 'cleverflow_core'
+                }
             },
         },
         outDir: 'dist-webcomponents',

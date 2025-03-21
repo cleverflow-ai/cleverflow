@@ -1,7 +1,7 @@
 import { AgentConnection, AgentMessenger } from "@cleverflow/cleverflow.core";
 
 export type InPayload = {
-    action: 'upload',
+    query: 'upload',
     name: string,
     data: any,
 }
@@ -27,12 +27,12 @@ export default class FileUploadAgentMessenger extends AgentMessenger<InPayload, 
      * @param {Partial<{ connection: AgentConnection }>} config - The configuration object containing the agent connection.
      */
     constructor(config: Partial<{ connection: AgentConnection }>) {
-        super({ connection: config.connection, subject: 'file-uploader' });
+        super({ connection: config.connection, subject: 'file-up' });
     }
 
     async upload(fileToUpload: any) {
         return await this?.request({
-            action: 'upload',
+            query: 'upload',
             name: fileToUpload.name,
             data: fileToUpload.data,
         });
