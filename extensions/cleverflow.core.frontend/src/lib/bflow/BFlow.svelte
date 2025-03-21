@@ -10,14 +10,13 @@
 		Zap,
 		Network,
 		Flame,
-		FileUp,
+		TriangleAlert,
 	} from "lucide-svelte";
 	import type BFlowController from "./BFlowController.js";
 	import BFlowView from "./visualization/BFlowView.svelte";
 	import LoadingIndicator from "../common/components/LoadingIndicator.svelte";
 	import { BFLowState } from "./BFlowState.js";
 	import Toast from "../common/components/toast/Toast.svelte";
-	import Modal from "../common/components/Modal.svelte";
 	import postal from "postal";
 	import {
 		addToast,
@@ -30,17 +29,15 @@
 	let { url = "", text = "", id = null, theme = "crimson" } = props;
 	let { controller }: { controller: BFlowController } = props;
 
-	let uploadFileElement: any = $state();
-	let filePathToUpload = $state("");
-
-	let nodeRequireClientAction: any = $state(null);
+	let serverWebComponentContainer: any = $state();
+	let serverWebComponentData: any = $state(null);
 
 	const showRunNodeResultSubscriber = bflowPostalChannel.subscribe(
-		"upload-file",
-		(payload: any) => {
-			nodeRequireClientAction = payload.node;
-			uploadFileElement?.setData(payload.node);
-			uploadFileElement?.show();
+		"show-server-web-component",
+		async (payload: any) => {
+			serverWebComponentData = payload.guiData;
+			showWebServerComponent();
+			addToast("Web component imported successfully!", ToastType.SUCCESS);
 		},
 	);
 
@@ -108,21 +105,43 @@
 		await controller.loadBFlowViz(url, text);
 	};
 
-	const uploadFile = async () => {
-		if (!filePathToUpload) {
-			addToast("Please select a file to upload", ToastType.ERROR);
-			return;
+	const onServerWebComponentFinished = () => {
+		serverWebComponentData = null;
+	};
+
+	const showWebServerComponent = async () => {
+		const binaryData = new Uint8Array(serverWebComponentData.buffer.data);
+		const blob = new Blob([binaryData], {
+			type: "application/javascript",
+		});
+		const moduleUrl = URL.createObjectURL(blob);
+
+		try {
+			if (!customElements.get(serverWebComponentData.webcomponent)) {
+				await import(moduleUrl);
+			}
+		} catch (exception) {}
+
+		if (serverWebComponentContainer) {
+			let attributes = "";
+			if (serverWebComponentData.attributes) {
+				attributes = Object.entries(serverWebComponentData.attributes)
+					.map(([key, value]) => `${key}="${value}"`)
+					.join(" ");
+			}
+			serverWebComponentContainer.innerHTML = `<${serverWebComponentData.webcomponent} ${attributes} onFinished={onServerWebComponentFinished}></${serverWebComponentData.webcomponent}>`;
+			setTimeout(() => {
+				const webComponent = serverWebComponentContainer.querySelector(
+					serverWebComponentData.webcomponent,
+				);
+
+				if (webComponent) {
+					webComponent.addOnFinishedListener(
+						onServerWebComponentFinished,
+					);
+				}
+			}, 1000);
 		}
-
-		uploadFileElement?.hide();
-		nodeRequireClientAction = null;
-
-		controller.addNodeResult(
-			uploadFileElement?.getData(),
-			filePathToUpload,
-		);
-
-		await controller.resumeBFlow();
 	};
 </script>
 
@@ -173,21 +192,19 @@
 	{/if}
 {/snippet}
 
-{#snippet requiredActionButton()}
-	{#if nodeRequireClientAction.name === "upload-file"}
-		<div class="flex flex-col items-end gap-1">
-			<div class="text-error-500 bold animate-bounce">
-				Action required
-			</div>
-			<button
-				onclick={async () => await controller.runBFlow()}
-				class="btn preset-filled-primary-500"
-			>
-				<FileUp class="text-white-700 w-5 h-5" />
-				Upload File
-			</button>
+{#snippet serverWebComponentTriggerButton()}
+	<div class="flex flex-col items-end gap-1">
+		<div class="text-error-500 text-sm bold animate-bounce">
+			Server is waiting for you
 		</div>
-	{/if}
+		<button
+			onclick={async () => await showWebServerComponent()}
+			class="btn preset-filled-primary-500"
+		>
+			<TriangleAlert class="text-white-700 w-5 h-5" />
+			Action Required
+		</button>
+	</div>
 {/snippet}
 
 <main data-theme={theme}>
@@ -200,8 +217,8 @@
 				{#if controller.isDocumentChanged(url, text)}
 					{@render reloadBFlowButton()}
 				{/if}
-				{#if nodeRequireClientAction}
-					{@render requiredActionButton()}
+				{#if serverWebComponentData}
+					{@render serverWebComponentTriggerButton()}
 				{:else}
 					{@render runBFlowButton()}
 				{/if}
@@ -277,42 +294,7 @@
 			{/if}
 		{/key}
 	</div>
+	<div bind:this={serverWebComponentContainer}></div>
 
 	<Toast />
-	<Modal bind:this={uploadFileElement}>
-		{#snippet modalContent()}
-			<div class="max-w-md mx-auto p-6 bg-white">
-				<h2 class="text-xl font-semibold text-gray-700 mb-4">
-					Upload Your File for Processing
-				</h2>
-				<p class="text-gray-600 mb-4">
-					Please upload the required file to continue processing your
-					request.
-				</p>
-
-				<form>
-					<div class="mb-4">
-						<label
-							for="file-input"
-							class="block text-sm font-medium text-gray-700"
-							>Choose a file</label
-						>
-						<input
-							class="input mt-1 w-full"
-							type="text "
-							bind:value={filePathToUpload}
-						/>
-					</div>
-
-					<button
-						type="button"
-						onclick={() => uploadFile()}
-						class="btn preset-filled-primary-500 w-full py-2 hover:preset-filled-primary-300 transition"
-					>
-						Upload File
-					</button>
-				</form>
-			</div>
-		{/snippet}
-	</Modal>
 </main>

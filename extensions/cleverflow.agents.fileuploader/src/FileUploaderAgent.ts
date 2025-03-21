@@ -2,16 +2,17 @@ import { Agent } from "@cleverflow/cleverflow.core";
 import { fileURLToPath } from 'node:url';
 import path from 'node:path';
 import fs from 'node:fs';
-import { inflateSync } from 'zlib';
+// import { inflateSync } from 'zlib';
 import { v4 as uuidv4 } from 'uuid';
 
 // Get the equivalent of __dirname in ESM
-const __filename = fileURLToPath(import.meta.url);
-const ___dirname = path.dirname(__filename);
+const ___filename = fileURLToPath(import.meta.url);
+const ___dirname = path.dirname(___filename);
 
 export type InPayload = {
     query: 'loadGUI' | 'upload',
     name?: string,
+    session?: string,
     data?: any
 }
 
@@ -37,6 +38,7 @@ export default class FileUploaderAgent extends Agent<InPayload, OutPayload> {
                     attributes: {
                         servers: "ws://localhost:8080",
                         token: "76de3ba222bec3af21f9dbfb01f3197b",
+                        session: payload.session,
                     },
                     buffer: this.loadGUIBinary(),
                 },
@@ -50,14 +52,14 @@ export default class FileUploaderAgent extends Agent<InPayload, OutPayload> {
             // Convert compressed data array back to Uint8Array
             const compressedData = new Uint8Array(payload.data);
 
-            // Decompress the data
-            const decompressedData = inflateSync(compressedData);
-            fs.writeFileSync(filePath, decompressedData);
+            // // Decompress the data
+            // const decompressedData = inflateSync(compressedData);
+            fs.writeFileSync(filePath, compressedData);
 
             this.notify('monitor.agents.notifications.server', {
                 agentName: this.name,
                 action: 'processed',
-                session: '',
+                session: payload.session,
                 time: new Date(),
                 data: {
                     filePath

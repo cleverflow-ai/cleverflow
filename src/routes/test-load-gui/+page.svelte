@@ -42,8 +42,24 @@
                     .join(" ");
             }
             container.innerHTML = `<${result.gui.webcomponent} ${attributes}></${result.gui.webcomponent}>`;
+
+            setTimeout(() => {
+                const webComponent = container.querySelector(
+                    result.gui.webcomponent,
+                );
+
+                if (webComponent) {
+                    webComponent.addOnFinishedListener(() => {
+                        alert("good boy!!");
+                    });
+                }
+            }, 1000);
         }
     });
+
+    const finished = () => {
+        alert("yeee");
+    };
 </script>
 
 <main>

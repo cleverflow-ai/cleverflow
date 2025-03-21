@@ -45,10 +45,9 @@ class MonitorAgent extends Agent {
     process(payload) {
         return __awaiter(this, void 0, void 0, function* () {
             if (payload.query === 'list') {
-                // SMELL: 
-                // return { agents: this._agents };
+                const publicAgents = _.filter(this._agents, (agent) => !agent.isExternal && !agent.isPrivate);
                 return {
-                    agents: _.map(_.filter(this._agents, (agent) => !agent.isExternal), (agent) => {
+                    agents: _.map(publicAgents, (agent) => {
                         return {
                             name: agent.name,
                             description: agent.description,

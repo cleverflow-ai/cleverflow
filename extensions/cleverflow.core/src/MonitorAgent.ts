@@ -50,10 +50,9 @@ class MonitorAgent extends Agent<MonitorAgentInPayload, MonitorAgentOutPayload> 
      */
     public async process(payload: MonitorAgentInPayload): Promise<MonitorAgentOutPayload> {
         if (payload.query === 'list') {
-            // SMELL: 
-            // return { agents: this._agents };
+            const publicAgents = _.filter(this._agents, (agent: AgentInfo) => !agent.isExternal && !agent.isPrivate);
             return {
-                agents: _.map(_.filter(this._agents, (agent: AgentInfo) => !agent.isExternal), (agent: AgentInfo) => {
+                agents: _.map(publicAgents, (agent: AgentInfo) => {
                     return {
                         name: agent.name,
                         description: agent.description,

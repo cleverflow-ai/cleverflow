@@ -31,10 +31,13 @@ export default class FileUploadAgentMessenger extends AgentMessenger<InPayload, 
     }
 
     async upload(fileToUpload: any) {
-        return await this?.request({
-            query: 'upload',
-            name: fileToUpload.name,
-            data: fileToUpload.data,
-        });
+        return await this?.request(
+            {
+                ...fileToUpload,
+                ...{
+                    query: 'upload',
+                }
+            }
+        );
     }
 }

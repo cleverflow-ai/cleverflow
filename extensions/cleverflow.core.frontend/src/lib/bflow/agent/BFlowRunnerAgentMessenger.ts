@@ -1,13 +1,7 @@
 import { AgentConnection, AgentMessenger } from "@cleverflow/cleverflow.core";
 
-enum ACTION {
-    CREATE = 'create',
-    RUN = 'run',
-    LOAD_GUI = 'loadGUI',
-}
-
 export type InPayload = {
-    action: ACTION,
+    query: 'create' | 'run',
     bflow?: any,
     outs?: any;
 }
@@ -42,14 +36,14 @@ export default class BFlowRunnerAgentMessenger extends AgentMessenger<InPayload,
 
     public async create(): Promise<string | null | undefined> {
         const result = await this.request({
-            action: ACTION.CREATE,
+            query: 'create',
         });
         return result?.subject;
     }
 
     public async run(bflow: any, outs?: any): Promise<OutPayload> {
         return await this.request({
-            action: ACTION.RUN,
+            query: 'run',
             bflow: bflow,
             outs: outs,
         });

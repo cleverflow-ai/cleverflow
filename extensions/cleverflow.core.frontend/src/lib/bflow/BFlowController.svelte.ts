@@ -245,11 +245,21 @@ export default class BFlowController {
             connection: this.agentConnection,
             subject: subject ?? undefined, // ?
             onProcess: (payload) => {
-                this.bflow = payload.bflow;
-                this.bflowRunResult = payload.outs;
-                this.updateBFlowRunResult();
-                this.setState(BFLowState.RUN_BFLOW_IN_PROGRESS);
-                addToast("BFlow is running", ToastType.WARNING);
+                if (payload.guiEnabled) {
+                    if (payload.guiData) {
+                        addToast("Server want to show a web component", ToastType.WARNING);
+                        this.bflowPostalChannel.publish("show-server-web-component", {
+                            guiData: payload.guiData
+                        });
+                    } else {
+                        addToast("Server want to show a web component but GUI data was missing", ToastType.ERROR);
+                    }
+                } else {
+                    this.bflow = payload.bflow;
+                    this.bflowRunResult = payload.outs;
+                    this.updateBFlowRunResult();
+                    this.setState(payload.isFinished ? BFLowState.RUN_BFLOW_SUCCESS : BFLowState.RUN_BFLOW_IN_PROGRESS);
+                }
             }
         });
 
@@ -314,7 +324,7 @@ export default class BFlowController {
         if (clientActionRequiredNode) {
             this.setState(BFLowState.RUN_BFLOW_IN_PROGRESS);
             addToast("Server requires an action from you", ToastType.WARNING);
-            this.doActionRequired(clientActionRequiredNode);
+            // this.doActionRequired(clientActionRequiredNode);
         } else {
             this.setState(BFLowState.RUN_BFLOW_SUCCESS);
             addToast("Successfully ran BFlow", ToastType.SUCCESS);

@@ -26,10 +26,7 @@
             ".carta-editor .carta-toolbar button[tabindex='-1']",
         );
         if (child) {
-            console.log(`>>> found`);
-            child.style.display = "none"; // Hide the element
-        } else {
-            console.log(" >>> not found");
+            child.style.display = "none"; // Hide preview tab
         }
     });
 
