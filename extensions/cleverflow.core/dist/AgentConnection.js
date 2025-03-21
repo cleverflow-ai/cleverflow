@@ -92,7 +92,8 @@ export class AgentConnection {
                 throw new Error('Subject is required to request.');
             }
             const reply = yield this.connection.request(`${config.subject}.server`, config.payload, config.options);
-            const payload = this.codec.decode(reply.data);
+            const payload = JSONCodec().decode(reply.data);
+            console.log(payload);
             console.log(`Agent ${config.subject} received: ${JSON.stringify(payload)}.`);
             return payload;
         });

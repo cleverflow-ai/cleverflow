@@ -68,13 +68,13 @@ export abstract class Agent<In extends object, Out extends object> implements Ag
                         console.error(`Agent ${this.name} Error receiving message:`, err);
                     } else {
                         // process messages
-                        const inPayload = this.codec.decode(message.data) as In;
+                        const inPayload = JSONCodec<In>().decode(message.data) as In;
                         console.log(`[Agent ${this.name} received]:`);
                         console.log(JSON.stringify(inPayload));
 
                         const outPayload: Out = await this.process(inPayload);
 
-                        const encodedOutPayload = this.codec.encode(outPayload);
+                        const encodedOutPayload = JSONCodec<Out>().encode(outPayload);
                         message.respond(encodedOutPayload);
                         console.log(`[Agent ${this.name} replied]:`);
                         console.log(JSON.stringify(outPayload));

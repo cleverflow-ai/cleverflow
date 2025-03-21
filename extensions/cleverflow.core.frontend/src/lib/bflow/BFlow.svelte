@@ -38,8 +38,6 @@
 	const showRunNodeResultSubscriber = bflowPostalChannel.subscribe(
 		"upload-file",
 		(payload: any) => {
-			console.log(">>>> payload");
-			console.log(payload);
 			nodeRequireClientAction = payload.node;
 			uploadFileElement?.setData(payload.node);
 			uploadFileElement?.show();

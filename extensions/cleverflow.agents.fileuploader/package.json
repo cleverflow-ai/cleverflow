@@ -1,0 +1,23 @@
+{
+  "name": "@cleverflow/cleverflow.agents.fileuploader",
+  "type": "module",
+  "version": "0.0.1",
+  "main": "./dist/src/index.js",
+  "scripts": {
+    "build": "tsc",
+    "dev": "tsx ./src/index.ts"
+  },
+  "devDependencies": {
+    "tsx": "^4.19.2",
+    "typescript": "^5.7.3"
+  },
+  "dependencies": {
+    "@cleverflow/cleverflow.core": "file:../cleverflow.core",
+    "@nats-io/nats-core": "^3.0.0-51",
+    "@nats-io/transport-node": "^3.0.0-36",
+    "dotenv-flow": "^4.1.0",
+    "lodash": "^4.17.21",
+    "nats": "^2.29.2",
+    "uuid": "^11.1.0"
+  }
+}

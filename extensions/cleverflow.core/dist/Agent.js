@@ -68,11 +68,11 @@ export class Agent {
                         }
                         else {
                             // process messages
-                            const inPayload = this.codec.decode(message.data);
+                            const inPayload = JSONCodec().decode(message.data);
                             console.log(`[Agent ${this.name} received]:`);
                             console.log(JSON.stringify(inPayload));
                             const outPayload = yield this.process(inPayload);
-                            const encodedOutPayload = this.codec.encode(outPayload);
+                            const encodedOutPayload = JSONCodec().encode(outPayload);
                             message.respond(encodedOutPayload);
                             console.log(`[Agent ${this.name} replied]:`);
                             console.log(JSON.stringify(outPayload));

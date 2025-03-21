@@ -99,11 +99,12 @@ export class AgentConnection {
             config.options,
         );
 
-        const payload = this.codec.decode(reply.data) as T;
+        const payload = JSONCodec<T>().decode(reply.data);
+        console.log(payload);
 
         console.log(`Agent ${config.subject} received: ${JSON.stringify(payload)}.`);
 
-        return payload;
+        return payload as T;
     }
 
     /**
