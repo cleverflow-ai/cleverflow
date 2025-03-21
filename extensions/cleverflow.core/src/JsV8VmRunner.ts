@@ -4,6 +4,8 @@
  */
 
 import axios from 'axios';
+import fs from "fs";
+import path from "path";
 import vm from 'vm';
 
 /**
@@ -33,20 +35,26 @@ export class JsV8VmRunner {
          * @returns {Promise<string>} The response data as a string.
          * @throws {Error} If the fetch operation fails.
          */
-        load: async (url: string): Promise<string> => {
+        load: async (filePathOrUrl: string): Promise<string> => {
             try {
-                const response = await axios.get(
-                    url,
-                    {
-                        headers: {
-                            "Cache-Control": "no-cache",
-                            "Access-Control-Allow-Origin": "*"
-                        },
-                    }
-                );
-                return response.data; // Return the response body
+                if (filePathOrUrl.startsWith("http://") || filePathOrUrl.startsWith("https://")) {
+                    const response = await axios.get(
+                        filePathOrUrl,
+                        {
+                            headers: {
+                                "Cache-Control": "no-cache",
+                                "Access-Control-Allow-Origin": "*"
+                            },
+                        }
+                    );
+                    return response.data; // Return the response body
+                } else {
+                    // Load from local file
+                    const resolvedPath = path.resolve(filePathOrUrl.trim().replace(/\\/g, "/")); // Ensure absolute path
+                    return fs.readFileSync(resolvedPath, "utf-8");
+                }
             } catch (error: any) {
-                throw new Error(`Failed to fetch: ${error.message}`);
+                throw new Error(`Failed to load file: ${error.message}`);
             }
         },
 

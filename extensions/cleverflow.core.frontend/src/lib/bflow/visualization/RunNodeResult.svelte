@@ -1,5 +1,4 @@
 <script lang="ts">
-    import { onMount } from "svelte";
     import { Tabs } from "@skeletonlabs/skeleton-svelte";
     import { Carta, Markdown } from "carta-md";
     import DOMPurify from "isomorphic-dompurify";
@@ -8,7 +7,7 @@
     import * as JsonUtil from "../../common/utils/JsonUtil.js";
 
     let { code, result } = $props();
-    let tab = $state("code");
+    let tab = $state(code ? "code" : "result");
     const carta = new Carta({
         sanitizer: DOMPurify.sanitize,
     });

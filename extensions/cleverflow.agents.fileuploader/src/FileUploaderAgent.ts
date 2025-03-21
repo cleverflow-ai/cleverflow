@@ -45,7 +45,7 @@ export default class FileUploaderAgent extends Agent<InPayload, OutPayload> {
             };
         } else if (payload.query === 'upload') {
 
-            const filePath = path.resolve(___dirname, '..', '_workspace/upload', `${uuidv4()}_${payload.name}`);
+            let filePath = path.resolve(___dirname, '..', '_workspace/upload', `${uuidv4()}_${payload.name}`);
             const dirPath = path.dirname(filePath);
             fs.mkdirSync(dirPath, { recursive: true });
 
@@ -54,6 +54,7 @@ export default class FileUploaderAgent extends Agent<InPayload, OutPayload> {
 
             // // Decompress the data
             // const decompressedData = inflateSync(compressedData);
+            filePath = filePath.trim().replace(/\\/g, "/");
             fs.writeFileSync(filePath, compressedData);
 
             this.notify('monitor.agents.notifications.server', {

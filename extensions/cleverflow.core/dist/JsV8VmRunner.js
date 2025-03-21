@@ -12,6 +12,8 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
     });
 };
 import axios from 'axios';
+import fs from "fs";
+import path from "path";
 import vm from 'vm';
 /**
  * @class JsV8VmRunner
@@ -40,18 +42,25 @@ export class JsV8VmRunner {
              * @returns {Promise<string>} The response data as a string.
              * @throws {Error} If the fetch operation fails.
              */
-            load: (url) => __awaiter(this, void 0, void 0, function* () {
+            load: (filePathOrUrl) => __awaiter(this, void 0, void 0, function* () {
                 try {
-                    const response = yield axios.get(url, {
-                        headers: {
-                            "Cache-Control": "no-cache",
-                            "Access-Control-Allow-Origin": "*"
-                        },
-                    });
-                    return response.data; // Return the response body
+                    if (filePathOrUrl.startsWith("http://") || filePathOrUrl.startsWith("https://")) {
+                        const response = yield axios.get(filePathOrUrl, {
+                            headers: {
+                                "Cache-Control": "no-cache",
+                                "Access-Control-Allow-Origin": "*"
+                            },
+                        });
+                        return response.data; // Return the response body
+                    }
+                    else {
+                        // Load from local file
+                        const resolvedPath = path.resolve(filePathOrUrl.trim().replace(/\\/g, "/")); // Ensure absolute path
+                        return fs.readFileSync(resolvedPath, "utf-8");
+                    }
                 }
                 catch (error) {
-                    throw new Error(`Failed to fetch: ${error.message}`);
+                    throw new Error(`Failed to load file: ${error.message}`);
                 }
             }),
             /**
