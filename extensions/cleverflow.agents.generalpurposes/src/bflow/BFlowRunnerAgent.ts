@@ -2,9 +2,10 @@ import { createInbox } from 'nats';
 import { monitorAgent } from '@cleverflow/cleverflow.core';
 import { BFlow, BFlowNode, BFlowNodeState, BFlowNodeType } from "../baml_client/types.js";
 import { Agent, type AgentInfo } from "@cleverflow/cleverflow.core";
+import _ from 'lodash';
 
 export type InPayload = {
-    query: 'create' | 'run' | 'loadGUI',
+    query: 'create' | 'run',
     bflow?: BFlow;
     outs?: {},
 }
@@ -25,7 +26,8 @@ export type OutPayload = {
 export default class BFlowRunnerAgent extends Agent<InPayload, OutPayload> {
     private _bflow: BFlow | undefined;
     private _outs = new Map<string, any>();
-    private _waitingClientActionNodeId: string | undefined | null;
+    // Tracks the point where the flow pauses and waits for an action from the client.
+    private _pendingClientActionNodeId: string | undefined | null;
 
     /**
      * Constructs a new BFlowRunnerAgent instance.
@@ -35,13 +37,6 @@ export default class BFlowRunnerAgent extends Agent<InPayload, OutPayload> {
             name: config?.name ?? 'bflow-runner',
             description: 'Run the given B-Flow.'
         });
-
-        // setTimeout(async () => {
-        //     const agent = await this.getAgentForAction('upload-file');
-        //     if (agent) {
-        //         await this.loadAgentGUI(agent);
-        //     }
-        // }, 10000);
     }
 
     /**
@@ -59,6 +54,7 @@ export default class BFlowRunnerAgent extends Agent<InPayload, OutPayload> {
                 });
                 privateBFlowRunnerAgent.isPrivate = true;
                 monitorAgent.register(privateBFlowRunnerAgent);
+
                 return {
                     subject: privateBFlowRunnerAgent.name,
                 };
@@ -92,16 +88,6 @@ export default class BFlowRunnerAgent extends Agent<InPayload, OutPayload> {
                     }
                 }
                 return {};
-            // TESTING
-            case 'loadGUI':
-                const agent = await this.getAgentForAction('upload-file');
-                if (agent) {
-                    const gui = await this.loadAgentGUI(agent);
-                    return {
-                        gui: gui,
-                    };
-                }
-                return {};
             default:
                 return {
                     error: `${payload.query} is still not supported.`
@@ -109,18 +95,19 @@ export default class BFlowRunnerAgent extends Agent<InPayload, OutPayload> {
         }
     }
 
+    // Notification received from another agent to update the state of an action
     public async onNotify(payload: any) {
         if (payload.session !== this.name) {
             return;
         }
         switch (payload.agentName) {
             case 'file-uploader':
-                if (payload.action === 'processed' && this._waitingClientActionNodeId) {
-                    this._outs.set(this._waitingClientActionNodeId, {
+                if (payload.action === 'processed' && this._pendingClientActionNodeId) {
+                    this._outs.set(this._pendingClientActionNodeId, {
                         result: payload.data.filePath,
                     });
 
-                    this._waitingClientActionNodeId = null;
+                    this._pendingClientActionNodeId = null;
 
                     if (this._bflow) {
                         await this.runNode(this._bflow.root, {
@@ -201,22 +188,20 @@ export default class BFlowRunnerAgent extends Agent<InPayload, OutPayload> {
 
         } else if (node.type === BFlowNodeType.ACTION || node.type === BFlowNodeType.CONDITION) {
 
-            if (this.isClientActionRequired(node)) {
+            const candidateAgent = await this.getAgent(node);
+            if (candidateAgent && candidateAgent.guiEnabled) {
                 if (this.hasNodeResult(node)) {
                     node.state = BFlowNodeState.SUCCESS;
                 } else {
-                    const candidateAgent = await this.getAgentForAction(node.name ?? '');
-                    if (candidateAgent && candidateAgent.guiEnabled) {
-                        const guiData = await this.loadAgentGUI(candidateAgent);
-                        if (guiData) {
-                            this.publish({
-                                guiEnabled: true,
-                                guiData: guiData
-                            }, {});
-                        }
+                    const guiData = await this.loadAgentGUI(candidateAgent);
+                    if (guiData) {
+                        this.publish({
+                            guiEnabled: true,
+                            guiData: guiData
+                        }, {});
                     }
                     node.state = BFlowNodeState.WAITING_FOR_CLIENT;
-                    this.saveSession(node);
+                    this.savePoint(node);
                 }
                 return node.state;
             }
@@ -264,11 +249,13 @@ export default class BFlowRunnerAgent extends Agent<InPayload, OutPayload> {
         return BFlowNodeState.FAILURE;
     }
 
-    private isClientActionRequired(node: BFlowNode): boolean {
-        if (node.name) {
-            return ['upload-file'].includes(node.name);
+    private getAgent(node: BFlowNode): AgentInfo | null {
+        if (!node.agent) {
+            return null;
         }
-        return false;
+        return _.find(monitorAgent._agents, (agent: AgentInfo) => {
+            return agent.name === node.agent?.name;
+        });
     }
 
     private hasNodeResult(node: BFlowNode) {
@@ -276,21 +263,6 @@ export default class BFlowRunnerAgent extends Agent<InPayload, OutPayload> {
             return this._outs.get(node.id);
         }
         return false;
-    }
-
-    private async getAgentForAction(action: string): Promise<AgentInfo> {
-        const result = await this.request({
-            subject: 'monitor-all-agents.server',
-            payload: {
-                query: 'get',
-                data: action,
-            },
-        });
-
-        if (result && result.agents && result.agents.length > 0) {
-            return result.agents[0];
-        }
-        return null;
     }
 
     private async loadAgentGUI(agent: AgentInfo) {
@@ -305,7 +277,7 @@ export default class BFlowRunnerAgent extends Agent<InPayload, OutPayload> {
         return result.data;
     }
 
-    private saveSession(node: any) {
+    private savePoint(node: any) {
         // const filePath = path.resolve(___dirname, '..', '_workspace/bflow_runner', `${this.name}`);
         // const dirPath = path.dirname(filePath);
         // fs.mkdirSync(dirPath, { recursive: true });
@@ -313,6 +285,6 @@ export default class BFlowRunnerAgent extends Agent<InPayload, OutPayload> {
         //     bflow: this._bflow,
         //     outs: Object.fromEntries(this._outs)
         // }));
-        this._waitingClientActionNodeId = node.id;
+        this._pendingClientActionNodeId = node.id;
     }
 }
