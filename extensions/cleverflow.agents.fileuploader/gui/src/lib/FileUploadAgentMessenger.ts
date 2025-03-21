@@ -27,7 +27,7 @@ export default class FileUploadAgentMessenger extends AgentMessenger<InPayload, 
      * @param {Partial<{ connection: AgentConnection }>} config - The configuration object containing the agent connection.
      */
     constructor(config: Partial<{ connection: AgentConnection }>) {
-        super({ connection: config.connection, subject: 'file-up' });
+        super({ connection: config.connection, subject: 'file-uploader' });
     }
 
     async upload(fileToUpload: any) {

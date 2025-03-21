@@ -25,7 +25,7 @@ export default class FileUploaderAgent extends Agent<InPayload, OutPayload> {
 
     constructor() {
         super({
-            name: 'file-up',
+            name: 'file-uploader',
             description: 'This Agent facilitates file uploads by requesting files from the client and saving them to its designated workspace.'
         });
     }
@@ -79,8 +79,8 @@ export default class FileUploaderAgent extends Agent<InPayload, OutPayload> {
             payload: {
                 query: 'register',
                 data: {
-                    name: 'file-up',
-                    description: 'This Agent facilitates file uploads by requesting files from the client and saving them to its designated workspace.',
+                    name: 'file-uploader',
+                    description: 'This Agent is responsible for uploading a file.',
                     isExternal: true,
                     actions: ['upload-file'],
                     guiEnabled: true,

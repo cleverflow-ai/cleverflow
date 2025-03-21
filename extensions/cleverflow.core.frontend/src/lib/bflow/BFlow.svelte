@@ -23,8 +23,6 @@
 		ToastType,
 	} from "../common/components/toast/ToastStore.js";
 
-	const bflowPostalChannel = postal.channel("b-flow");
-
 	let props = $props();
 	let { url = "", text = "", id = null, theme = "crimson" } = props;
 	let { controller }: { controller: BFlowController } = props;
@@ -32,6 +30,7 @@
 	let serverWebComponentContainer: any = $state();
 	let serverWebComponentData: any = $state(null);
 
+	const bflowPostalChannel = postal.channel("b-flow");
 	const showRunNodeResultSubscriber = bflowPostalChannel.subscribe(
 		"show-server-web-component",
 		async (payload: any) => {

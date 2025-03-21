@@ -2,14 +2,6 @@ import { createInbox } from 'nats';
 import { monitorAgent } from '@cleverflow/cleverflow.core';
 import { BFlow, BFlowNode, BFlowNodeState, BFlowNodeType } from "../baml_client/types.js";
 import { Agent, type AgentInfo } from "@cleverflow/cleverflow.core";
-import { fileURLToPath } from 'node:url';
-import path from 'node:path';
-import fs from 'node:fs';
-// import { inflateSync } from 'zlib';
-
-// Get the equivalent of __dirname in ESM
-const ___filename = fileURLToPath(import.meta.url);
-const ___dirname = path.dirname(___filename);
 
 export type InPayload = {
     query: 'create' | 'run' | 'loadGUI',
@@ -23,6 +15,7 @@ export type OutPayload = {
     bflow?: BFlow;
     outs?: {},
     gui?: any,
+    error?: any,
 }
 
 /**
@@ -110,7 +103,9 @@ export default class BFlowRunnerAgent extends Agent<InPayload, OutPayload> {
                 }
                 return {};
             default:
-                throw new Error(`${payload.query} is still not supported.`);
+                return {
+                    error: `${payload.query} is still not supported.`
+                };
         }
     }
 
@@ -119,7 +114,7 @@ export default class BFlowRunnerAgent extends Agent<InPayload, OutPayload> {
             return;
         }
         switch (payload.agentName) {
-            case 'file-up':
+            case 'file-uploader':
                 if (payload.action === 'processed' && this._waitingClientActionNodeId) {
                     this._outs.set(this._waitingClientActionNodeId, {
                         result: payload.data.filePath,
