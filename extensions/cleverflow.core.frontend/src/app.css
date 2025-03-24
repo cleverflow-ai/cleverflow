@@ -1,0 +1,88 @@
+@import 'tailwindcss';
+/* SMELL: MarkdocEditor worked incorrectly if @tailwindcss/forms has been imported */
+/* @plugin '@tailwindcss/forms'; */
+@import '@skeletonlabs/skeleton';
+@import '@skeletonlabs/skeleton/optional/presets';
+@import '@skeletonlabs/skeleton/themes/crimson';
+@import '@skeletonlabs/skeleton/themes/vintage';
+@import '@skeletonlabs/skeleton/themes/sahara';
+@import '@skeletonlabs/skeleton/themes/rocket';
+@source '../../../node_modules/@skeletonlabs/skeleton-svelte/dist';
+
+[data-theme='crimson'],
+[data-theme='vintage'],
+[data-theme='sahara'],
+[data-theme='rocket'] {
+
+    --radius-base: 0rem;
+
+    --animate-wiggle: wiggle 1s ease-in-out infinite;
+
+    ::selection {
+        background-color: var(--color-primary-500);
+        color: var(--color-primary-contrast-500);
+        font-weight: bolder;
+    }
+
+    pre {
+        background-color: var(--color-surface-950) !important;
+        color: var(--color-surface-contrast-950) !important;
+    }
+
+}
+
+.animate-ping {
+    animation: var(--animate-ping);
+}
+
+.animate-pulse {
+    animation: var(--animate-pulse);
+}
+
+/* SMELL */
+@keyframes spin {
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+@keyframes ping {
+
+    75%,
+    to {
+        opacity: 0;
+        transform: scale(2);
+    }
+}
+
+@keyframes pulse {
+    50% {
+        opacity: 0.5;
+    }
+}
+
+@keyframes bounce {
+
+    0%,
+    to {
+        animation-timing-function: cubic-bezier(0.8, 0, 1, 1);
+        transform: translateY(-25%);
+    }
+
+    50% {
+        animation-timing-function: cubic-bezier(0, 0, 0.2, 1);
+        transform: none;
+    }
+}
+
+@keyframes wiggle {
+
+    0%,
+    100% {
+        transform: rotate(-3deg);
+    }
+
+    50% {
+        transform: rotate(3deg);
+    }
+}
