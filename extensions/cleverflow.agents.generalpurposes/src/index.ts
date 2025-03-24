@@ -1,6 +1,8 @@
 import dotenvFlow from 'dotenv-flow';
-dotenvFlow.config();
-console.log('BAML Log Level:', process.env.BAML_LOG);
+import dotenvExpand from 'dotenv-expand';
+dotenvExpand.expand(dotenvFlow.config())
+
+console.log('process.env.OLLAMA_OPENAI_URL', process.env.OLLAMA_OPENAI_URL);
 
 import { monitorAgent, JsV8VmRunner } from '@cleverflow/cleverflow.core';
 import MarkdocCustomElementToBFlowAgent from './bflow/MarkdocCustomeElementToBFlowAgent.js';

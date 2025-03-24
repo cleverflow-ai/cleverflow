@@ -43,44 +43,53 @@ export default class Clients {
         this._registry = new ClientRegistry();
 
         this._registry.addLlmClient(
-            Clients.OllamaDefault, 
-            'openai-generic', 
+            Clients.OllamaDefault,
+            'openai-generic',
             {
                 // @ts-ignore: Object literal may only specify known properties, and 'base_url' does not exist in type '{ [x: number]: any; }'
-                base_url: 'http://57.128.86.248:11434/v1',
+                base_url: process.env.OLLAMA_OPENAI_URL,
                 api_key: 'ollama',
-                model:'gemma2:latest' ,
+                model: 'gemma3:latest',
                 temperature: 0,
+                headers: {
+                    "Api-Key": process.env.OLLAMA_API_KEY
+                }
             }
         );
 
         this._registry.addLlmClient(
-            Clients.OllamaTool, 
-            'openai-generic', 
+            Clients.OllamaTool,
+            'openai-generic',
             {
                 // @ts-ignore: Object literal may only specify known properties, and 'base_url' does not exist in type '{ [x: number]: any; }'
-                base_url: 'http://57.128.86.248:11434/v1',
+                base_url: process.env.OLLAMA_OPENAI_URL,
                 api_key: 'ollama',
-                model:'qwen2.5:latest' ,
+                model: 'qwen2.5:3b',
                 temperature: 0,
+                headers: {
+                    "Api-Key": process.env.OLLAMA_API_KEY
+                }
             }
         );
 
         this._registry.addLlmClient(
-            Clients.OllamaCode, 
-            'openai-generic', 
+            Clients.OllamaCode,
+            'openai-generic',
             {
                 // @ts-ignore: Object literal may only specify known properties, and 'base_url' does not exist in type '{ [x: number]: any; }'
-                base_url: 'http://57.128.86.248:11434/v1',
+                base_url: process.env.OLLAMA_OPENAI_URL,
                 api_key: 'ollama',
-                model:'qwen2.5-coder:latest' ,
+                model: 'qwen2.5-coder:3b',
                 temperature: 0,
+                headers: {
+                    "Api-Key": process.env.OLLAMA_API_KEY
+                }
             }
         );
 
         this._registry.setPrimary(config.primary ?? Clients.OllamaDefault);
     }
-    
+
     /**
      * @property {ClientRegistry} registry
      * @description Gets the client registry.
