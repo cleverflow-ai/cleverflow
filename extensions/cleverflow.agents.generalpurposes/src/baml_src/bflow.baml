@@ -143,14 +143,36 @@ test Test_WithoutAssignedIds_ParseMarkdocBFlowElementToBFlow {
                 {% /sequence %}
             {% /b-flow %}
         "#,
+        // agents [
+        //     {
+        //         name "download-file"
+        //         description "Can be use for fetching file from a given URL."
+        //     }
+        //     {
+        //         name "generate-code"
+        //         description "Depending on the given instructions, can generate the code in Javascript for excuting the task ad hoc."
+        //     }
+        // ]
         agents [
             {
-                name "download-file"
-                description "Can be use for fetching file from a given URL."
+                name "markdoc-custom-element-to-bflow",
+                description "Parse given Markdoc Custome Element (as Text) to B-Flow.",
+                instructions "SMELL: TODO"
             }
             {
-                name "generate-code"
-                description "Depending on the given instructions, can generate the code in Javascript for excuting the task ad hoc."
+                name "bflow-to-bflowviz",
+                description "Parse given B-Flow to the Visualization Format.",
+                instructions "SMELL: TODO"
+            }
+            {
+                name "js-v8-code-generation",
+                description "\n                Generate Javascript (V8) code for executing Task ad hoc.\n                Can be used as default Agent.\n            ",
+                instructions "SMELL: TODO"
+            }
+            {
+                name "bflow-runner",
+                description "Run the given B-Flow.",
+                instructions "SMELL: TODO"
             }
         ]
     }

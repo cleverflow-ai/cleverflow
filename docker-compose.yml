@@ -1,0 +1,20 @@
+# See also:
+# https://github.com/TomDoesTech/caddy-nodejs-docker-tutorial
+
+version: "3"
+
+services:
+  app:
+    image: "cleverflow/cleverflow.portal"
+    container_name: app
+    build:
+      dockerfile: Dockerfile
+      context: ./
+    ports:
+      - "5173:5173"
+    networks:
+      - shared_network
+
+networks:
+  shared_network:
+    external: true

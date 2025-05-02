@@ -89,7 +89,7 @@ export default class JsV8CodeGenerationAgent extends Agent<InPayload, OutPayload
             save(url: string, data: string): Promise<void>  // For saving file with a given destination URL. Usage: await save(...).
             `,
             {
-                clientRegistry: new Clients({ primary: Clients.OllamaCode }).registry
+                clientRegistry: new Clients({ primary: Clients.OllamaTool }).registry
             }
         );
 
