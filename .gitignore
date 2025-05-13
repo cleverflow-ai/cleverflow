@@ -5,8 +5,8 @@ node_modules
 .vercel
 .netlify
 .wrangler
-/.svelte-kit
-/build
+.svelte-kit
+build
 
 # OS
 .DS_Store
@@ -31,3 +31,5 @@ extensions/cleverflow.agents.fileuploader/_workspace/
 extensions/cleverflow.agents.fileuploader/gui/.svelte-kit/__package__/
 dist
 dist-webcomponents
+baml_client
+paraglide
