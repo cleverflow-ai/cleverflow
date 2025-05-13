@@ -30,3 +30,4 @@ src/lib/paraglide
 extensions/cleverflow.agents.fileuploader/_workspace/
 extensions/cleverflow.agents.fileuploader/gui/.svelte-kit/__package__/
 dist
+dist-webcomponents
