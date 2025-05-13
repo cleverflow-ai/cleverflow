@@ -29,3 +29,5 @@ src/lib/paraglide
 **/baml_client
 extensions/cleverflow.agents.fileuploader/_workspace/
 extensions/cleverflow.agents.fileuploader/gui/.svelte-kit/__package__/
+extensions/cleverflow.core/dist/
+extensions/cleverflow.agents.generalpurposes/dist/
