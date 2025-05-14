@@ -1,0 +1,26 @@
+{
+  "name": "@cleverflow/cleverflow.a2a",
+  "version": "0.0.1",
+  "main": "dist/index.js",
+  "exports": {
+    "import": "./dist/index.js",
+    "require": "./dist/index.js"
+  },
+  "type": "module",
+  "scripts": {
+    "build": "tsc",
+    "a2a:cli": "npx tsx src/cli.ts"
+  },
+  "devDependencies": {
+    "@types/node": "^22.15.18",
+    "npx": "^10.2.2",
+    "typescript": "^5.8.3"
+  },
+  "dependencies": {
+    "@types/cors": "^2.8.18",
+    "@types/express": "^5.0.1",
+    "body-parser": "^2.2.0",
+    "cors": "^2.8.5",
+    "express": "^5.1.0"
+  }
+}
