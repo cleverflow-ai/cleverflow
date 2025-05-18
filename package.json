@@ -32,6 +32,8 @@
 	"dependencies": {
 		"@inlang/paraglide-sveltekit": "^0.15.5",
 		"@markdoc/markdoc": "^0.5.1",
+		"dotenv-expand": "^12.0.2",
+		"dotenv-flow": "^4.1.0",
 		"js-yaml": "^4.1.0",
 		"lucide-svelte": "^0.475.0",
 		"postal": "^2.0.6"
