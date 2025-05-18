@@ -46,6 +46,7 @@ class MonitorAgent extends Agent {
         return __awaiter(this, void 0, void 0, function* () {
             if (payload.query === 'list') {
                 const publicAgents = _.filter(this._agents, (agent) => !agent.isPrivate);
+                console.log(publicAgents);
                 return {
                     agents: _.map(publicAgents, (agent) => {
                         return {

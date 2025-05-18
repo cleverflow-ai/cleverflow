@@ -32,12 +32,14 @@ export default class FileUploaderAgent extends Agent<InPayload, OutPayload> {
 
     public async process(payload: InPayload): Promise<OutPayload> {
         if (payload.query === 'loadGUI') {
+            const eventsServer = process.env.EVENTS_WS;
+            const eventsToken = process.env.EVENTS_TOKEN;
             return {
                 data: {
                     webcomponent: 'file-uploader',
                     attributes: {
-                        servers: "ws://localhost:8080",
-                        token: "76de3ba222bec3af21f9dbfb01f3197b",
+                        servers: eventsServer,
+                        token: eventsToken,
                         session: payload.session,
                     },
                     buffer: this.loadGUIBinary(),

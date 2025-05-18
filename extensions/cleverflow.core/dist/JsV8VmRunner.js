@@ -14,6 +14,9 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
 import axios from 'axios';
 import fs from "fs";
 import path from "path";
+import * as ftp from "basic-ftp";
+import SftpClient from "ssh2-sftp-client";
+import { WritableStreamBuffer } from "stream-buffers";
 import vm from 'vm';
 /**
  * @class JsV8VmRunner
@@ -51,11 +54,53 @@ export class JsV8VmRunner {
                                 "Access-Control-Allow-Origin": "*"
                             },
                         });
-                        return response.data; // Return the response body
+                        return response.data;
+                    }
+                    else if (filePathOrUrl.startsWith("ftp://")) {
+                        const client = new ftp.Client();
+                        client.ftp.verbose = true;
+                        try {
+                            const url = new URL(filePathOrUrl);
+                            yield client.access({
+                                host: url.hostname,
+                                user: url.username || "anonymous",
+                                password: url.password || "guest",
+                            });
+                            const bufferStream = new WritableStreamBuffer();
+                            yield client.downloadTo(bufferStream, url.pathname);
+                            return bufferStream.getContentsAsString("utf-8") || "";
+                        }
+                        finally {
+                            client.close();
+                        }
+                    }
+                    else if (filePathOrUrl.startsWith("sftp://")) {
+                        const sftp = new SftpClient();
+                        try {
+                            const url = new URL(filePathOrUrl);
+                            yield sftp.connect({
+                                host: url.hostname,
+                                username: url.username,
+                                password: url.password,
+                            });
+                            const fileContent = yield sftp.get(url.pathname);
+                            return fileContent.toString("utf-8");
+                        }
+                        finally {
+                            sftp.end();
+                        }
+                    }
+                    else if (filePathOrUrl.startsWith("file://")) {
+                        const filePath = decodeURI(filePathOrUrl.replace("file://", ""));
+                        return fs.readFileSync(filePath, "utf-8");
+                    }
+                    else if (filePathOrUrl.startsWith("data:")) {
+                        const base64Content = filePathOrUrl.split(",")[1];
+                        return Buffer.from(base64Content, "base64").toString("utf-8");
                     }
                     else {
-                        // Load from local file
-                        const resolvedPath = path.resolve(filePathOrUrl.trim().replace(/\\/g, "/")); // Ensure absolute path
+                        // Assume local file path
+                        const resolvedPath = path.resolve(filePathOrUrl.trim().replace(/\\/g, "/"));
                         return fs.readFileSync(resolvedPath, "utf-8");
                     }
                 }

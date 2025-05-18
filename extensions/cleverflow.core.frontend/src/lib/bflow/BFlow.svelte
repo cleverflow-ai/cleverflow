@@ -129,7 +129,7 @@
 					.join(" ");
 			}
 			serverWebComponentContainer.innerHTML = `<${serverWebComponentData.webcomponent} ${attributes} onFinished={onServerWebComponentFinished}></${serverWebComponentData.webcomponent}>`;
-			setTimeout(() => {
+			requestAnimationFrame(() => {
 				const webComponent = serverWebComponentContainer.querySelector(
 					serverWebComponentData.webcomponent,
 				);
@@ -139,7 +139,18 @@
 						onServerWebComponentFinished,
 					);
 				}
-			}, 1000);
+			});
+			// setTimeout(() => {
+			// 	const webComponent = serverWebComponentContainer.querySelector(
+			// 		serverWebComponentData.webcomponent,
+			// 	);
+
+			// 	if (webComponent) {
+			// 		webComponent.addOnFinishedListener(
+			// 			onServerWebComponentFinished,
+			// 		);
+			// 	}
+			// }, 1000);
 		}
 	};
 </script>
