@@ -8,7 +8,7 @@ export type GUIAgentOutPayload = {
     jsonForm: Object;
 }
 
-export abstract class GUIAgent extends Agent<GUIAgentInPayload, GUIAgentOutPayload> {
+export class GUIAgent extends Agent<GUIAgentInPayload, GUIAgentOutPayload> {
 
     constructor(name: string) {
         super({
@@ -21,5 +21,7 @@ export abstract class GUIAgent extends Agent<GUIAgentInPayload, GUIAgentOutPaylo
         return this.getGUI(payload);
     }
 
-    public abstract getGUI(payload: GUIAgentInPayload): Promise<GUIAgentOutPayload>;
+    public async getGUI(_payload: GUIAgentInPayload): Promise<GUIAgentOutPayload> {
+        throw new Error('Method not implemented.');
+    }
 }

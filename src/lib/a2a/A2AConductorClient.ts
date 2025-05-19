@@ -18,12 +18,18 @@ export class A2AConductorClient {
                 id: crypto.randomUUID(),
                 message: {
                     role: "user",
-                    parts: [{
-                        type: "file",
-                        file: {
-                            uri: 'https://gitea.clevernow.com/files/demo.md'
+                    parts: [
+                        // {
+                        //     type: "file",
+                        //     file: {
+                        //         uri: 'https://gitea.clevernow.com/files/demo.md'
+                        //     }
+                        // },
+                        {
+                            type: "text",
+                            text: 'empty request'
                         }
-                    }]
+                    ]
                 },
                 metadata: {
                     taskName: "read-file",

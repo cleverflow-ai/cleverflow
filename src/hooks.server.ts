@@ -1,9 +1,9 @@
 import type { Handle } from '@sveltejs/kit';
 import { i18n } from '$lib/i18n';
-import { CFGUIAgent } from '$lib/GUI/CFGUIAgent';
+import { CFGUIAgent } from '$lib/gui/CFGUIAgent';
 import dotenvFlow from 'dotenv-flow';
 import dotenvExpand from 'dotenv-expand';
-dotenvExpand.expand(dotenvFlow.config())
+dotenvExpand.expand(dotenvFlow.config());
 
 const handleParaglide: Handle = i18n.handle();
 
@@ -18,14 +18,15 @@ async function startGUIAgent() {
     GUIAgentStarted = true;
 
     const eventsServer = process.env.EVENTS_SERVER;
-    console.log('eventsServer', eventsServer);
     const eventsToken = process.env.EVENTS_TOKEN;
 
     const GUIAgent = new CFGUIAgent('GUI');
-    await GUIAgent.run({
+    await GUIAgent.connect({
         servers: eventsServer,
         token: eventsToken
     });
+
+    GUIAgent.subscribe("GUI");
 
     console.log(`>>>> GUI Agent started...`);
 }

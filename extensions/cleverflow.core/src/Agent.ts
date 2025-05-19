@@ -1,5 +1,5 @@
 import { JSONCodec } from 'nats/lib/nats-base-client/codec.js';
-import { connect, NatsConnection, PublishOptions, Subscription } from 'nats';
+import { connect, Msg, NatsConnection, PublishOptions, Subscription } from 'nats';
 import { AgentInfo } from './AgentInfo.js';
 
 /**
@@ -32,6 +32,119 @@ export abstract class Agent<In extends object, Out extends object> implements Ag
     constructor(config: Partial<{ name: string, description: string }>) {
         this.name = config.name;
         this.description = config.description;
+    }
+
+
+    /**
+     * Establishes a connection to the NATS server.
+     * 
+     * @param {Partial<{ servers: string | string[], token: string }>} config - Configuration object containing server details and token.
+     * @returns {Promise<NatsConnection>}
+     */
+    async connect(config: Partial<{ servers: string | string[], token: string }>): Promise<NatsConnection> {
+        this.connection = await connect({
+            servers: config.servers,
+            token: config.token
+        });
+
+        return this.connection;
+    }
+
+    async disconnect() {
+
+        if (this.subscription) {
+            // Notes:
+            // 1. `unsubscribe()` is immediate and does not guarantee processing of pending messages.
+            // 2. `drain()` ensures all pending messages are processed before unsubscribing.
+            // 3. For asynchronous subscriptions, you can also use the `max` option to automatically unsubscribe after receiving a specified number of messages.
+            this.subscription.drain();
+            this.subscription = null;
+            console.log(`Agent ${this.name} was disconnected.`);
+        }
+
+        if (this.connection) {
+            await this.connection?.drain();
+            this.connection = null;
+            console.log(`Agent ${this.name} was drained and is not listening to any subject.`);
+        }
+    }
+
+    /**
+     * Publishes a message to a specified subject using the underlying connection.
+     *
+     * @param subject - The subject or topic to which the message will be published.
+     * @param payload - (Optional) The data or message payload to be sent. This will be encoded using the codec.
+     * @param options - (Optional) Additional options for publishing, such as headers or delivery settings.
+     *
+     * @remarks
+     * This method uses the `connection` object to publish the message. If the connection is not established,
+     * the method will not perform any action. The `codec` is used to encode the payload before sending.
+     *
+     * @throws {Error} If encoding the payload fails or if the connection encounters an issue during publishing.
+     *
+     * @example
+     * ```typescript
+     * const agent = new Agent();
+     * agent.publish('my.subject', { key: 'value' }, { headers: { 'custom-header': 'header-value' } });
+     * ```
+     */
+    public publish(payload?: any, options?: PublishOptions): void {
+        console.log(`[Agent ${this.name} published]:`);
+        console.log(JSON.stringify(payload));
+        this.connection?.publish(`${this.name}`, this.codec.encode(payload), options);
+    }
+
+    /**
+     * Subscribe to a subject
+     */
+    subscribe<T = unknown>(
+        subject: string
+    ): Subscription {
+        if (!this.connection) {
+            throw Error("Connection was null");
+        }
+        const subscription = this.connection.subscribe(subject);
+        if (subscription) {
+            subscription.callback = async (err, message) => {
+                if (err) {
+                    console.error(`Agent ${this.name} Error receiving message:`, err);
+                } else {
+                    // process messages
+                    const inPayload = JSONCodec<In>().decode(message.data) as In;
+                    console.log(`[Agent ${this.name} received]:`);
+                    console.log(JSON.stringify(inPayload));
+
+                    const outPayload: Out = await this.process(inPayload);
+
+                    const encodedOutPayload = JSONCodec<Out>().encode(outPayload);
+                    message.respond(encodedOutPayload);
+                    console.log(`[Agent ${this.name} replied]:`);
+                    console.log(JSON.stringify(outPayload));
+                }
+            };
+        }
+        return subscription;
+    }
+
+    /**
+     * Request-Reply pattern
+     */
+    public async request(config: {
+        subject: string,
+        payload: In
+    }): Promise<Out | null> {
+        console.log(`Agent ${this.name} requested to ${config.subject}: ${JSON.stringify(config.payload)}.`);
+        const msg = await this.connection?.request(
+            config.subject,
+            JSONCodec<In>().encode(config.payload),
+            {
+                timeout: 3600 * 1000 // 1 hour 
+            },
+        );
+        if (msg) {
+            return JSONCodec<Out>().decode(msg.data);
+        }
+        return null;
     }
 
     /**
@@ -84,28 +197,7 @@ export abstract class Agent<In extends object, Out extends object> implements Ag
         }
     }
 
-    /**
-     * Stops the agent by draining the subscription and closing the connection.
-     * 
-     * @returns {Promise<void>}
-     */
-    public async stop(): Promise<void> {
-        if (this.subscription) {
-            // Notes:
-            // 1. `unsubscribe()` is immediate and does not guarantee processing of pending messages.
-            // 2. `drain()` ensures all pending messages are processed before unsubscribing.
-            // 3. For asynchronous subscriptions, you can also use the `max` option to automatically unsubscribe after receiving a specified number of messages.
-            this.subscription.drain();
-            this.subscription = null;
-            console.log(`Agent ${this.name} was disconnected.`);
-        }
 
-        if (this.connection) {
-            this.connection.close();
-            this.connection = null;
-            console.log(`Agent ${this.name} was drained and is not listening to any subject.`);
-        }
-    }
 
     /**
      * Abstract method to process incoming messages. Must be implemented by subclasses.
@@ -115,31 +207,6 @@ export abstract class Agent<In extends object, Out extends object> implements Ag
      * @returns {Promise<Out>}
      */
     public abstract process(payload: In): Promise<Out>;
-
-    /**
-     * Publishes a message to a specified subject using the underlying connection.
-     *
-     * @param subject - The subject or topic to which the message will be published.
-     * @param payload - (Optional) The data or message payload to be sent. This will be encoded using the codec.
-     * @param options - (Optional) Additional options for publishing, such as headers or delivery settings.
-     *
-     * @remarks
-     * This method uses the `connection` object to publish the message. If the connection is not established,
-     * the method will not perform any action. The `codec` is used to encode the payload before sending.
-     *
-     * @throws {Error} If encoding the payload fails or if the connection encounters an issue during publishing.
-     *
-     * @example
-     * ```typescript
-     * const agent = new Agent();
-     * agent.publish('my.subject', { key: 'value' }, { headers: { 'custom-header': 'header-value' } });
-     * ```
-     */
-    public publish(payload?: any, options?: PublishOptions): void {
-        console.log(`[Agent ${this.name} published]:`);
-        console.log(JSON.stringify(payload));
-        this.connection?.publish(`${this.name}.client`, this.codec.encode(payload), options);
-    }
 
     /**
      * Sends a notification to a specified subject with an optional payload and publishing options.
@@ -168,24 +235,7 @@ export abstract class Agent<In extends object, Out extends object> implements Ag
         this.connection?.publish(`${subject}`, this.codec.encode(payload), options);
     }
 
-    public async request(config: {
-        subject?: string,
-        payload: In
-    }): Promise<Out | null> {
-        const subjectToSendRequest = config.subject ?? this.name ?? '';
-        console.log(`Agent ${this.name} requested to ${subjectToSendRequest}: ${JSON.stringify(config.payload)}.`);
-        const msg = await this.connection?.request(
-            subjectToSendRequest,
-            JSONCodec<In>().encode(config.payload),
-            {
-                timeout: 3600 * 1000 // 1 hour 
-            },
-        );
-        if (msg) {
-            return JSONCodec<Out>().decode(msg.data);
-        }
-        return null;
-    }
+
 
     /**
      * Handles notifications with the provided payload.
@@ -212,19 +262,4 @@ export abstract class Agent<In extends object, Out extends object> implements Ag
      * ```
      */
     public onNotify(payload: any) { }
-
-    /**
-     * Establishes a connection to the NATS server.
-     * 
-     * @param {Partial<{ servers: string | string[], token: string }>} config - Configuration object containing server details and token.
-     * @returns {Promise<NatsConnection>}
-     */
-    protected async connect(config: Partial<{ servers: string | string[], token: string }>): Promise<NatsConnection> {
-        const nc = await connect({
-            servers: config.servers,
-            token: config.token
-        });
-
-        return nc;
-    }
 }

@@ -7,7 +7,7 @@ export class CFGUIAgent extends GUIAgent {
     public async getGUI(payload: GUIAgentInPayload): Promise<GUIAgentOutPayload> {
 
         switch (`${payload.id}`.toLowerCase()) {
-            case 'get_file':
+            case 'file-url-form':
                 return {
                     jsonForm: {
                         "type": "object",
