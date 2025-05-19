@@ -1,6 +1,6 @@
 
-import { TaskContext, TaskYieldUpdate } from '@cleverflow/cleverflow.a2a/server';
-import * as schema from '@cleverflow/cleverflow.a2a/schema';
+import { TaskContext, TaskYieldUpdate } from '@cleverflow/cleverflow.agents/server';
+import * as schema from '@cleverflow/cleverflow.agents/schema';
 import * as readFileTask from './tasks/readFile';
 
 export async function* handleTask(context: TaskContext): AsyncGenerator<TaskYieldUpdate, schema.Task | void, unknown> {

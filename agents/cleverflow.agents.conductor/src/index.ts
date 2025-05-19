@@ -1,4 +1,4 @@
-import { A2AServer } from '@cleverflow/cleverflow.a2a/server';
+import { A2AServer } from '@cleverflow/cleverflow.agents/server';
 import { handleTask } from './handler';
 import dotenvFlow from 'dotenv-flow';
 import dotenvExpand from 'dotenv-expand';

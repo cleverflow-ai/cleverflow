@@ -12,7 +12,8 @@ export default defineConfig({
                 'markdoc-renderer-controller': 'src/lib/markdoc/renderer/MarkdocRendererController.svelte.ts',
                 'markdoc-reader': 'src/lib/markdoc/renderer/MarkdocReader.ts',
                 'b-flow': 'src/lib/bflow/BFlow.ts',
-                'b-flow-controller': 'src/lib/bflow/BFlowController.svelte.ts'
+                'b-flow-controller': 'src/lib/bflow/BFlowController.svelte.ts',
+                'json-form': 'src/lib/dynamicform/JsonForm.ts'
             },
             fileName: (format, entryName) => `${entryName}.js`,
             formats: ['es'],

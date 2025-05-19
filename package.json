@@ -6,7 +6,8 @@
 	"workspaces": [
 		"extensions/*",
 		"mcp/*",
-		"agents/*"
+		"agents/*",
+		"clients/*"
 	],
 	"scripts": {
 		"dev": "vite dev",

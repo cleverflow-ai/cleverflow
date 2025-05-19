@@ -1,6 +1,6 @@
 import type { Handle } from '@sveltejs/kit';
 import { i18n } from '$lib/i18n';
-import { CFGUIAgent } from '$lib/gui/CFGUIAgent';
+import { CFGUIAgent } from '$lib/agents/GUIAgent';
 import dotenvFlow from 'dotenv-flow';
 import dotenvExpand from 'dotenv-expand';
 dotenvExpand.expand(dotenvFlow.config());
@@ -20,13 +20,13 @@ async function startGUIAgent() {
     const eventsServer = process.env.EVENTS_SERVER;
     const eventsToken = process.env.EVENTS_TOKEN;
 
-    const GUIAgent = new CFGUIAgent('GUI');
-    await GUIAgent.connect({
+    const guiAgent = new CFGUIAgent('GUI');
+    await guiAgent.connect({
         servers: eventsServer,
         token: eventsToken
     });
 
-    GUIAgent.subscribe("GUI");
+    guiAgent.subscribe("GUI");
 
     console.log(`>>>> GUI Agent started...`);
 }

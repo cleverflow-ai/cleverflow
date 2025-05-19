@@ -1,10 +1,10 @@
-import { A2AClient } from "@cleverflow/cleverflow.a2a";
+import { A2AClient } from "@cleverflow/cleverflow.agents";
 
 import type {
     TaskSendParams,
-} from "@cleverflow/cleverflow.a2a/schema";
+} from "@cleverflow/cleverflow.agents/schema";
 
-export class A2AConductorClient {
+export class ConductorAgent {
     private client: A2AClient;
 
     constructor(private serverUrl: string) {
@@ -16,12 +16,24 @@ export class A2AConductorClient {
 
             const taskParams: TaskSendParams = {
                 id: crypto.randomUUID(),
-                name: 'read-file',
                 message: {
                     role: "user",
-                    parts: [{ type: "text", text: 'hello server: ' + new Date().toISOString() }]
-                }
-
+                    parts: [
+                        // {
+                        //     type: "file",
+                        //     file: {
+                        //         uri: 'https://gitea.clevernow.com/files/demo.md'
+                        //     }
+                        // },
+                        {
+                            type: "text",
+                            text: 'empty request'
+                        }
+                    ]
+                },
+                metadata: {
+                    taskName: "read-file",
+                },
             };
 
             console.log(taskParams);

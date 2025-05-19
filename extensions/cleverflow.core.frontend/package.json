@@ -48,6 +48,10 @@
 		"./webcomponents/b-flow-controller.js": {
 			"import": "./dist-webcomponents/b-flow-controller.js",
 			"require": "./dist-webcomponents/b-flow-controller.js"
+		},
+		"./webcomponents/json-form.js": {
+			"import": "./dist-webcomponents/json-form.js",
+			"require": "./dist-webcomponents/json-form.js"
 		}
 	},
 	"sideEffects": [
@@ -78,9 +82,10 @@
 		"vite": "^6.0.0"
 	},
 	"dependencies": {
-		"@cleverflow/cleverflow.core": "file:../cleverflow.core",
 		"@cartamd/plugin-component": "^1.1.0",
+		"@cleverflow/cleverflow.core": "file:../cleverflow.core",
 		"@inlang/paraglide-sveltekit": "^0.15.5",
+		"@jsfe/form": "^0.4.0",
 		"@markdoc/markdoc": "^0.5.1",
 		"@nats-io/nats-core": "^3.0.0-51",
 		"@types/js-beautify": "^1.14.3",

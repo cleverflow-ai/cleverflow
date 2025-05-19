@@ -1,14 +1,14 @@
 <script lang="ts">
-    import { A2AConductorClient } from "$lib/a2a/A2AConductorClient";
+    import { ConductorAgent } from "$lib/agents/ConductorAgent";
     import { onMount } from "svelte";
 
-    let conductorClient: A2AConductorClient;
+    let conductorAgent: ConductorAgent;
 
     onMount(() => {
         const conductorServer = import.meta.env.VITE_A2A_CONDUCTOR_SERVER;
         console.log(`>>> conductorServer: ${conductorServer}`);
-        conductorClient = new A2AConductorClient(conductorServer);
-        conductorClient.sendTask({
+        conductorAgent = new ConductorAgent(conductorServer);
+        conductorAgent.sendTask({
             id: new Date().toISOString(),
             name: "hello a2a server",
         });

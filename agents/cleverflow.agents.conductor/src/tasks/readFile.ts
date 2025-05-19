@@ -1,6 +1,6 @@
 
-import { A2AServer, TaskContext, TaskYieldUpdate } from '@cleverflow/cleverflow.a2a/server';
-import * as schema from '@cleverflow/cleverflow.a2a/schema';
+import { A2AServer, TaskContext, TaskYieldUpdate } from '@cleverflow/cleverflow.agents/server';
+import * as schema from '@cleverflow/cleverflow.agents/schema';
 import _ from 'lodash';
 import { GUIAgent } from '@cleverflow/cleverflow.core';
 import type { GUIAgentInPayload, GUIAgentOutPayload } from '@cleverflow/cleverflow.core';
@@ -32,9 +32,7 @@ export async function* runTask(context: TaskContext): AsyncGenerator<TaskYieldUp
                 role: 'agent',
                 parts: [{
                     type: 'data',
-                    data: {
-                        jsonForm,
-                    }
+                    data: jsonForm
                 }]
             }
         };

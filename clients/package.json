@@ -1,0 +1,23 @@
+{
+  "name": "@cleverflow/cleverflow.clients",
+  "version": "0.0.1",
+  "main": "dist/index.js",
+  "exports": {
+    "import": "./dist/index.js",
+    "require": "./dist/index.js"
+  },
+  "type": "module",
+  "scripts": {
+    "build": "tsc",
+    "a2a:cli": "npx tsx src/cli.ts"
+  },
+  "devDependencies": {
+    "@types/node": "^22.15.18",
+    "npx": "^10.2.2",
+    "typescript": "^5.8.3"
+  },
+  "dependencies": {
+    "@cleverflow/cleverflow.agents": "file:../cleverflow.agents",
+    "ts-node": "^10.9.2"
+  }
+}
