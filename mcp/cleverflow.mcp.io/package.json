@@ -1,0 +1,24 @@
+{
+  "name": "@cleverflow/cleverflow.mcp.io",
+  "version": "1.0.0",
+  "type": "module",
+  "main": "index.js",
+  "scripts": {
+    "build": "npx tsc",
+    "dev": "npx tsx src/index.ts"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "",
+  "description": "",
+  "devDependencies": {
+    "@types/node": "^22.15.18",
+    "npx": "^10.2.2",
+    "typescript": "^5.8.3"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.11.4",
+    "ts-node": "^10.9.2",
+    "@cleverflow/cleverflow.mcp": "file:../cleverflow.mcp"
+  }
+}
