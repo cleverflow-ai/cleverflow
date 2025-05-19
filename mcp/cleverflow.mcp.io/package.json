@@ -1,6 +1,6 @@
 {
   "name": "@cleverflow/cleverflow.mcp.io",
-  "version": "1.0.0",
+  "version": "0.1.0",
   "type": "module",
   "main": "index.js",
   "scripts": {
@@ -8,9 +8,9 @@
     "dev": "npx tsx src/index.ts"
   },
   "keywords": [],
-  "author": "",
-  "license": "",
-  "description": "",
+  "author": "cleverflow.ai",
+  "license": "AGPL-3.0-only",
+  "description": "Provides the base implementation of the Model Context Protocol (MCP) for working with files stored in Github, Gitea, Outline and other Source Version Control or Wiki Systems.",
   "devDependencies": {
     "@types/node": "^22.15.18",
     "npx": "^10.2.2",

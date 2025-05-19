@@ -4,21 +4,48 @@ import http from "http";
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { StreamableHTTPServerTransport } from "@modelcontextprotocol/sdk/server/streamableHttp.js";
 import { isInitializeRequest } from "@modelcontextprotocol/sdk/types.js"
+import McpHost from "./McpHost.js";
 
-export default class ExpressHost {
+/**
+ * ExpressMcpHost is a concrete implementation of McpHost using Express.js.
+ * 
+ * This class sets up HTTP endpoints for the MCP server using Express, handling
+ * session management, request routing, and transport lifecycle. It supports
+ * stateful and stateless operation modes.
+ * 
+ * Endpoints:
+ * - POST   /mcp : Handles client-to-server communication and session initialization.
+ * - GET    /mcp : Handles server-to-client notifications via Server-Sent Events (SSE).
+ * - DELETE /mcp : Handles session termination.
+ * 
+ * Session management is handled via the 'mcp-session-id' header.
+ */
+export default class ExpressMcpHost extends McpHost {
     protected app: express.Express;
     protected httpServer: http.Server;
     protected transports: { [sessionId: string]: StreamableHTTPServerTransport } = {};
 
-    private readonly sessionIdHeaderParam = 'mcp-session-id';
+    /** HTTP header used for session identification. */
+    public readonly SESSION_ID_HEADER = 'mcp-session-id';
 
+    /**
+     * Constructs an ExpressMcpHost.
+     * @param defaultRoutePath The base route path for the MCP server (default: '/mcp').
+     * @param port The port number on which the server will listen (default: 3000).
+     * @param type The type of server: 'stateful' or 'stateless' (default: 'stateful').
+     * @param getMcpServer A function that returns a Promise resolving to an `McpServer` instance.
+     */
     constructor(
         protected defaultRoutePath: string = '/mcp', 
         protected port: number = 3000, 
         protected type: 'stateful' | 'stateless' = 'stateful',
         protected getMcpServer: () => Promise<McpServer>) {
+            super(defaultRoutePath, port, type, getMcpServer); 
     }
 
+    /**
+     * Starts the Express server and sets up HTTP endpoints for MCP communication.
+     */
     public async start(): Promise<void> {
         this.app = express();
 
@@ -35,13 +62,16 @@ export default class ExpressHost {
 
         this.httpServer = this.app.listen(this.port, (error) => {
             if (error) {
-                console.error(`Error starting server: ${error}`);
+                console.error(`Error starting server: ${error}.`);
             } else {
-                console.log(`Server is running on http://localhost:${this.port}${this.defaultRoutePath}`);
+                console.log(`Server is running on http://localhost:${this.port}${this.defaultRoutePath}.`);
             }
         });
     }
 
+    /**
+     * Stops the Express server and closes all active transports.
+     */
     public async stop(): Promise<void> {
         // Close all transports
         for (const transport of Object.values(this.transports)) {
@@ -52,16 +82,22 @@ export default class ExpressHost {
         // Close the HTTP Server
         this.httpServer.close((error) => {
             if (error) {
-                console.error(`Error stopping server: ${error}`);
+                console.error(`Error stopping server: ${error}.`);
             } else {
                 console.log(`Server stopped successfully.`);
             }
         });
     }
 
+    /**
+     * Handles POST requests for client-to-server communication and session initialization.
+     * - Reuses existing transport if session ID is provided and valid.
+     * - Initializes a new session and transport if request is an initialization request.
+     * - Responds with 400 if neither condition is met.
+     */
     protected async post(req: express.Request, res: express.Response) : Promise<void> {
         // Check for existing session ID
-        const sessionId = req.headers[this.sessionIdHeaderParam] as string | undefined;
+        const sessionId = req.headers[this.SESSION_ID_HEADER] as string | undefined;
         let transport: StreamableHTTPServerTransport;
 
         if (sessionId && this.transports[sessionId]) {
@@ -92,7 +128,7 @@ export default class ExpressHost {
                 jsonrpc: '2.0',
                 error: {
                     code: -32000,
-                    message: 'Bad Request: No valid Session ID provided',
+                    message: 'Bad Request: No valid Session ID in Header.',
                 },
                 id: null,
             });
@@ -103,10 +139,14 @@ export default class ExpressHost {
         await transport.handleRequest(req, res, req.body);
     }
 
+    /**
+     * Handles GET requests for server-to-client notifications via SSE.
+     * Requires a valid session ID.
+     */
     protected async get(req: express.Request, res: express.Response): Promise<void> {
-        const sessionId = req.headers[this.sessionIdHeaderParam] as string | undefined;
+        const sessionId = req.headers[this.SESSION_ID_HEADER] as string | undefined;
         if (!sessionId || !this.transports[sessionId]) {
-            res.status(400).send('Invalid or missing Session ID');
+            res.status(400).send('Invalid or missing Session ID in Header.');
             return;
         }
 
@@ -114,10 +154,14 @@ export default class ExpressHost {
         await transport.handleRequest(req, res);
     }
 
+    /**
+     * Handles DELETE requests for session termination.
+     * Requires a valid session ID.
+     */
     protected async delete(req: express.Request, res: express.Response): Promise<void> {
-        const sessionId = req.headers[this.sessionIdHeaderParam] as string | undefined;
+        const sessionId = req.headers[this.SESSION_ID_HEADER] as string | undefined;
         if (!sessionId || !this.transports[sessionId]) {
-            res.status(400).send('Invalid or missing Session ID');
+            res.status(400).send('Invalid or missing Session ID in Header.');
             return;
         }
 
