@@ -2,7 +2,7 @@
 import { GUIAgent } from '@cleverflow/cleverflow.core';
 import type { GUIAgentInPayload, GUIAgentOutPayload } from '@cleverflow/cleverflow.core';
 
-export class CustomGUIAgent extends GUIAgent {
+export class CFGUIAgent extends GUIAgent {
 
     public async getGUI(payload: GUIAgentInPayload): Promise<GUIAgentOutPayload> {
 

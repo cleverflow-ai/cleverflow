@@ -32,7 +32,7 @@ export interface A2AServerOptions {
 }
 
 // Define new TaskContext without the store, based on the original from handler.ts
-export interface TaskContext extends Omit<OldTaskContext, "taskStore"> {}
+export interface TaskContext extends Omit<OldTaskContext, "taskStore"> { }
 
 /**
  * Implements an A2A specification compliant server using Express.
@@ -148,8 +148,8 @@ export class A2AServer {
         typeof this.corsOptions === "string"
           ? { origin: this.corsOptions }
           : this.corsOptions === true
-          ? undefined // Use default cors options if true
-          : this.corsOptions;
+            ? undefined // Use default cors options if true
+            : this.corsOptions;
       app.use(cors(options));
     }
 
@@ -273,11 +273,10 @@ export class A2AServer {
           parts: [
             {
               type: "text",
-              text: `Handler failed: ${
-                handlerError instanceof Error
+              text: `Handler failed: ${handlerError instanceof Error
                   ? handlerError.message
                   : String(handlerError)
-              }`,
+                }`,
             },
           ],
         },
@@ -442,11 +441,10 @@ export class A2AServer {
           parts: [
             {
               type: "text",
-              text: `Handler failed: ${
-                handlerError instanceof Error
+              text: `Handler failed: ${handlerError instanceof Error
                   ? handlerError.message
                   : String(handlerError)
-              }`,
+                }`,
             },
           ],
         },
@@ -735,8 +733,7 @@ export class A2AServer {
     }
 
     console.error(
-      `Error processing request (Task: ${a2aError.taskId ?? "N/A"}, ReqID: ${
-        reqId ?? "N/A"
+      `Error processing request (Task: ${a2aError.taskId ?? "N/A"}, ReqID: ${reqId ?? "N/A"
       }):`,
       a2aError
     );
@@ -781,8 +778,7 @@ export class A2AServer {
     // The stream handler should have sent an error event if possible.
     if (res.headersSent) {
       console.error(
-        `[ErrorHandler] Error after headers sent (ReqID: ${
-          req.body?.id ?? "N/A"
+        `[ErrorHandler] Error after headers sent (ReqID: ${req.body?.id ?? "N/A"
         }, TaskID: ${err?.taskId ?? "N/A"}):`,
         err
       );

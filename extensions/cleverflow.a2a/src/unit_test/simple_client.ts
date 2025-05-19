@@ -8,12 +8,10 @@ import {
     const currentTaskId = crypto.randomUUID();
     const serverUrl = "http://localhost:41241";
     const client = new A2AClient(serverUrl);
-    const params: any = {
+    const params: TaskSendParams = {
         // Use the specific Params type
         id: "ab541069-155d-4f20-be20-00e4ad9e2d42", // The actual Task ID
         message: {
-            sku: 'sss-001',
-            name: 'Stud earrings',
             role: "user",
             parts: [{ type: "text", text: 'hello server: ' + new Date().toISOString() }], // Ensure type: "text" is included if your schema needs it
         },

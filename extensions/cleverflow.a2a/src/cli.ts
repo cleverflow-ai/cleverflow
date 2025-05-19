@@ -102,8 +102,7 @@ function printAgentEvent(
   else if ("artifact" in event) {
     const update = event as TaskArtifactUpdateEvent; // Cast for type safety
     console.log(
-      `${prefix} 📄 Artifact Received: ${
-        update.artifact.name || "(unnamed)"
+      `${prefix} 📄 Artifact Received: ${update.artifact.name || "(unnamed)"
       } (Index: ${update.artifact.index ?? 0})`
     );
     printMessageContent({ role: "agent", parts: update.artifact.parts }); // Reuse message printing logic
@@ -125,10 +124,8 @@ function printMessageContent(message: Message) {
     } else if ("file" in part) {
       const filePart = part as FilePart;
       console.log(
-        `${partPrefix} ${colorize("blue", "📄 File:")} Name: ${
-          filePart.file.name || "N/A"
-        }, Type: ${filePart.file.mimeType || "N/A"}, Source: ${
-          filePart.file.bytes ? "Inline (bytes)" : filePart.file.uri
+        `${partPrefix} ${colorize("blue", "📄 File:")} Name: ${filePart.file.name || "N/A"
+        }, Type: ${filePart.file.mimeType || "N/A"}, Source: ${filePart.file.bytes ? "Inline (bytes)" : filePart.file.uri
         }`
       );
       // Avoid printing large byte strings

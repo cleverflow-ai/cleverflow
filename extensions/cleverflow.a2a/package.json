@@ -3,8 +3,22 @@
   "version": "0.0.1",
   "main": "dist/index.js",
   "exports": {
-    "import": "./dist/index.js",
-    "require": "./dist/index.js"
+    ".": {
+      "import": "./dist/client/client.js",
+      "require": "./dist/client/client.js"
+    },
+    "./client": {
+      "import": "./dist/client/client.js",
+      "require": "./dist/client/client.js"
+    },
+    "./server": {
+      "import": "./dist/server/index.js",
+      "require": "./dist/server/index.js"
+    },
+    "./schema": {
+      "import": "./dist/schema.js",
+      "require": "./dist/schema.js"
+    }
   },
   "type": "module",
   "scripts": {

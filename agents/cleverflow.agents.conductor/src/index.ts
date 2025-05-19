@@ -1,7 +1,10 @@
-import { A2AServer } from '@cleverflow/cleverflow.a2a';
+import { A2AServer } from '@cleverflow/cleverflow.a2a/server';
 import { handleTask } from './handler';
+import dotenvFlow from 'dotenv-flow';
+import dotenvExpand from 'dotenv-expand';
+dotenvExpand.expand(dotenvFlow.config())
 
-const PORT = process.env.PORT || 8080;
+const PORT = process.env.PORT || 41241;
 
 const server = new A2AServer(handleTask);
 

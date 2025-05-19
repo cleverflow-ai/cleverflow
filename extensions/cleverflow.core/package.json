@@ -12,8 +12,6 @@
   },
   "devDependencies": {
     "@types/lodash": "^4.17.16",
-    "@types/ssh2-sftp-client": "^9.0.4",
-    "@types/stream-buffers": "^3.0.7",
     "publint": "^0.3.12",
     "typescript": "^5.8.3",
     "vite": "^6.3.5"
@@ -24,12 +22,9 @@
     "@nats-io/transport-node": "^3.0.2",
     "@types/md5": "^2.3.5",
     "axios": "^1.9.0",
-    "basic-ftp": "^5.0.5",
     "lodash": "^4.17.21",
     "md5": "^2.3.0",
     "nats": "^2.29.3",
-    "ssh2-sftp-client": "^12.0.0",
-    "stream-buffers": "^3.0.3",
     "vm": "^0.1.0"
   }
 }

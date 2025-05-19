@@ -15,8 +15,11 @@
     "typescript": "^5.8.3"
   },
   "dependencies": {
-    "ts-node": "^10.9.2",
+    "@cleverflow/cleverflow.a2a": "file:../../extensions/cleverflow.a2a",
     "@cleverflow/cleverflow.core": "file:../../extensions/cleverflow.core",
-    "@cleverflow/cleverflow.a2a": "file:../../extensions/cleverflow.a2a"
+    "dotenv-expand": "^12.0.2",
+    "dotenv-flow": "^4.1.0",
+    "lodash": "^4.17.21",
+    "ts-node": "^10.9.2"
   }
 }

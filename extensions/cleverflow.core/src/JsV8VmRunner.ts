@@ -6,9 +6,9 @@
 import axios from 'axios';
 import fs from "fs";
 import path from "path";
-import * as ftp from "basic-ftp";
-import SftpClient from "ssh2-sftp-client";
-import { WritableStreamBuffer } from "stream-buffers";
+// import * as ftp from "basic-ftp";
+// import SftpClient from "ssh2-sftp-client";
+// import { WritableStreamBuffer } from "stream-buffers";
 import vm from 'vm';
 
 /**
@@ -48,38 +48,41 @@ export class JsV8VmRunner {
                         },
                     });
                     return response.data;
-                } else if (filePathOrUrl.startsWith("ftp://")) {
-                    const client = new ftp.Client();
-                    client.ftp.verbose = true;
-                    try {
-                        const url = new URL(filePathOrUrl);
-                        await client.access({
-                            host: url.hostname,
-                            user: url.username || "anonymous",
-                            password: url.password || "guest",
-                        });
+                }
+                // else if (filePathOrUrl.startsWith("ftp://")) {
+                //     const client = new ftp.Client();
+                //     client.ftp.verbose = true;
+                //     try {
+                //         const url = new URL(filePathOrUrl);
+                //         await client.access({
+                //             host: url.hostname,
+                //             user: url.username || "anonymous",
+                //             password: url.password || "guest",
+                //         });
 
-                        const bufferStream = new WritableStreamBuffer();
-                        await client.downloadTo(bufferStream, url.pathname);
-                        return bufferStream.getContentsAsString("utf-8") || "";
-                    } finally {
-                        client.close();
-                    }
-                } else if (filePathOrUrl.startsWith("sftp://")) {
-                    const sftp = new SftpClient();
-                    try {
-                        const url = new URL(filePathOrUrl);
-                        await sftp.connect({
-                            host: url.hostname,
-                            username: url.username,
-                            password: url.password,
-                        });
-                        const fileContent = await sftp.get(url.pathname);
-                        return fileContent.toString("utf-8");
-                    } finally {
-                        sftp.end();
-                    }
-                } else if (filePathOrUrl.startsWith("file://")) {
+                //         const bufferStream = new WritableStreamBuffer();
+                //         await client.downloadTo(bufferStream, url.pathname);
+                //         return bufferStream.getContentsAsString("utf-8") || "";
+                //     } finally {
+                //         client.close();
+                //     }
+                // } 
+                // else if (filePathOrUrl.startsWith("sftp://")) {
+                //     const sftp = new SftpClient();
+                //     try {
+                //         const url = new URL(filePathOrUrl);
+                //         await sftp.connect({
+                //             host: url.hostname,
+                //             username: url.username,
+                //             password: url.password,
+                //         });
+                //         const fileContent = await sftp.get(url.pathname);
+                //         return fileContent.toString("utf-8");
+                //     } finally {
+                //         sftp.end();
+                //     }
+                // } 
+                else if (filePathOrUrl.startsWith("file://")) {
                     const filePath = decodeURI(filePathOrUrl.replace("file://", ""));
                     return fs.readFileSync(filePath, "utf-8");
                 } else if (filePathOrUrl.startsWith("data:")) {
