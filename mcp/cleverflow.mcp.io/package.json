@@ -19,6 +19,6 @@
   "dependencies": {
     "@modelcontextprotocol/sdk": "^1.11.4",
     "ts-node": "^10.9.2",
-    "@cleverflow/cleverflow.mcp": "file:../cleverflow.mcp"
+    "@cleverflow-ai/cleverflow.mcp": "file:../cleverflow.mcp"
   }
 }

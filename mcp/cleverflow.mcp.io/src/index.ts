@@ -1,6 +1,6 @@
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
-import McpHost from "@cleverflow/cleverflow.mcp/dist/McpHost.js";
-import ExpressMcpHost from "@cleverflow/cleverflow.mcp/dist/ExpressMcpHost.js";
+import McpHost from "@cleverflow-ai/cleverflow.mcp/dist/McpHost.js";
+import ExpressMcpHost from "@cleverflow-ai/cleverflow.mcp/dist/ExpressMcpHost.js";
 
 const host: McpHost = new ExpressMcpHost(() => {
     const server = new McpServer({

@@ -34,3 +34,5 @@ dist-webcomponents
 baml_client
 paraglide
 **/project.inlang/cache/
+
+*.npmrc
