@@ -1,12 +1,15 @@
 {
-  "name": "@cleverflow/cleverflow.mcp",
+  "name": "@cleverflow-ai/cleverflow.mcp",
   "version": "0.1.0",
   "type": "module",
+  "publishConfig": {
+    "registry": "https://npm.pkg.github.com/"
+  },
   "scripts": {
     "build": "npx tsc"
   },
   "keywords": [],
-  "author": "cleverflow.ai",
+  "author": "cleverflow-ai",
   "license": "AGPL-3.0-only",
   "description": "Provides the base implementation of the Model Context Protocol (MCP) for CLEVER°FLOW.",
   "devDependencies": {
