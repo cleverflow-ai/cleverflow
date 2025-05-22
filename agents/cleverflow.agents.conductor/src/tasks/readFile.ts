@@ -15,17 +15,18 @@ export async function* runTask(context: TaskContext): AsyncGenerator<TaskYieldUp
         }
     };
 
-    const parts = context.userMessage.parts;
-    const filePart = _.find(parts, (part) => {
-        return part && part.type === 'file' && 'file' in part;
-    });
+    // const parts = context.userMessage.parts;
+    // const filePart = _.find(parts, (part) => {
+    //     return part && part.type === 'file' && 'file' in part;
+    // });
 
-    if (filePart) {
+    const input = context.task.metadata?.input as any;
+    const fileUrl = input?.fileUrl;
+
+    if (fileUrl) {
         console.log('>>> run MCP client to get that file content');
     } else {
         const jsonForm = await guiAgent.getFileUrlForm();
-        console.log('>>>>>> jsonForm');
-        console.log(jsonForm);
         yield {
             state: 'input-required',
             message: {
@@ -33,7 +34,8 @@ export async function* runTask(context: TaskContext): AsyncGenerator<TaskYieldUp
                 parts: [{
                     type: 'data',
                     data: jsonForm
-                }]
+                }],
+                metadata: context.task.metadata
             }
         };
     }

@@ -1,64 +1,14 @@
-import { A2AClient } from "@cleverflow/cleverflow.agents";
+import { InteractiveClient } from "@cleverflow/cleverflow.agents.interactiveclient";
+import type { Task } from "@cleverflow/cleverflow.agents/schema";
 
-import type {
-    TaskSendParams,
-} from "@cleverflow/cleverflow.agents/schema";
+export class ConductorAgent extends InteractiveClient {
 
-export class ConductorAgent {
-    private client: A2AClient;
-
-    constructor(private serverUrl: string) {
-        this.client = new A2AClient(serverUrl);
+    constructor(serverUrl: string) {
+        super(serverUrl);
     }
 
-    public async sendTask(payload: any): Promise<void> {
-        try {
-
-            const taskParams: TaskSendParams = {
-                id: crypto.randomUUID(),
-                message: {
-                    role: "user",
-                    parts: [
-                        // {
-                        //     type: "file",
-                        //     file: {
-                        //         uri: 'https://gitea.clevernow.com/files/demo.md'
-                        //     }
-                        // },
-                        {
-                            type: "text",
-                            text: 'empty request'
-                        }
-                    ]
-                },
-                metadata: {
-                    taskName: "read-file",
-                },
-            };
-
-            console.log(taskParams);
-
-            const stream = this.client.sendTaskSubscribe(taskParams);
-
-            for await (const event of stream) {
-                this.handleEvent(event);
-            }
-        } catch (error: any) {
-            this.handleError(error);
-        }
-    }
-
-    private handleEvent(event: unknown) {
-        console.log(`📥 Received event:`, event);
-    }
-
-    private handleError(error: any) {
-        console.error(`❌ Error:`, error.message || error);
-        if (error.code) {
-            console.error(`Code: ${error.code}`);
-        }
-        if (error.data) {
-            console.error(`Data: ${JSON.stringify(error.data)}`);
-        }
+    protected onEvent(event: Task): void {
+        console.log('>>>> event');
+        console.log(event);
     }
 }

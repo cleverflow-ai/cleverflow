@@ -2,125 +2,47 @@
 
 <script lang="ts">
 	import { onMount, onDestroy } from "svelte";
+	import { Modal } from "@skeletonlabs/skeleton-svelte";
 	import css from "../../app.css?inline";
-	import postal from "postal";
 	import "@jsfe/shoelace";
 	import type { FromSchema, JSONSchema7, Jsf } from "@jsfe/shoelace";
 
 	let props = $props();
-	let { url = "", text = "", id = null, theme = "crimson" } = props;
+	let { theme = "crimson" } = props;
 
-	let serverWebComponentContainer: any = $state();
-	let serverWebComponentData: any = $state(null);
+	let isVisible = $state(false);
 
-	const channel = postal.channel("json-schema-form");
-	const subscription = channel.subscribe(
-		"show-form",
-		async (payload: any) => {
-			serverWebComponentData = payload.guiData;
-			showWebServerComponent();
-		},
-	);
+	let channel: any;
+	let subscription: any;
 
-	onMount(async () => {});
+	let event: any;
 
-	onDestroy(() => {
-		subscription.unsubscribe();
+	let mySchema = {} as const satisfies JSONSchema7;
+	type MyData = FromSchema<typeof mySchema>;
+	let dataInSvelte: MyData = $state({});
+
+	onMount(async () => {
+		const postal = window.postal;
+		channel = postal?.channel("dynamic-form-channel");
+		subscription = channel?.subscribe(
+			"show-dynamic-form",
+			async (payload: any) => {
+				event = payload.event;
+				mySchema = payload.form;
+				isVisible = true;
+			},
+		);
 	});
 
-	const onServerWebComponentFinished = () => {
-		serverWebComponentData = null;
-	};
-
-	const showWebServerComponent = async () => {
-		const binaryData = new Uint8Array(serverWebComponentData.buffer.data);
-		const blob = new Blob([binaryData], {
-			type: "application/javascript",
-		});
-		const moduleUrl = URL.createObjectURL(blob);
-
-		try {
-			if (!customElements.get(serverWebComponentData.webcomponent)) {
-				await import(moduleUrl);
-			}
-		} catch (exception) {}
-
-		if (serverWebComponentContainer) {
-			let attributes = "";
-			if (serverWebComponentData.attributes) {
-				attributes = Object.entries(serverWebComponentData.attributes)
-					.map(([key, value]) => `${key}="${value}"`)
-					.join(" ");
-			}
-			serverWebComponentContainer.innerHTML = `<${serverWebComponentData.webcomponent} ${attributes} onFinished={onServerWebComponentFinished}></${serverWebComponentData.webcomponent}>`;
-			requestAnimationFrame(() => {
-				const webComponent = serverWebComponentContainer.querySelector(
-					serverWebComponentData.webcomponent,
-				);
-
-				if (webComponent) {
-					webComponent.addOnFinishedListener(
-						onServerWebComponentFinished,
-					);
-				}
-			});
-		}
-	};
-
-	const mySchema = {
-		title: "Sign-up form",
-		description: "A simple form example.",
-		type: "object",
-		required: ["FirstName", "LastName"],
-		properties: {
-			FirstName: {
-				type: "string",
-				title: "First name",
-				default: "Chuck",
-			},
-			LastName: {
-				type: "string",
-				title: "Last name",
-			},
-			Age: {
-				type: "integer",
-				title: "Age",
-				minimum: 13,
-				maximum: 150,
-			},
-			Bio: {
-				type: "string",
-				title: "Bio",
-			},
-			Email: {
-				title: "Email",
-				format: "email",
-				type: "string",
-			},
-			Password: {
-				type: "string",
-				title: "Password",
-				format: "password",
-				minLength: 3,
-			},
-			Telephone: {
-				type: "string",
-				title: "Telephone",
-				minLength: 10,
-			},
-		},
-	} as const satisfies JSONSchema7;
-	type MyData = FromSchema<typeof mySchema>;
+	onDestroy(() => {
+		subscription?.unsubscribe();
+	});
 
 	function assertValidData(data: unknown): data is MyData {
 		// Use your AJV or other schema checker here, if you need thorough validation
 		// ...
 		return true;
 	}
-
-	let dataInSvelte: MyData = $state({
-		foo: "hello",
-	});
 
 	function formBinding(form: Jsf) {
 		form.data = dataInSvelte;
@@ -141,7 +63,11 @@
 			console.log({ "Submitted from Svelte!": newData, valid });
 
 			if (assertValidData(newData)) {
-				// Do stuff...
+				channel?.publish("dynamic-form-submit", {
+					event,
+					formData: newData,
+				});
+				isVisible = false;
 			}
 		};
 	}
@@ -149,24 +75,34 @@
 
 <svelte:element this={"style"}>{@html css}</svelte:element>
 
-<!-- {#snippet serverWebComponentTriggerButton()}
-	<div class="flex flex-col items-end gap-1">
-		<div class="text-error-500 text-sm bold animate-bounce">
-			Server is waiting for you
-		</div>
-		<button
-			onclick={async () => await showWebServerComponent()}
-			class="btn preset-filled-primary-500"
-		>
-			<TriangleAlert class="text-white-700 w-5 h-5" />
-			Action Required
-		</button>
-	</div>
-{/snippet} -->
-
 <main data-theme={theme}>
-	<article id="svelte">
-		<jsf-shoelace use:formBinding></jsf-shoelace>
-	</article>
-	<div bind:this={serverWebComponentContainer}></div>
+	<Modal
+		open={isVisible}
+		onOpenChange={(e) => {
+			isVisible = e.open;
+		}}
+		triggerBase="btn preset-tonal"
+		contentBase="h-screen w-screen"
+		backdropClasses="backdrop-blur-sm"
+	>
+		{#snippet content()}
+			<div class="flex flex-col items-center justify-center h-full">
+				<!-- <div class="flex items-center justify-end w-full p-4">
+					<button
+						type="button"
+						class="btn preset-tonal-surface"
+						onclick={() => (shopModalState = false)}
+						><X class="w-8 h-8" /></button
+					>
+				</div> -->
+				<div
+					class="card bg-white dark:bg-gray-900 rounded-xl p-6 max-w-screen-sm w-full shadow-2xl space-y-4"
+				>
+					<article id="svelte">
+						<jsf-shoelace use:formBinding></jsf-shoelace>
+					</article>
+				</div>
+			</div>
+		{/snippet}
+	</Modal>
 </main>

@@ -36,11 +36,11 @@ export default class ExpressMcpHost extends McpHost {
      * @param getMcpServer A function that returns a Promise resolving to an `McpServer` instance.
      */
     constructor(
-        protected defaultRoutePath: string = '/mcp', 
-        protected port: number = 3000, 
+        protected defaultRoutePath: string = '/mcp',
+        protected port: number = 3000,
         protected type: 'stateful' | 'stateless' = 'stateful',
         protected getMcpServer: () => Promise<McpServer>) {
-            super(defaultRoutePath, port, type, getMcpServer); 
+        super(defaultRoutePath, port, type, getMcpServer);
     }
 
     /**
@@ -95,7 +95,7 @@ export default class ExpressMcpHost extends McpHost {
      * - Initializes a new session and transport if request is an initialization request.
      * - Responds with 400 if neither condition is met.
      */
-    protected async post(req: express.Request, res: express.Response) : Promise<void> {
+    protected async post(req: express.Request, res: express.Response): Promise<void> {
         // Check for existing session ID
         const sessionId = req.headers[this.SESSION_ID_HEADER] as string | undefined;
         let transport: StreamableHTTPServerTransport;
@@ -119,7 +119,7 @@ export default class ExpressMcpHost extends McpHost {
                     delete this.transports[transport.sessionId];
                 }
             };
-            
+
             const server = await this.getMcpServer();
             await server.connect(transport);
         } else {

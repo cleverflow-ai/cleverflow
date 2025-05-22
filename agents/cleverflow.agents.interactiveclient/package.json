@@ -1,5 +1,5 @@
 {
-  "name": "@cleverflow/cleverflow.clients",
+  "name": "@cleverflow/cleverflow.agents.interactiveclient",
   "version": "0.0.1",
   "main": "dist/index.js",
   "exports": {
@@ -18,6 +18,9 @@
   },
   "dependencies": {
     "@cleverflow/cleverflow.agents": "file:../cleverflow.agents",
+    "@types/postal": "^1.0.35",
+    "lodash": "^4.17.21",
+    "postal": "^2.0.6",
     "ts-node": "^10.9.2"
   }
 }

@@ -1,0 +1,22 @@
+{
+  "name": "@cleverflow/cleverflow.mcp.client",
+  "version": "1.0.0",
+  "type": "module",
+  "scripts": {
+    "build": "npx tsc",
+    "dev": "npx tsx src/index.ts"
+  },
+  "keywords": [],
+  "author": "cleverflow-ai",
+  "license": "AGPL-3.0-only",
+  "description": "Provides the base implementation of the Model Context Protocol (MCP) for CLEVER°FLOW.",
+  "devDependencies": {
+    "@types/node": "^22.15.18",
+    "npx": "^10.2.2",
+    "typescript": "^5.8.3"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.11.4",
+    "ts-node": "^10.9.2"
+  }
+}
