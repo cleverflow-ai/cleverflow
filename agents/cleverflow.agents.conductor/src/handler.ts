@@ -1,7 +1,7 @@
 
 import { TaskContext, TaskYieldUpdate } from '@cleverflow/cleverflow.agents/server';
 import * as schema from '@cleverflow/cleverflow.agents/schema';
-import * as readFileTask from './tasks/readFile';
+import * as readFileTask from './tasks/getOutlineFile';
 
 export async function* handleTask(context: TaskContext): AsyncGenerator<TaskYieldUpdate, schema.Task | void, unknown> {
     console.log('>>>> context');

@@ -17,11 +17,11 @@ const guiAgent = new GUIAgent('GUI');
     console.log('>>> gui agent connected to: ', eventsServer, eventsToken);
 })();
 
-export const getFileUrlForm = async () => {
+export const getOutlineFileIdForm = async () => {
     return await guiAgent.request({
         subject: "GUI",
         payload: {
-            id: 'file-url-form'
+            id: 'file-id-form'
         },
     });
 }
