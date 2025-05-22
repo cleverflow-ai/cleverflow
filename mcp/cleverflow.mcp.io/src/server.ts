@@ -1,5 +1,13 @@
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
-import { registerCalculateBmiTool } from "./tools/index.js";
+import {
+    registerCalculateBmiTool,
+    registerReadOutlineFileTool,
+} from "./tools/index.js";
+
+function registerTool(server: McpServer) {
+    registerCalculateBmiTool(server);
+    registerReadOutlineFileTool(server);
+}
 
 export function createServer() {
     const server = new McpServer({
@@ -7,7 +15,7 @@ export function createServer() {
         version: "1.0.0"
     });
 
-    registerCalculateBmiTool(server);
+    registerTool(server);
 
     return server;
 }

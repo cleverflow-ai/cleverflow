@@ -17,11 +17,18 @@ console.log('✅ A2A Conductor is listening on port ', PORT);
 
 (async () => {
     const client = await getClient(process.env.MCP_SERVER_URL);
+    // const result = await client.callTool({
+    //     name: "calculate-bmi",
+    //     arguments: {
+    //         weightKg: 70,
+    //         heightM: 1.75
+    //     }
+    // });
+
     const result = await client.callTool({
-        name: "calculate-bmi",
+        name: "read-outline-file",
         arguments: {
-            weightKg: 70,
-            heightM: 1.75
+            fileId: 'sealing-technologies-rrOT5m2iSz',
         }
     });
 

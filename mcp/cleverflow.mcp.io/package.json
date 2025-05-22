@@ -18,6 +18,7 @@
   },
   "dependencies": {
     "@cleverflow-ai/cleverflow.mcp": "file:../cleverflow.mcp",
+    "@cleverflow/cleverflow.outline": "file:../../outline",
     "@modelcontextprotocol/sdk": "^1.11.4",
     "ts-node": "^10.9.2",
     "zod": "^3.25.7"

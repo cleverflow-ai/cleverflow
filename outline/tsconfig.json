@@ -1,0 +1,22 @@
+{
+  "compilerOptions": {
+    "target": "ESNext",
+    "module": "NodeNext",
+    "moduleResolution": "NodeNext",
+    "sourceMap": false,
+    "strict": false,
+    "skipLibCheck": true,
+    "outDir": "dist",
+    "rootDir": "src",
+    "esModuleInterop": true, // Often helpful with NodeNext
+    "resolveJsonModule": true, // Good practice for importing JSON if needed
+  },
+  "include": [
+    "src"
+  ],
+  "exclude": [
+    "tests",
+    "dist",
+    "node_modules"
+  ]
+}
