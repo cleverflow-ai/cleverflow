@@ -10,6 +10,8 @@ import _ from 'lodash';
 export abstract class InteractiveClient {
     private client: A2AClient;
 
+    public callbacks = new Map<string, (task: Task) => void>();
+
     private channel = window ? window.postal?.channel("dynamic-form-channel") : null;
     private dynamicFormSubmitSubscription: any;
 
@@ -20,8 +22,9 @@ export abstract class InteractiveClient {
         );
     }
 
-    public async sendTask(taskParams: TaskSendParams): Promise<void> {
+    public async sendTask(taskParams: TaskSendParams, onComplete: (event: Task) => void): Promise<void> {
         try {
+            this.callbacks.set(taskParams.id, onComplete);
             const stream = this.client.sendTaskSubscribe(taskParams);
 
             for await (const event of stream) {
@@ -35,9 +38,6 @@ export abstract class InteractiveClient {
     private handleEvent(event: Task) {
         const state = event.status?.state;
 
-        console.log('>>>> handle event');
-        console.log(event);
-        // Nếu event yêu cầu input
         if (state === 'input-required') {
             this.requestShowDynamicForm(event);
         } else {
@@ -65,8 +65,6 @@ export abstract class InteractiveClient {
     };
 
     private onDynamicFormSubmit = async (payload: any) => {
-        console.log('>>>> formSubmitHanler');
-        console.log('payload', payload);
         const event: Task = payload.event;
         const metadata = event.status?.message?.metadata ?? {};
         metadata.input = payload.formData;
@@ -78,9 +76,9 @@ export abstract class InteractiveClient {
             },
             metadata: metadata,
         };
-        console.log('>>>> taskParams');
-        console.log(taskParams);
-        this.sendTask(taskParams);
+        const onComplete = this.callbacks.get(event.id);
+        this.callbacks.delete(event.id);
+        this.sendTask(taskParams, onComplete);
     };
 
     private handleError(error: any) {

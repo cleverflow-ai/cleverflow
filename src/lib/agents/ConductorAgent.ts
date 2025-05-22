@@ -1,5 +1,5 @@
 import { InteractiveClient } from "@cleverflow/cleverflow.agents.interactiveclient";
-import type { Task } from "@cleverflow/cleverflow.agents/schema";
+import type { Task, TaskSendParams } from "@cleverflow/cleverflow.agents/schema";
 
 export class ConductorAgent extends InteractiveClient {
 
@@ -10,5 +10,12 @@ export class ConductorAgent extends InteractiveClient {
     protected onEvent(event: Task): void {
         console.log('>>>> event');
         console.log(event);
+        const state = event.status?.state;
+        if (state === 'completed') {
+            const onComplete = this.callbacks.get(event.id);
+            if (onComplete) {
+                onComplete(event);
+            }
+        }
     }
 }
