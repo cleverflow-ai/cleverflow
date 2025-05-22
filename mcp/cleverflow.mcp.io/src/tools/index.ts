@@ -1,0 +1,1 @@
+export { registerCalculateBmiTool } from "./calculateBmi.js";

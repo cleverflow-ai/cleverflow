@@ -1,7 +1,13 @@
 {
-  "name": "@cleverflow/cleverflow.mcp.client",
+  "name": "@cleverflow/cleverflow.mcp.io.client",
   "version": "1.0.0",
   "type": "module",
+  "exports": {
+    ".": {
+      "import": "./dist/client.js",
+      "require": "./dist/client.js"
+    }
+  },
   "scripts": {
     "build": "npx tsc",
     "dev": "npx tsx src/index.ts"

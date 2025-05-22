@@ -52,13 +52,19 @@ export default class ExpressMcpHost extends McpHost {
         this.app.use(express.json());
 
         // Handle POST requests for client-to-server communication
-        this.app.post(this.defaultRoutePath, this.post);
+        this.app.post(this.defaultRoutePath, (req: express.Request, res: express.Response) => {
+            this.post(req, res);
+        });
 
         // Handle GET requests for server-to-client notifications via SSE
-        this.app.get(this.defaultRoutePath, this.get);
+        this.app.get(this.defaultRoutePath, (req: express.Request, res: express.Response) => {
+            this.get(req, res);
+        });
 
         // Handle DELETE requests for session termination
-        this.app.delete(this.defaultRoutePath, this.delete);
+        this.app.delete(this.defaultRoutePath, (req: express.Request, res: express.Response) => {
+            this.delete(req, res);
+        });
 
         this.httpServer = this.app.listen(this.port, (error) => {
             if (error) {
