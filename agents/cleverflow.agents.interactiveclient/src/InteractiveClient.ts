@@ -1,10 +1,10 @@
-import { A2AClient } from "@cleverflow/cleverflow.agents";
+import { A2AClient } from "@cleverflow-ai/cleverflow.agents/client";
 import type {
     DataPart,
     Part,
     Task,
     TaskSendParams,
-} from "@cleverflow/cleverflow.agents/schema";
+} from "@cleverflow-ai/cleverflow.agents/schema";
 import _ from 'lodash';
 
 export abstract class InteractiveClient {

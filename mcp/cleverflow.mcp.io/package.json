@@ -1,6 +1,6 @@
 {
-  "name": "@cleverflow/cleverflow.mcp.io",
-  "version": "0.1.0",
+  "name": "@cleverflow-ai/cleverflow.mcp.io",
+  "version": "1.0.0",
   "type": "module",
   "main": "index.js",
   "scripts": {
@@ -18,9 +18,9 @@
   },
   "dependencies": {
     "@cleverflow-ai/cleverflow.mcp": "file:../cleverflow.mcp",
-    "@cleverflow/cleverflow.outline": "file:../../outline",
     "@modelcontextprotocol/sdk": "^1.11.4",
     "ts-node": "^10.9.2",
+    "uuid": "^11.1.0",
     "zod": "^3.25.7"
   }
 }

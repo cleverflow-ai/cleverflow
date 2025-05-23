@@ -32,6 +32,6 @@ async function startGUIAgent() {
 }
 
 export const handle: Handle = async ({ event, resolve }) => {
-    await startGUIAgent(); // start once on first request
+    // await startGUIAgent(); // start once on first request
     return handleParaglide({ event, resolve });
 };

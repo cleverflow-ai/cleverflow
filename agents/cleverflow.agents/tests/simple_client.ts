@@ -1,8 +1,8 @@
 import crypto from "node:crypto";
-import { A2AClient } from "../client/client.js";
+import { A2AClient } from "../src/client/client.js";
 import {
     TaskSendParams,
-} from "../schema.js";
+} from "../src/schema.js";
 
 (async () => {
     const currentTaskId = crypto.randomUUID();

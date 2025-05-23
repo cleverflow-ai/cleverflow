@@ -1,5 +1,7 @@
-import { A2AServer } from '@cleverflow/cleverflow.agents/server';
-import { handleTask } from './handler';
+import { A2AServer, TaskContext, TaskYieldUpdate } from '@cleverflow-ai/cleverflow.agents/dist/server.js';
+import * as schema from '@cleverflow-ai/cleverflow.agents/dist/schema.js';
+import { fetchOutlineFile } from './tasks/fetchOutlineFile.js';
+
 import dotenvFlow from 'dotenv-flow';
 import dotenvExpand from 'dotenv-expand';
 
@@ -13,3 +15,19 @@ const server = new A2AServer(handleTask);
 server.start(PORT);
 
 console.log('✅ A2A Conductor is listening on port ', PORT);
+
+async function* handleTask(context: TaskContext): AsyncGenerator<TaskYieldUpdate, schema.Task | void, unknown> {
+    console.log('>>>> context');
+    console.log(JSON.stringify(context));
+    
+    const taskName = context.task.metadata?.taskName;
+
+    switch (taskName) {
+        case 'read-file': {
+            return yield* fetchOutlineFile(context);
+        }
+
+        default:
+            throw new Error(`Unknown task: ${context}`);
+    }
+}

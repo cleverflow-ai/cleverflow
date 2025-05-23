@@ -1,11 +1,10 @@
-
-import { TaskContext, TaskYieldUpdate } from '@cleverflow/cleverflow.agents/server';
-import * as schema from '@cleverflow/cleverflow.agents/schema';
+import { TaskContext, TaskYieldUpdate } from '@cleverflow-ai/cleverflow.agents/dist/server.js';
+import * as schema from '@cleverflow-ai/cleverflow.agents/dist/schema';
 import _ from 'lodash';
 import * as guiAgent from '../gui/GUIAgent';
-import { getClient } from '@cleverflow/cleverflow.mcp.io.client';
+import { createClient } from '@cleverflow-ai/cleverflow.mcp.io/dist/client.js';
 
-export async function* runTask(context: TaskContext): AsyncGenerator<TaskYieldUpdate, schema.Task | void, unknown> {
+export async function* fetchOutlineFile(context: TaskContext): AsyncGenerator<TaskYieldUpdate, schema.Task | void, unknown> {
     yield {
         state: 'working',
         message: {
@@ -18,7 +17,8 @@ export async function* runTask(context: TaskContext): AsyncGenerator<TaskYieldUp
     const fileId = input?.fileId;
 
     if (fileId) {
-        const client = await getClient(process.env.MCP_SERVER_URL);
+        const client = await createClient(process.env.MCP_SERVER_URL);
+        
         const result = await client.callTool({
             name: "read-outline-file",
             arguments: {

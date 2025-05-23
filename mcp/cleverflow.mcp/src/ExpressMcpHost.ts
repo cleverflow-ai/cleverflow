@@ -1,5 +1,6 @@
 import express from "express";
-import { randomUUID } from "node:crypto";
+import cors from "cors";
+import { v4 as uuidv4 } from 'uuid';
 import http from "http";
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { StreamableHTTPServerTransport } from "@modelcontextprotocol/sdk/server/streamableHttp.js";
@@ -48,6 +49,8 @@ export default class ExpressMcpHost extends McpHost {
      */
     public async start(): Promise<void> {
         this.app = express();
+
+        this.app.use(cors()); // This enables CORS for all origins
 
         this.app.use(express.json());
 
@@ -104,15 +107,18 @@ export default class ExpressMcpHost extends McpHost {
     protected async post(req: express.Request, res: express.Response): Promise<void> {
         // Check for existing session ID
         const sessionId = req.headers[this.SESSION_ID_HEADER] as string | undefined;
+        console.log("Session ID:", sessionId);
+        console.log("Request Body:", req.body);
+
         let transport: StreamableHTTPServerTransport;
 
         if (sessionId && this.transports[sessionId]) {
             // Reuse existing transport
             transport = this.transports[sessionId];
-        } else if (!sessionId && isInitializeRequest(req.body)) {
+        } else if (isInitializeRequest(req.body)) {
             // New initialization request
             transport = new StreamableHTTPServerTransport({
-                sessionIdGenerator: () => randomUUID(),
+                sessionIdGenerator: () => sessionId ?? uuidv4(),
                 onsessioninitialized: (sessionId) => {
                     // Store the transport by session ID
                     this.transports[sessionId] = transport;
@@ -134,7 +140,7 @@ export default class ExpressMcpHost extends McpHost {
                 jsonrpc: '2.0',
                 error: {
                     code: -32000,
-                    message: 'Bad Request: No valid Session ID in Header.',
+                    message: 'POST | Invalid or missing Session ID in Header or empty Body.',
                 },
                 id: null,
             });
@@ -152,7 +158,7 @@ export default class ExpressMcpHost extends McpHost {
     protected async get(req: express.Request, res: express.Response): Promise<void> {
         const sessionId = req.headers[this.SESSION_ID_HEADER] as string | undefined;
         if (!sessionId || !this.transports[sessionId]) {
-            res.status(400).send('Invalid or missing Session ID in Header.');
+            res.status(400).send('GET | Invalid or missing Session ID in Header.');
             return;
         }
 
@@ -167,7 +173,7 @@ export default class ExpressMcpHost extends McpHost {
     protected async delete(req: express.Request, res: express.Response): Promise<void> {
         const sessionId = req.headers[this.SESSION_ID_HEADER] as string | undefined;
         if (!sessionId || !this.transports[sessionId]) {
-            res.status(400).send('Invalid or missing Session ID in Header.');
+            res.status(400).send('DELETE | Invalid or missing Session ID in Header.');
             return;
         }
 

@@ -1,5 +1,5 @@
-import { InteractiveClient } from "@cleverflow/cleverflow.agents.interactiveclient";
-import type { Task, TaskSendParams } from "@cleverflow/cleverflow.agents/schema";
+import { InteractiveClient } from "@cleverflow-ai/cleverflow.agents.interactiveclient";
+import type { Task, TaskSendParams } from "@cleverflow-ai/cleverflow.agents/schema";
 
 export class ConductorAgent extends InteractiveClient {
 

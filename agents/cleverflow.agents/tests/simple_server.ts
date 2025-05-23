@@ -1,4 +1,4 @@
-import { A2AServer, TaskContext, TaskYieldUpdate, schema } from '../server/index.js';
+import { A2AServer, TaskContext, TaskYieldUpdate, schema } from '../src/server/index.js';
 import { v4 as uuidv4 } from 'uuid'; // Assuming uuid is installed
 
 async function* mySimpleHandler(context: TaskContext): AsyncGenerator<TaskYieldUpdate, schema.Task | void, unknown> {

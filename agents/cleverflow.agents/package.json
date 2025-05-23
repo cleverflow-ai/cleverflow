@@ -1,6 +1,6 @@
 {
-  "name": "@cleverflow/cleverflow.agents",
-  "version": "0.0.1",
+  "name": "@cleverflow-ai/cleverflow.agents",
+  "version": "1.0.0",
   "main": "dist/index.js",
   "exports": {
     ".": {

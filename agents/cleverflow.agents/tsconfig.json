@@ -13,7 +13,7 @@
     "declaration": true,
     "emitDeclarationOnly": false,
   },
-  // "include": [
-  //   "src/**/*.ts"
-  // ]
+  "include": [
+    "src/**/*.ts"
+  ]
 }

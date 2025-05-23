@@ -1,9 +1,10 @@
 import { Client } from "@modelcontextprotocol/sdk/client/index.js";
 import { StreamableHTTPClientTransport } from "@modelcontextprotocol/sdk/client/streamableHttp.js";
+import { v4 as uuidv4 } from 'uuid';
 
 let client: Client | undefined = undefined;
 
-export async function getClient(serverUrl: string): Promise<Client> {
+export async function createClient(serverUrl: string): Promise<Client> {
     if (client) return client;
 
     client = new Client({
@@ -12,7 +13,13 @@ export async function getClient(serverUrl: string): Promise<Client> {
     });
 
     const baseUrl = new URL(serverUrl);
-    const transport = new StreamableHTTPClientTransport(baseUrl);
+    const transport = new StreamableHTTPClientTransport(baseUrl, {
+        requestInit: {
+            headers: {  
+                'mcp-session-id': uuidv4()
+            }
+        }
+    });
 
     await client.connect(transport);
 
