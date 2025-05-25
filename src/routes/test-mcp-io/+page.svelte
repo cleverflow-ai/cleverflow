@@ -38,9 +38,20 @@
 
         const client = await createClient("http://localhost:3000/mcp");
 
-        // List resources
+        // // List resources
         // const resources = await client.listResources();
         // console.log("Resources:", resources);
+        // // Read a resource
+        // const resource = await client.readResource({
+        //     uri: `outline://${fileId}`,
+        //     arguments: {
+        //         fileId,
+        //         baseUrl,
+        //         apiKey,
+        //     },
+        // });
+        // console.log('Resource:', resource);
+        // console.log('Text:', resource.contents[0].text);
 
         // List tools
         // const tools = await client.listTools();
@@ -49,7 +60,6 @@
         const result = await client.callTool({
             name: "fetch-outline-text-file",
             arguments: {
-                uri: "outline://textFile",
                 fileId,
                 baseUrl,
                 apiKey,
@@ -76,15 +86,6 @@
         fileId = ""; // Clear fileId after fetching
         baseUrl = ""; // Clear baseUrl after fetching
         apiKey = ""; //
-        // Read a resource
-        // const resource = await client.readResource({
-        //     uri: "outline://textFile",
-        //     fileId: "sealing-technologies-rrOT5m2iSz",
-        //     baseUrl: "https://docs-atlascopco.clevernow.com/",
-        //     apiKey: "ol_api_qHHZcDQ8EKJfx9tKwbi7E2zeT30Rnx5bq1uMfO"
-        // });
-        // console.log('Resource:', resource);
-        // console.log('Text:', resource.contents[0].text);
     }
 </script>
 

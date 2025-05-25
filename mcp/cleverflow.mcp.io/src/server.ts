@@ -6,6 +6,12 @@ export function createServer() {
     const server = new McpServer({
         name: "@cleverflow/cleverflow.mcp.io",
         version: "1.0.0"
+    }, {
+        capabilities: {
+            logging: {
+                
+            }
+        }
     });
     console.log("MCP Server created");
 
@@ -32,30 +38,25 @@ function registerResources(server: McpServer) {
     );
     console.log("Echo resource registered");
 
-    server.resource(
-        "outline",
-        "outline://textFile",
-        // new ResourceTemplate("outline://{fileId}", { list: undefined }),
-        async (uri, extra) => {
-            const params = uri.searchParams;
-            const fileId = params.get("fileId");
-            const baseUrl = params.get("baseUrl");
-            const apiKey = params.get("apiKey");
+    // server.resource(
+    //     "outline",
+    //     new ResourceTemplate("outline://{fileId}", { list: undefined }),
+    //     async (uri, { fileId }, extra) => {
+    //         // const outline = new Outline(baseUrl as string, apiKey as string);
+    //         // const text = await outline.fetch(fileId as string);
+    //         console.log(uri);
 
-            const outline = new Outline(baseUrl, apiKey);
-            const text = await outline.fetch(fileId);
-
-            return {
-                contents: [
-                    {
-                        uri: uri.href,
-                        text: text
-                    }
-                ],
-            };
-        }
-    );
-    console.log("Outline resource registered");
+    //         return {
+    //             contents: [
+    //                 {
+    //                     uri: uri.href,
+    //                     text: "Test"
+    //                 }
+    //             ],
+    //         };
+    //     }
+    // );
+    // console.log("Outline resource registered");
 }
 
 function registerTools(server: McpServer) {
@@ -66,9 +67,18 @@ function registerTools(server: McpServer) {
             baseUrl: z.string(),
             apiKey: z.string()
         },
-        async ({ fileId, baseUrl, apiKey }) => {
+        async ({ fileId, baseUrl, apiKey }, extra) => {
+            await extra.sendNotification({
+                method: "notifications/message",
+                params: {
+                    level: "info",
+                    message: "Fetching outline file content...",
+                }
+            });
+
             const outline = new Outline(baseUrl, apiKey);
             const text = await outline.fetch(fileId);
+            
             return {
                 content: [
                     {
