@@ -3,7 +3,7 @@ export default class Outline {
     }
 
     public async fetch(fileId: string): Promise<string> {
-        const response = await fetch(`${this.baseUrl}/outline`, {
+        const response = await fetch(`${this.baseUrl}/documents.info`, {
             method: "POST",
             headers: {
                 "Authorization": `Bearer ${this.apiKey}`,
@@ -16,6 +16,7 @@ export default class Outline {
             throw new Error(`Failed to fetch outline file content: ${response.statusText}`);
         }
 
-        return response.text();
+        const result = await response.json();
+        return result?.data?.text ?? "";
     }
 }

@@ -11,7 +11,7 @@ export function createServer() {
 
     registerResources(server);
     registerTools(server);
-    
+
     return server;
 }
 
@@ -53,7 +53,7 @@ function registerResources(server: McpServer) {
                     }
                 ],
             };
-        } 
+        }
     );
     console.log("Outline resource registered");
 }
@@ -69,15 +69,14 @@ function registerTools(server: McpServer) {
         async ({ fileId, baseUrl, apiKey }) => {
             const outline = new Outline(baseUrl, apiKey);
             const text = await outline.fetch(fileId);
-
             return {
-                contents: [
+                content: [
                     {
                         type: "text",
                         text: text
                     }
                 ],
             };
-        } 
+        }
     );
 }
