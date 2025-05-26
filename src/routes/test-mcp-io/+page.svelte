@@ -56,7 +56,11 @@
             return;
         }
 
-        const client = await createClient("http://localhost:3000/mcp", "@cleverflow-ao/cleverflow.mcp.io", "1.0.0");
+        const client = await createClient(
+            "http://localhost:3000/mcp",
+            "@cleverflow-ao/cleverflow.mcp.io",
+            "1.0.0",
+        );
 
         // // List resources
         // const resources = await client.listResources();
@@ -86,10 +90,10 @@
                     apiKey,
                 },
             },
-            null,
-            {
-                timeout: 3600 * 1000,
-            },
+            // null,
+            // {
+            //     timeout: 3600 * 1000,
+            // },
         );
         console.log("Result:", result);
         const text =
@@ -118,7 +122,11 @@
             return;
         }
 
-        const client = await createClient("http://localhost:3000/mcp", "@cleverflow-ao/cleverflow.mcp.io", "1.0.0");
+        const client = await createClient(
+            "http://localhost:3000/mcp",
+            "@cleverflow-ao/cleverflow.mcp.io",
+            "1.0.0",
+        );
 
         const result = await client.callTool(
             {
@@ -163,7 +171,11 @@
             return;
         }
 
-        const client = await createClient("http://localhost:4001/mcp", "@clevernow/clevernow.mcp.3d", "1.0.0");
+        const client = await createClient(
+            "http://localhost:4001/mcp",
+            "@clevernow/clevernow.mcp.3d",
+            "1.0.0",
+        );
 
         const result = await client.callTool(
             {
@@ -243,6 +255,15 @@
                 >
             </div>
         {:else if currentForm === "gitea-form"}
+            <label class="label">
+                <span class="label-text">Base URL</span>
+                <input bind:value={baseUrl} type="text" class="input" />
+            </label>
+
+            <label class="label">
+                <span class="label-text">API Key</span>
+                <input bind:value={apiKey} type="text" class="input" />
+            </label>
             <label class="label">
                 <span class="label-text">Repo Owner</span>
                 <input bind:value={repoOwner} type="text" class="input" />
