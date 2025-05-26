@@ -1,5 +1,6 @@
 import { McpServer, ResourceTemplate } from "@modelcontextprotocol/sdk/server/mcp.js";
 import Outline from "./resources/Outline.js";
+import Gitea from "./resources/Gitea.js";
 import z from "zod";
 
 export function createServer() {
@@ -9,7 +10,7 @@ export function createServer() {
     }, {
         capabilities: {
             logging: {
-                
+
             }
         }
     });
@@ -78,7 +79,40 @@ function registerTools(server: McpServer) {
 
             const outline = new Outline(baseUrl, apiKey);
             const text = await outline.fetch(fileId);
-            
+
+            return {
+                content: [
+                    {
+                        type: "text",
+                        text: text
+                    }
+                ],
+            };
+        }
+    );
+
+    server.tool(
+        "fetch-gitea-text-file",
+        {
+
+            baseUrl: z.string(),
+            apiKey: z.string(),
+            repoOwner: z.string(),
+            repo: z.string(),
+            filePath: z.string(),
+        },
+        async ({ repoOwner, repo, filePath, baseUrl, apiKey }, extra) => {
+            await extra.sendNotification({
+                method: "notifications/message",
+                params: {
+                    level: "info",
+                    message: "Fetching gitea file content...",
+                }
+            });
+
+            const gitea = new Gitea(baseUrl, apiKey);
+            const text = await gitea.fetch(repoOwner, repo, filePath);
+
             return {
                 content: [
                     {

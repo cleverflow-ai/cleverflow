@@ -7,6 +7,7 @@
     let rendered = $state("");
 
     onMount(() => {
+        console.log(doc);
         const ast = Markdoc.parse(doc);
         const content = Markdoc.transform(ast);
         rendered = Markdoc.renderers.html(content);

@@ -15,8 +15,9 @@ export default class Outline {
         if (!response.ok) {
             throw new Error(`Failed to fetch outline file content: ${response.statusText}`);
         }
-
+        console.log(">>>> Outline fetch result:");
         const result = await response.json();
+        console.log("Outline fetch result:", result);
         return result?.data?.text ?? "";
     }
 }

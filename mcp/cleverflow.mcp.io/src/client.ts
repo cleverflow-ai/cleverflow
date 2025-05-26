@@ -28,7 +28,7 @@ export async function createClient(serverUrl: string): Promise<Client> {
     const baseUrl = new URL(serverUrl);
     const transport = new StreamableHTTPClientTransport(baseUrl, {
         requestInit: {
-            headers: {  
+            headers: {
                 'mcp-session-id': uuidv4()
             }
         }
