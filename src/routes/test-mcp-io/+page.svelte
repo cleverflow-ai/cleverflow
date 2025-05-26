@@ -1,6 +1,6 @@
 <script lang="ts">
     import { onMount } from "svelte";
-    import { createClient } from "@cleverflow-ai/cleverflow.mcp.io/dist/client.js";
+    import { createClient } from "@cleverflow-ai/cleverflow.mcp/dist/McpClient.js";
     import MarkdocRenderer from "$lib/components/MarkdocRenderer.svelte";
     import GlbViewer from "$lib/components/GlbViewer.svelte";
 
@@ -56,7 +56,7 @@
             return;
         }
 
-        const client = await createClient("http://localhost:3000/mcp");
+        const client = await createClient("http://localhost:3000/mcp", "@cleverflow-ao/cleverflow.mcp.io", "1.0.0");
 
         // // List resources
         // const resources = await client.listResources();
@@ -118,7 +118,7 @@
             return;
         }
 
-        const client = await createClient("http://localhost:3000/mcp");
+        const client = await createClient("http://localhost:3000/mcp", "@cleverflow-ao/cleverflow.mcp.io", "1.0.0");
 
         const result = await client.callTool(
             {
@@ -163,7 +163,7 @@
             return;
         }
 
-        const client = await createClient("http://localhost:4001/mcp");
+        const client = await createClient("http://localhost:4001/mcp", "@clevernow/clevernow.mcp.3d", "1.0.0");
 
         const result = await client.callTool(
             {

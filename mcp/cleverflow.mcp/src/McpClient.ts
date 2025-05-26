@@ -3,14 +3,10 @@ import { StreamableHTTPClientTransport } from "@modelcontextprotocol/sdk/client/
 import { v4 as uuidv4 } from 'uuid';
 import z from "zod";
 
-let client: Client | undefined = undefined;
-
-export async function createClient(serverUrl: string): Promise<Client> {
-    if (client) return client;
-
-    client = new Client({
-        name: '@cleverflow/cleverflow.mcp.io',
-        version: '1.0.0',
+export async function createClient(serverUrl: string, name: string, version: string): Promise<Client> {
+    const client = new Client({
+        name: name,
+        version: version,
     });
 
     const notificationSchema = z.object({
