@@ -7,6 +7,13 @@
     let apiKey = $state("ol_api_qHHZcDQ8EKJfx9tKwbi7E2zeT30Rnx5bq1uMfO");
     let fileId = $state("sealing-technologies-rrOT5m2iSz");
 
+    let repoOwner = $state("clevernow");
+    let repo = $state("atlascopco-dasm");
+    let filePath = $state("README.md");
+
+    let currentForm = $state("outline-form");
+    // let currentForm = $state("gitea-form");
+
     const results: any[] = $state([]);
 
     onMount(async () => {
@@ -90,31 +97,59 @@
 
 <div class="max-w-2xl mx-auto p-4 space-y-6">
     <!-- Form -->
-    <form class="mx-auto w-full space-y-4 card bg-base-100 shadow-md p-4">
-        <label class="label">
-            <span class="label-text">Base URL</span>
-            <input bind:value={baseUrl} type="text" class="input" />
-        </label>
+    {#if currentForm === "outline-form"}
+        <form class="mx-auto w-full space-y-4 card bg-base-100 shadow-md p-4">
+            <label class="label">
+                <span class="label-text">Base URL</span>
+                <input bind:value={baseUrl} type="text" class="input" />
+            </label>
 
-        <label class="label">
-            <span class="label-text">API Key</span>
-            <input bind:value={apiKey} type="text" class="input" />
-        </label>
+            <label class="label">
+                <span class="label-text">API Key</span>
+                <input bind:value={apiKey} type="text" class="input" />
+            </label>
 
-        <label class="label">
-            <span class="label-text">File ID</span>
-            <input bind:value={fileId} type="text" class="input" />
-        </label>
+            <label class="label">
+                <span class="label-text">File ID</span>
+                <input bind:value={fileId} type="text" class="input" />
+            </label>
 
-        <div class="flex justify-end">
-            <button
-                onclick={fetchOutlineTextFile}
-                disabled={!baseUrl || !apiKey || !fileId ? true : false}
-                type="button"
-                class="btn btn-sm preset-filled-primary-500">Submit</button
-            >
-        </div>
-    </form>
+            <div class="flex justify-end">
+                <button
+                    onclick={fetchOutlineTextFile}
+                    disabled={!baseUrl || !apiKey || !fileId ? true : false}
+                    type="button"
+                    class="btn btn-sm preset-filled-primary-500">Submit</button
+                >
+            </div>
+        </form>
+    {:else if currentForm === "gitea-form"}
+        <form class="mx-auto w-full space-y-4 card bg-base-100 shadow-md p-4">
+            <label class="label">
+                <span class="label-text">Base URL</span>
+                <input bind:value={baseUrl} type="text" class="input" />
+            </label>
+
+            <label class="label">
+                <span class="label-text">API Key</span>
+                <input bind:value={apiKey} type="text" class="input" />
+            </label>
+
+            <label class="label">
+                <span class="label-text">File ID</span>
+                <input bind:value={fileId} type="text" class="input" />
+            </label>
+
+            <div class="flex justify-end">
+                <button
+                    onclick={fetchOutlineTextFile}
+                    disabled={!baseUrl || !apiKey || !fileId ? true : false}
+                    type="button"
+                    class="btn btn-sm preset-filled-primary-500">Submit</button
+                >
+            </div>
+        </form>
+    {/if}
 
     <!-- Results List -->
     <div class="mx-auto w-full space-y-4">
