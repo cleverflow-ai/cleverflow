@@ -4,11 +4,11 @@
     import MarkdocRenderer from "$lib/components/MarkdocRenderer.svelte";
     import GlbViewer from "$lib/components/GlbViewer.svelte";
 
-    let baseUrl = $state("https://docs-atlascopco.clevernow.com/api");
-    let apiKey = $state("ol_api_qHHZcDQ8EKJfx9tKwbi7E2zeT30Rnx5bq1uMfO");
+    let baseUrl = $state("");
+    let apiKey = $state("");
 
     // OUTLINE
-    let fileId = $state("sealing-technologies-rrOT5m2iSz");
+    let fileId = $state("");
 
     // GITEA
     let repoOwner = $state("clevernow");
