@@ -3,6 +3,7 @@
     import { createClient } from "@cleverflow-ai/cleverflow.mcp/dist/McpClient.js";
     import MarkdocRenderer from "$lib/components/MarkdocRenderer.svelte";
     import GlbViewer from "$lib/components/GlbViewer.svelte";
+    import LoadingIndicator from "$lib/components/LoadingIndicator.svelte";
     import { z } from "zod";
 
     let baseUrl = $state("");
@@ -24,6 +25,8 @@
     let currentForm = $state("glb-form");
     // let currentForm = $state("gitea-form");
     // let currentForm = $state("gitea-form");
+
+    let isLoading = $state(false);
 
     let results: any[] = $state([]);
 
@@ -72,6 +75,8 @@
             return;
         }
 
+        isLoading = true;
+
         const client = await createClient(
             "http://localhost:3000/mcp",
             "@cleverflow-ao/cleverflow.mcp.io",
@@ -118,7 +123,7 @@
                 timeout: 3600 * 1000,
             },
         );
-        console.log("Result:", result);
+
         const text =
             result.content &&
             Array.isArray(result.content) &&
@@ -136,7 +141,8 @@
                 ...results,
             ];
         }
-        console.log(results);
+
+        isLoading = false;
     }
 
     async function fetchGiteaTextFile(): Promise<void> {
@@ -144,6 +150,8 @@
             console.error("Please provide repoOwner, repo, and filePath.");
             return;
         }
+
+        isLoading = true;
 
         const client = await createClient(
             "http://localhost:3000/mcp",
@@ -193,13 +201,19 @@
                 ...results,
             ]; // Ensure results is an array
         }
+
+        isLoading = false;
     }
 
     async function convertStepToGlb(): Promise<void> {
-        if (!repoOwner || !repo || !filePath) {
-            console.error("Please provide repoOwner, repo, and filePath.");
+        if (!rpUsername || !rpPassword || !rpModelName) {
+            console.error(
+                "Please provide rpUsername, rpPassword, and rpModelName.",
+            );
             return;
         }
+
+        isLoading = true;
 
         const client = await createClient(
             "http://localhost:4001/mcp",
@@ -229,7 +243,6 @@
                 timeout: 3600 * 1000,
             },
         );
-        console.log("Result:", result);
         const data =
             result.content &&
             Array.isArray(result.content) &&
@@ -250,6 +263,8 @@
                 ...results,
             ]; // Ensure results is an array
         }
+
+        isLoading = false;
     }
 </script>
 
@@ -287,7 +302,9 @@
             <div class="flex justify-end">
                 <button
                     onclick={fetchOutlineTextFile}
-                    disabled={!baseUrl || !apiKey || !fileId ? true : false}
+                    disabled={isLoading || !baseUrl || !apiKey || !fileId
+                        ? true
+                        : false}
                     type="button"
                     class="btn btn-sm preset-filled-primary-500">Submit</button
                 >
@@ -320,7 +337,9 @@
             <div class="flex justify-end">
                 <button
                     onclick={fetchGiteaTextFile}
-                    disabled={!repoOwner || !repo || !filePath ? true : false}
+                    disabled={isLoading || !repoOwner || !repo || !filePath
+                        ? true
+                        : false}
                     type="button"
                     class="btn btn-sm preset-filled-primary-500">Submit</button
                 >
@@ -344,7 +363,12 @@
             <div class="flex justify-end">
                 <button
                     onclick={convertStepToGlb}
-                    disabled={!repoOwner || !repo || !filePath ? true : false}
+                    disabled={isLoading ||
+                    !rpUsername ||
+                    !rpPassword ||
+                    !rpModelName
+                        ? true
+                        : false}
                     type="button"
                     class="btn btn-sm preset-filled-primary-500">Submit</button
                 >
@@ -354,6 +378,10 @@
 
     <!-- Results List -->
     <div class="mx-auto w-full space-y-4">
+        {#if isLoading}
+            <LoadingIndicator size={40} />
+        {/if}
+
         {#key results.length}
             {#each results as result}
                 {#if result.gblData}
