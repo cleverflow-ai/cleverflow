@@ -3,6 +3,7 @@
     import { createClient } from "@cleverflow-ai/cleverflow.mcp/dist/McpClient.js";
     import MarkdocRenderer from "$lib/components/MarkdocRenderer.svelte";
     import GlbViewer from "$lib/components/GlbViewer.svelte";
+    import { z } from "zod";
 
     let baseUrl = $state("");
     let apiKey = $state("");
@@ -48,7 +49,22 @@
         // }` //await guiAgent.runTask(`generate-json-form`, `Please help me generate a .. with three text fields for ...`);
     });
 
-    function setDefaultForm(): void {}
+    function setDefaultForm(): void {
+        baseUrl = "";
+        apiKey = "";
+
+        // OUTLINE
+        fileId = "";
+        // GITEA
+        repoOwner = "";
+        repo = "";
+        filePath = "";
+
+        // RP
+        rpUsername = "";
+        rpPassword = "";
+        rpModelName = "";
+    }
 
     async function fetchOutlineTextFile(): Promise<void> {
         if (!baseUrl || !apiKey || !fileId) {
@@ -90,10 +106,17 @@
                     apiKey,
                 },
             },
-            // null,
-            // {
-            //     timeout: 3600 * 1000,
-            // },
+            z.object({
+                content: z.array(
+                    z.object({
+                        type: z.literal("text"),
+                        text: z.string(),
+                    }),
+                ),
+            }),
+            {
+                timeout: 3600 * 1000,
+            },
         );
         console.log("Result:", result);
         const text =
@@ -139,10 +162,17 @@
                     filePath,
                 },
             },
-            // null,
-            // {
-            //     timeout: 3600 * 1000,
-            // },
+            z.object({
+                content: z.array(
+                    z.object({
+                        type: z.literal("text"),
+                        text: z.string(),
+                    }),
+                ),
+            }),
+            {
+                timeout: 3600 * 1000,
+            },
         );
         const text =
             result.content &&
@@ -186,10 +216,18 @@
                     rpModelName,
                 },
             },
-            // null,
-            // {
-            //     timeout: 3600 * 1000,
-            // },
+            z.object({
+                content: z.array(
+                    z.object({
+                        type: z.literal("text"),
+                        text: z.string(),
+                        data: z.string(),
+                    }),
+                ),
+            }),
+            {
+                timeout: 3600 * 1000,
+            },
         );
         console.log("Result:", result);
         const data =
