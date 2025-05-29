@@ -235,7 +235,7 @@
                     z.object({
                         type: z.literal("text"),
                         text: z.string(),
-                        data: z.string(),
+                        uri: z.string(),
                     }),
                 ),
             }),
@@ -243,25 +243,55 @@
                 timeout: 3600 * 1000,
             },
         );
-        const data =
+
+        const uri =
             result.content &&
             Array.isArray(result.content) &&
             result.content.length > 0
-                ? result.content[0].data
+                ? result.content[0].uri
                 : null;
-        if (data) {
-            console.log("GLB Data:", data.length);
-            results = [
+
+        if (uri) {
+            const fileResult = await client.request(
                 {
-                    baseUrl,
-                    apiKey,
-                    repoOwner,
-                    repo,
-                    filePath,
-                    gblData: data,
+                    method: "resources/read",
+                    params: {
+                        uri: uri,
+                    },
                 },
-                ...results,
-            ]; // Ensure results is an array
+                z.object({
+                    content: z.array(
+                        z.object({
+                            uri: z.string(),
+                            data: z.string(),
+                        }),
+                    ),
+                }),
+                {
+                    timeout: 3600 * 1000,
+                },
+            );
+
+            const data =
+                fileResult.content &&
+                Array.isArray(fileResult.content) &&
+                fileResult.content.length > 0
+                    ? fileResult.content[0].data
+                    : null;
+
+            if (data) {
+                results = [
+                    {
+                        baseUrl,
+                        apiKey,
+                        repoOwner,
+                        repo,
+                        filePath,
+                        gblData: data,
+                    },
+                    ...results,
+                ]; // Ensure results is an array
+            }
         }
 
         isLoading = false;
