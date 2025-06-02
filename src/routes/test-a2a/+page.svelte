@@ -20,9 +20,9 @@
 
     onMount(async () => {
         window.postal = postal;
-        await import(
-            "@cleverflow-ai/cleverflow.core.frontend/webcomponents/json-form.js"
-        );
+        // await import(
+        //     "@cleverflow-ai/cleverflow.core.frontend/webcomponents/json-form.js"
+        // );
         const conductorServer = import.meta.env.VITE_A2A_CONDUCTOR_SERVER;
         console.log(`>>> conductorServer: ${conductorServer}`);
         conductorAgent = new ConductorAgent(conductorServer);
@@ -33,7 +33,26 @@
                 parts: [],
             },
             metadata: {
-                taskName: "read-file",
+                taskName: "text-to-bflow",
+                input: {
+                    text: `
+                        {% b-flow id="cleverflow-mcp-a2a" %}
+                            {% sequence %}                    
+                                {% gitea-file-fetching id="action_1" %}
+                                    Fetching a gitea file
+                                {% /gitea-file-fetching %}
+
+                                {% outline-file-fetching id="action_2" %}
+                                    Fetching a outline file
+                                {% /outline-file-fetching %}
+
+                                {% convert-steps-to-glb id="action_3" %}
+                                    Convert a steps file to glb
+                                {% /convert-steps-to-glb %}
+                            {% /sequence %}
+                        {% /b-flow %}
+                    `,
+                },
             },
         };
         conductorAgent.sendTask(taskParams, (event: Task) => {
@@ -43,7 +62,7 @@
     });
 </script>
 
-<json-form theme="crimson"></json-form>
+<!-- <json-form theme="crimson"></json-form> -->
 <Modal
     open={completeFormModalState}
     onOpenChange={(e) => (completeFormModalState = e.open)}

@@ -74,7 +74,7 @@ function ParseMarkdocBFlowElementToBFlow(text: string, agents: BFlowNodeAgent[])
         It is noted that:
         - If Markdoc entry name is not <% entry %>, <% fallback %>, <% sequence %>, <% parallel %>, or <% condition %>, then it is an ACTION node.
         - If there is any text locating before the Markdoc node-element, than extract it as the description of the corresponding node. Otherwise, auto generates the description based on the text inside the Markdoc element.
-        - The Tree / each Node needs a Unique Id. If there is no Id given in the Markdoc element, assign it with a unique Id which can be constructed with its name and its appearing sequennce.
+        - The Tree / each Node needs a Unique Id. If there is no id given in the Markdoc element, assign it with a unique id which can be constructed with its name and its appearing order.
         - If it is about ACTION node, the name of the node corresponds to the name of the Markdoc element.
            - For example: '<% get-text %>' must be converted to { type: "ACTION", name: "get-text" }
         - If markdoc element contains children, then they should be added to the 'goto' field of the nearest father node.
@@ -92,8 +92,8 @@ function ParseMarkdocBFlowElementToBFlow(text: string, agents: BFlowNodeAgent[])
     "#
 }
 
-function ParseBFlowToBFlowViz2(bflow: string) -> BFlowViz {
-    client Ollama_Code
+function ParseBFlowToBFlowViz(bflow: string) -> BFlowViz {
+    client Ollama_Tool
     prompt #"
         You are an expert in Markdoc, Behavior Tree, and JSON processing.
         
@@ -123,23 +123,19 @@ test Test_WithoutAssignedIds_ParseMarkdocBFlowElementToBFlow {
     functions [ParseMarkdocBFlowElementToBFlow]
     args {
         text #"
-            {% b-flow id="select-baking-machines" %}
+            {% b-flow id="cleverflow-mcp-a2a" %}
                 {% sequence %}                    
-                    {% get-text %}
-						Get List of all Machines from: https://raw.githubusercontent.com/cleverflow-ai/examples/refs/heads/main/machinery/machines-list.md
-                    {% /get-text %}
+                    {% gitea-file-fetching id="action_1" %}
+                        Fetching a gitea file
+                    {% /gitea-file-fetching %}
 
-                    {% filter-data %}
-                        Filter the List of Machines for having Availability as 'available'.
-                    {% /filter-data %}
+                    {% outline-file-fetching id="action_2" %}
+                        Fetching a outline file
+                    {% /outline-file-fetching %}
 
-                    {% get-text %}
-                        Get Machine Selection Processes from: https://raw.githubusercontent.com/cleverflow-ai/examples/refs/heads/main/machinery/machines-selection.md
-                    {% /get-text %}
-
-                    {% select-machine %}
-						Select the best suitable Machines for Customer, based on the filtered Machines and the Selection Process: for baking Brownies and Muffins.
-                    {% /select-machine %}
+                    {% convert-steps-to-glb id="action_3" %}
+                        Convert a steps file to glb
+                    {% /convert-steps-to-glb %}
                 {% /sequence %}
             {% /b-flow %}
         "#,
@@ -179,107 +175,69 @@ test Test_WithoutAssignedIds_ParseMarkdocBFlowElementToBFlow {
 }
 
 test Test_ParseBFlowToBFlowViz {
-    functions [ParseBFlowToBFlowViz2]
+    functions [ParseBFlowToBFlowViz]
     args {
         bflow #"
             {
-                "id": null,
-                "name": null,
+                "id": "cleverflow-mcp-a2a",
+                "name": "cleverflow-mcp-a2a",
                 "description": null,
                 "root": {
                     "type": "SEQUENCE",
-                    "id": "prepare_data",
+                    "id": "sequence_0",
                     "name": null,
-                    "description": "1. Getting List of all Machine Models and corresponding Infos.\n2. Converting Selection Logic to a Behavioral Flow to both enable AI-based Decision Making, and explain the Choices made to Human.",
+                    "description": null,
                     "config": null,
                     "state": null,
                     "goto": [
                         {
                             "type": "ACTION",
-                            "id": null,
-                            "name": "get-text",
-                            "description": null,
-                            "config": {
-                                "yaml": "{url: https://cleverflow.ai/use-cases/machinery/machines-list.md}"
-                            },
+                            "id": "action_1",
+                            "name": "gitea-file-fetching",
+                            "description": "Fetching a gitea file",
+                            "config": null,
                             "state": null,
-                            "goto": [],
+                            "goto": null,
                             "agent": {
-                                "name": "markdoc-custom-element-to-bflow",
-                                "instructions": "SMELL: TODO"
+                                "name": "js-v8-code-generation",
+                                "description": "\n                Generate Javascript (V8) code for executing Task ad hoc.\n                Can be used as default Agent.\n            "
                             },
                             "inputs": [],
                             "output": null
                         },
                         {
                             "type": "ACTION",
-                            "id": null,
-                            "name": "get-bflow",
-                            "description": null,
-                            "config": {
-                                "yaml": "{url: https://cleverflow.ai/use-cases/machinery/machines-selection.md}"
-                            },
+                            "id": "action_2",
+                            "name": "outline-file-fetching",
+                            "description": "Fetching a outline file",
+                            "config": null,
                             "state": null,
-                            "goto": [],
+                            "goto": null,
                             "agent": {
-                                "name": "markdoc-custom-element-to-bflow",
-                                "instructions": "SMELL: TODO"
+                                "name": "js-v8-code-generation",
+                                "description": "\n                Generate Javascript (V8) code for executing Task ad hoc.\n                Can be used as default Agent.\n            "
                             },
                             "inputs": [],
                             "output": null
                         },
                         {
-                            "type": "SEQUENCE",
-                            "id": "test",
-                            "name": null,
-                            "description": null,
+                            "type": "ACTION",
+                            "id": "action_3",
+                            "name": "convert-steps-to-glb",
+                            "description": "Convert a steps file to glb",
                             "config": null,
                             "state": null,
-                            "goto": [
-                                {
-                                    "type": "ACTION",
-                                    "id": null,
-                                    "name": "get-bflow",
-                                    "description": null,
-                                    "config": {
-                                        "yaml": "{url: https://cleverflow.ai/use-cases/machinery/machines-selection2.md}"
-                                    },
-                                    "state": null,
-                                    "goto": [],
-                                    "agent": {
-                                        "name": "markdoc-custom-element-to-bflow",
-                                        "instructions": "SMELL: TODO"
-                                    },
-                                    "inputs": [],
-                                    "output": null
-                                },
-                                {
-                                    "type": "ACTION",
-                                    "id": null,
-                                    "name": "get-bflow",
-                                    "description": null,
-                                    "config": {
-                                        "yaml": "{url: https://cleverflow.ai/use-cases/machinery/machines-selection3.md}"
-                                    },
-                                    "state": null,
-                                    "goto": [],
-                                    "agent": {
-                                        "name": "markdoc-custom-element-to-bflow",
-                                        "instructions": "SMELL: TODO"
-                                    },
-                                    "inputs": [],
-                                    "output": null
-                                }
-                            ],
-                            "agent": null,
-                            "inputs": [
-                                "get-bflow"
-                            ],
+                            "goto": null,
+                            "agent": {
+                                "name": "js-v8-code-generation",
+                                "description": "\n                Generate Javascript (V8) code for executing Task ad hoc.\n                Can be used as default Agent.\n            "
+                            },
+                            "inputs": [],
                             "output": null
                         }
                     ],
                     "agent": null,
-                    "inputs": [],
+                    "inputs": null,
                     "output": null
                 }
             }

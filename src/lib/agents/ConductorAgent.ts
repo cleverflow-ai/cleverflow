@@ -1,21 +1,28 @@
-import { InteractiveClient } from "@cleverflow-ai/cleverflow.agents.interactiveclient";
 import type { Task, TaskSendParams } from "@cleverflow-ai/cleverflow.agents/schema";
+import { A2AClient } from "@cleverflow-ai/cleverflow.agents/client";
 
-export class ConductorAgent extends InteractiveClient {
+export class ConductorAgent {
+
+    private client: A2AClient;
 
     constructor(serverUrl: string) {
-        super(serverUrl);
+        this.client = new A2AClient(serverUrl);
     }
 
-    protected onEvent(event: Task): void {
-        console.log('>>>> event');
-        console.log(event);
-        const state = event.status?.state;
-        if (state === 'completed') {
-            const onComplete = this.callbacks.get(event.id);
-            if (onComplete) {
-                onComplete(event);
+    public async sendTask(taskParams: TaskSendParams, onComplete: (event: Task) => void): Promise<void> {
+        try {
+            const stream = this.client.sendTaskSubscribe(taskParams);
+
+            for await (const event of stream) {
+                this.handleEvent(event as Task);
             }
+        } catch (error: any) {
         }
+    }
+
+    private handleEvent(event: Task) {
+        const state = event.status?.state;
+        console.log(event);
+
     }
 }

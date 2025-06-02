@@ -4,8 +4,7 @@
   import { onMount } from "svelte";
   import MarkdocRendererController from "@cleverflow-ai/cleverflow.core.frontend/webcomponents/markdoc-renderer-controller.js";
 
-  const eventServer = "ws://localhost:8080";
-  const eventServerToken = "76de3ba222bec3af21f9dbfb01f3197b";
+  const conductorServerUrl = import.meta.env.VITE_A2A_CONDUCTOR_SERVER;
 
   const currentTheme = "crimson";
   let tab = $state("editor");
@@ -26,8 +25,7 @@
     );
 
     markdocRendererController = new MarkdocRendererController(
-      eventServer,
-      eventServerToken,
+      conductorServerUrl,
     );
 
     markdocRendererController.setMarkdoc(markdoc);

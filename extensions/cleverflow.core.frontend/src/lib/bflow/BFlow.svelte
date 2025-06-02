@@ -24,7 +24,7 @@
 	} from "../common/components/toast/ToastStore.js";
 
 	let props = $props();
-	let { url = "", text = "", id = null, theme = "crimson" } = props;
+	let { text = "", id = null, theme = "crimson" } = props;
 	let { controller }: { controller: BFlowController } = props;
 
 	let serverWebComponentContainer: any = $state();
@@ -41,8 +41,8 @@
 	);
 
 	onMount(async () => {
-		if ((url || text) && controller.state === BFLowState.CONNECT_SUCCESS) {
-			await controller.loadBFlowViz(url, text);
+		if (text && controller.state === BFLowState.CONNECT_SUCCESS) {
+			await controller.convertTextToBFlow(text);
 		}
 	});
 
@@ -94,14 +94,14 @@
 	const start = async () => {
 		try {
 			await controller.connect();
-			await controller.loadBFlowViz(url, text);
+			await controller.convertTextToBFlow(text);
 		} catch (exception: any) {
 			console.error(exception);
 		}
 	};
 
 	const reload = async () => {
-		await controller.loadBFlowViz(url, text);
+		await controller.convertTextToBFlow(text);
 	};
 
 	const onServerWebComponentFinished = () => {
@@ -224,7 +224,7 @@
 		{/if}
 		{#if controller.bflowviz}
 			<div class="flex justify-end items-center gap-2">
-				{#if controller.isDocumentChanged(url, text)}
+				{#if controller.isDocumentChanged(text)}
 					{@render reloadBFlowButton()}
 				{/if}
 				{#if serverWebComponentData}
@@ -237,7 +237,7 @@
 	</div>
 	<div class="w-full border border-gray-300 p-4 h-[500px]">
 		{#key controller.stateKey}
-			{#if !url && !text}
+			{#if !text}
 				<div
 					class="h-full w-full flex flex-col items-center justify-center gap-2"
 				>

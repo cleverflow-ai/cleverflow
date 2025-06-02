@@ -15,7 +15,7 @@ client<llm> Ollama_Tool {
   provider "openai-generic"
   options {
     base_url env.BASE_URL
-    model "gemma:3m"
+    model "gemma3:12b"
     headers {
       "Api-Key" env.OLLAMA_API_KEY
     }

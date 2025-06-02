@@ -1,26 +1,19 @@
 import { AgentConnection, MonitorAgentMessenger, type AgentInfo } from "@cleverflow-ai/cleverflow.core";
-import MarkdocCustomeElementToBFlowAgentMessenger from "./agent/MarkdocCustomeElementToBFlowAgentMessenger.js";
-import BFlowToBFlowVizAgentMessenger from "./agent/BFlowToBFlowVizAgentMessenger.js";
 import _ from "lodash";
 import { BFLowState } from "./BFlowState.js";
-import BFlowRunnerAgentMessenger from "./agent/BFlowRunnerAgentMessenger.js";
 import Styles from './Styles.js';
 import { addToast, ToastType } from '../common/components/toast/ToastStore.js';
 import * as MarkocNodeUtil from '../common/utils/MarkdocNodeUtil.js';
 import * as JsonUtil from '../common/utils/JsonUtil.js';
 import { BFlowNodeState } from "./agent/models/BFlowNodeState.js";
+import { ConductorAgent } from "./agent/ConductorAgent.js";
 import postal from "postal";
+import type { Task, TaskSendParams } from "@cleverflow-ai/cleverflow.agents/schema";
 
 export default class BFlowController {
 
-    private servers: string | string[] = "";
-    private token: string = "";
-
-    private agentConnection?: AgentConnection;
-    private monitorAgentMessenger?: MonitorAgentMessenger;
-    private markdocCustomeElementToBFlowAgentMessenger?: MarkdocCustomeElementToBFlowAgentMessenger;
-    private bflowToBFlowVizAgentMessenger?: BFlowToBFlowVizAgentMessenger;
-    private bflowRunnerAgentMessenger?: BFlowRunnerAgentMessenger;
+    private conductorServerUrl: string;
+    private conductorAgent?: ConductorAgent;
 
     public state: BFLowState = $state(BFLowState.NONE);
     public stateKey = $state(0);
@@ -31,41 +24,24 @@ export default class BFlowController {
     public bflowviz: any = $state(null);
     public bflowRunResult: any = $state(null);
 
-    private url: string | undefined;
     private text: string | undefined;
 
     private bflowPostalChannel = postal.channel("b-flow");
 
-    constructor(servers: string | string[], token: string) {
-        this.servers = servers;
-        this.token = token;
+    constructor(conductorServerUrl: string) {
+        this.conductorServerUrl = conductorServerUrl;
     }
 
     async connect() {
         this.setState(BFLowState.CONNECTING);
         try {
-            this.agentConnection = new AgentConnection({ name: "bflow" });
-
-            await this.agentConnection.connect({
-                servers: this.servers,
-                token: this.token,
-            });
-
-            this.monitorAgentMessenger = new MonitorAgentMessenger({
-                connection: this.agentConnection,
-            });
-
-            this.markdocCustomeElementToBFlowAgentMessenger =
-                new MarkdocCustomeElementToBFlowAgentMessenger({
-                    connection: this.agentConnection,
-                });
-            this.bflowToBFlowVizAgentMessenger = new BFlowToBFlowVizAgentMessenger({
-                connection: this.agentConnection,
-            });
-            this.bflowRunnerAgentMessenger = new BFlowRunnerAgentMessenger({
-                connection: this.agentConnection,
-            });
-
+            this.conductorAgent = new ConductorAgent(this.conductorServerUrl);
+            const isServerAnswered = this.conductorAgent?.ping();
+            if (!isServerAnswered) {
+                this.setState(BFLowState.CONNECT_FAILED);
+                addToast("Failed to connect to the server", ToastType.ERROR);
+                return;
+            }
             this.setState(BFLowState.CONNECT_SUCCESS);
         } catch (exception) {
             this.setState(BFLowState.CONNECT_FAILED);
@@ -74,10 +50,7 @@ export default class BFlowController {
 
     async disconnect() {
         try {
-            await this.monitorAgentMessenger?.stop();
-            await this.markdocCustomeElementToBFlowAgentMessenger?.stop();
-            await this.bflowToBFlowVizAgentMessenger?.stop();
-            await this.agentConnection?.stop();
+            this.conductorAgent = undefined;
         } catch { }
 
         this.setState(BFLowState.NONE);
@@ -89,15 +62,14 @@ export default class BFlowController {
     }
 
 
-    isDocumentChanged(url: string, text: string) {
-        if (this.url === undefined || this.text === undefined) {
+    isDocumentChanged(text: string) {
+        if (this.text === undefined) {
             return false;
         }
-        return this.url !== url || this.text !== text;
+        return this.text !== text;
     }
 
-    async loadBFlowViz(url: string, text: string) {
-        this.url = url;
+    async convertTextToBFlow(text: string) {
         this.text = text;
         this.bflowviz = null;
 
@@ -107,30 +79,48 @@ export default class BFlowController {
             this.agents = result.agents;
             this.setState(BFLowState.LIST_AGENTS_SUCCESS);
         } else {
-            this.agents = await this.loadAgents();
+            // TODO:
+            // this.agents = await this.loadAgents();
+            this.agents = [];
+            this.setState(BFLowState.LIST_AGENTS_SUCCESS);
+            console.warn("TODO: No agents found in the document, using empty agents list.");
         }
 
-        if (result.bflow) {
+        if (result.bflow && result.bflowviz) {
             this.bflow = result.bflow;
             this.setState(BFLowState.CONVERT_MARKDOC_ELEMENT_TO_BFLOW_SUCCESS);
-        } else {
-            this.bflow = await this.convertMarkdocCustomElementToBFlow(url, text);
-        }
 
-        if (this.bflow) {
-            this.rawBFlow = JSON.parse(JSON.stringify(this.bflow));
-        }
-
-        if (result.bflowviz) {
             this.addDataPropertyToNodes(result.bflowviz.nodes);
             const tree = this.buildTree(result.bflowviz.nodes);
             this.calculatePositions(tree);
             this.bflowviz = result.bflowviz;
             this.setState(BFLowState.CONVERT_BFLOW_TO_BFLOWVIZ_SUCCESS);
         } else {
-            if (this.bflow) {
-                this.bflowviz = await this.convertBFlowToBFlowViz(this.bflow);
+            try {
+                this.setState(BFLowState.CONVERT_MARKDOC_ELEMENT_TO_BFLOW);
+
+                const taskResult = await this.runConvertTextToBFlowTask();
+
+                this.bflow = taskResult?.bflow;
+                this.setState(BFLowState.CONVERT_MARKDOC_ELEMENT_TO_BFLOW_SUCCESS);
+
+                this.bflowviz = taskResult?.bflowviz;
+                if (this.bflowviz) {
+                    this.addDataPropertyToNodes(this.bflowviz.nodes);
+                    const tree = this.buildTree(this.bflowviz.nodes);
+                    this.calculatePositions(tree);
+                    this.setState(BFLowState.CONVERT_BFLOW_TO_BFLOWVIZ_SUCCESS);
+                }
+            } catch (exception) {
+                console.error("Failed to convert text to BFlow:", exception);
+                this.setState(BFLowState.CONVERT_MARKDOC_ELEMENT_TO_BFLOW_FAILED);
+                addToast("Failed to convert text to BFlow", ToastType.ERROR);
+                return;
             }
+        }
+
+        if (this.bflow) {
+            this.rawBFlow = JSON.parse(JSON.stringify(this.bflow));
         }
 
         if (this.bflowviz && result.outs) {
@@ -180,156 +170,157 @@ export default class BFlowController {
         return result;
     }
 
-    async loadAgents() {
-        this.setState(BFLowState.LIST_AGENTS);
+    // async loadAgents() {
+    //     this.setState(BFLowState.LIST_AGENTS);
 
-        try {
-            const result = await this.monitorAgentMessenger?.request({
-                query: "list",
-            });
+    //     try {
+    //         const result = await this.monitorAgentMessenger?.request({
+    //             query: "list",
+    //         });
 
-            this.setState(BFLowState.LIST_AGENTS_SUCCESS);
-            return result?.agents;
-        } catch (e: any) {
-            console.log(">>>>> Error:", e);
-            this.setState(BFLowState.LIST_AGENTS_FAILED);
-        }
-    };
+    //         this.setState(BFLowState.LIST_AGENTS_SUCCESS);
+    //         return result?.agents;
+    //     } catch (e: any) {
+    //         console.log(">>>>> Error:", e);
+    //         this.setState(BFLowState.LIST_AGENTS_FAILED);
+    //     }
+    // };
 
-    async convertMarkdocCustomElementToBFlow(
-        url: string,
-        text: string,
-    ) {
-        this.setState(BFLowState.CONVERT_MARKDOC_ELEMENT_TO_BFLOW);
-        try {
-            const bflowRes =
-                await this.markdocCustomeElementToBFlowAgentMessenger?.request({
-                    url,
-                    text,
-                    agents: this.agents,
-                });
-            this.setState(BFLowState.CONVERT_MARKDOC_ELEMENT_TO_BFLOW_SUCCESS);
-            return bflowRes?.bflow;
-        } catch (e: any) {
-            console.error(e);
-            this.setState(BFLowState.CONVERT_MARKDOC_ELEMENT_TO_BFLOW_FAILED);
-            return null;
-        }
-    };
-
-    async convertBFlowToBFlowViz(bflow: any) {
-        this.setState(BFLowState.CONVERT_BFLOW_TO_BFLOWVIZ);
-        try {
-            const bflowvizRes = await this.bflowToBFlowVizAgentMessenger?.request({
-                bflow: bflow,
-            });
-            this.addDataPropertyToNodes(bflowvizRes?.bflowViz?.nodes);
-            const tree = this.buildTree(bflowvizRes?.bflowViz?.nodes);
-            this.calculatePositions(tree);
-            this.setState(BFLowState.CONVERT_BFLOW_TO_BFLOWVIZ_SUCCESS);
-            return bflowvizRes?.bflowViz;
-        } catch (e: any) {
-            console.error(e);
-            this.setState(BFLowState.CONVERT_BFLOW_TO_BFLOWVIZ_FAILED);
-            return null;
-        }
-    };
-
-    async createBFlowRunnerAgent() {
-        let creatingBFlowRunnerAgentMessenger: BFlowRunnerAgentMessenger | null = new BFlowRunnerAgentMessenger({
-            connection: this.agentConnection,
-        });
-        const subject = await creatingBFlowRunnerAgentMessenger.create();
-
-        this.bflowRunnerAgentMessenger = new BFlowRunnerAgentMessenger({
-            connection: this.agentConnection,
-            subject: subject ?? undefined, // ?
-            onProcess: (payload) => {
-                if (payload.guiEnabled) {
-                    if (payload.guiData) {
-                        addToast("Server want to show a web component", ToastType.WARNING);
-                        this.bflowPostalChannel.publish("show-server-web-component", {
-                            guiData: payload.guiData
-                        });
-                    } else {
-                        addToast("Server want to show a web component but GUI data was missing", ToastType.ERROR);
+    async runConvertTextToBFlowTask() {
+        return new Promise((resolve, reject) => {
+            const taskParams: TaskSendParams = {
+                id: crypto.randomUUID(),
+                message: {
+                    role: "user",
+                    parts: [],
+                },
+                metadata: {
+                    taskName: "text-to-bflow",
+                    input: {
+                        text: this.text,
+                    },
+                },
+            };
+            this.conductorAgent?.sendTask(taskParams, (event: Task) => {
+                const state = event.status?.state;
+                if (state === 'completed') {
+                    const bflow = event.status?.message?.parts?.[0]?.data?.bflow;
+                    const bflowviz = event.status?.message?.parts?.[0]?.data?.bflowViz;
+                    resolve({
+                        bflow, bflowviz,
+                    });
+                } else if (state === 'failed') {
+                    reject(new Error("Failed to convert text to BFlow"));
+                } else if (state === 'working') {
+                    const text = event.status?.message?.parts?.[0]?.text;
+                    console.log("Working on converting text to BFlow:", text);
+                    if (text in BFLowState) {
+                        const state = BFLowState[text as keyof typeof BFLowState];
+                        this.setState(state);
                     }
                 } else {
-                    this.bflow = payload.bflow;
-                    this.bflowRunResult = payload.outs;
-                    this.updateBFlowRunResult();
-                    this.setState(payload.isFinished ? BFLowState.RUN_BFLOW_SUCCESS : BFLowState.RUN_BFLOW_IN_PROGRESS);
+                    reject(new Error(`Unexpected state: ${state}`));
                 }
-            }
+            });
         });
 
-        await this.bflowRunnerAgentMessenger.start();
-
-        creatingBFlowRunnerAgentMessenger = null;
     }
 
-    async runBFlow() {
-        if (this.state === BFLowState.RUN_BFLOW) {
-            return;
-        }
+    // async createBFlowRunnerAgent() {
+    //     let creatingBFlowRunnerAgentMessenger: BFlowRunnerAgentMessenger | null = new BFlowRunnerAgentMessenger({
+    //         connection: this.agentConnection,
+    //     });
+    //     const subject = await creatingBFlowRunnerAgentMessenger.create();
 
-        await this.createBFlowRunnerAgent();
+    //     this.bflowRunnerAgentMessenger = new BFlowRunnerAgentMessenger({
+    //         connection: this.agentConnection,
+    //         subject: subject ?? undefined, // ?
+    //         onProcess: (payload) => {
+    //             if (payload.guiEnabled) {
+    //                 if (payload.guiData) {
+    //                     addToast("Server want to show a web component", ToastType.WARNING);
+    //                     this.bflowPostalChannel.publish("show-server-web-component", {
+    //                         guiData: payload.guiData
+    //                     });
+    //                 } else {
+    //                     addToast("Server want to show a web component but GUI data was missing", ToastType.ERROR);
+    //                 }
+    //             } else {
+    //                 this.bflow = payload.bflow;
+    //                 this.bflowRunResult = payload.outs;
+    //                 this.updateBFlowRunResult();
+    //                 this.setState(payload.isFinished ? BFLowState.RUN_BFLOW_SUCCESS : BFLowState.RUN_BFLOW_IN_PROGRESS);
+    //             }
+    //         }
+    //     });
 
-        this.setState(BFLowState.RUN_BFLOW);
+    //     await this.bflowRunnerAgentMessenger.start();
 
-        try {
-            const runningBflowResult = await this.bflowRunnerAgentMessenger?.run(this.rawBFlow);
-            if (runningBflowResult) {
-                this.onRunBFlowFinished(runningBflowResult);
-            } else {
-                this.setState(BFLowState.RUN_BFLOW_FAILED);
-                addToast("Failed to run BFlow", ToastType.ERROR)
-            }
-        } catch (e: any) {
-            console.error(e);
-            this.setState(BFLowState.RUN_BFLOW_FAILED);
-            addToast("Failed to run BFlow", ToastType.ERROR)
-        }
-    }
+    //     creatingBFlowRunnerAgentMessenger = null;
+    // }
 
-    async resumeBFlow() {
-        if (this.state === BFLowState.RUN_BFLOW) {
-            return;
-        }
+    // async runBFlow() {
+    //     if (this.state === BFLowState.RUN_BFLOW) {
+    //         return;
+    //     }
 
-        this.setState(BFLowState.RUN_BFLOW);
+    //     await this.createBFlowRunnerAgent();
 
-        try {
+    //     this.setState(BFLowState.RUN_BFLOW);
 
-            const runningBflowResult = await this.bflowRunnerAgentMessenger?.run(this.bflow, this.bflowRunResult);
-            if (runningBflowResult) {
-                this.onRunBFlowFinished(runningBflowResult);
-            } else {
-                this.setState(BFLowState.RUN_BFLOW_FAILED);
-                addToast("Failed to run BFlow", ToastType.ERROR)
-            }
-        } catch (e: any) {
-            console.error(e);
-            this.setState(BFLowState.RUN_BFLOW_FAILED);
-            addToast("Failed to run BFlow", ToastType.ERROR)
-        }
-    }
+    //     try {
+    //         const runningBflowResult = await this.bflowRunnerAgentMessenger?.run(this.rawBFlow);
+    //         if (runningBflowResult) {
+    //             this.onRunBFlowFinished(runningBflowResult);
+    //         } else {
+    //             this.setState(BFLowState.RUN_BFLOW_FAILED);
+    //             addToast("Failed to run BFlow", ToastType.ERROR)
+    //         }
+    //     } catch (e: any) {
+    //         console.error(e);
+    //         this.setState(BFLowState.RUN_BFLOW_FAILED);
+    //         addToast("Failed to run BFlow", ToastType.ERROR)
+    //     }
+    // }
 
-    onRunBFlowFinished(runningBflowResult: any) {
-        this.bflow = runningBflowResult.bflow;
-        this.bflowRunResult = runningBflowResult.outs;
-        this.updateBFlowRunResult();
+    // async resumeBFlow() {
+    //     if (this.state === BFLowState.RUN_BFLOW) {
+    //         return;
+    //     }
 
-        const clientActionRequiredNode = this.findClientActionRequiredNode(runningBflowResult.bflow.root);
-        if (clientActionRequiredNode) {
-            this.setState(BFLowState.RUN_BFLOW_IN_PROGRESS);
-            addToast("Server requires an action from you", ToastType.WARNING);
-            // this.doActionRequired(clientActionRequiredNode);
-        } else {
-            this.setState(BFLowState.RUN_BFLOW_SUCCESS);
-            addToast("Successfully ran BFlow", ToastType.SUCCESS);
-        }
-    }
+    //     this.setState(BFLowState.RUN_BFLOW);
+
+    //     try {
+
+    //         const runningBflowResult = await this.bflowRunnerAgentMessenger?.run(this.bflow, this.bflowRunResult);
+    //         if (runningBflowResult) {
+    //             this.onRunBFlowFinished(runningBflowResult);
+    //         } else {
+    //             this.setState(BFLowState.RUN_BFLOW_FAILED);
+    //             addToast("Failed to run BFlow", ToastType.ERROR)
+    //         }
+    //     } catch (e: any) {
+    //         console.error(e);
+    //         this.setState(BFLowState.RUN_BFLOW_FAILED);
+    //         addToast("Failed to run BFlow", ToastType.ERROR)
+    //     }
+    // }
+
+    // onRunBFlowFinished(runningBflowResult: any) {
+    //     this.bflow = runningBflowResult.bflow;
+    //     this.bflowRunResult = runningBflowResult.outs;
+    //     this.updateBFlowRunResult();
+
+    //     const clientActionRequiredNode = this.findClientActionRequiredNode(runningBflowResult.bflow.root);
+    //     if (clientActionRequiredNode) {
+    //         this.setState(BFLowState.RUN_BFLOW_IN_PROGRESS);
+    //         addToast("Server requires an action from you", ToastType.WARNING);
+    //         // this.doActionRequired(clientActionRequiredNode);
+    //     } else {
+    //         this.setState(BFLowState.RUN_BFLOW_SUCCESS);
+    //         addToast("Successfully ran BFlow", ToastType.SUCCESS);
+    //     }
+    // }
 
     updateBFlowRunResult() {
         if (!this.bflowRunResult) {
