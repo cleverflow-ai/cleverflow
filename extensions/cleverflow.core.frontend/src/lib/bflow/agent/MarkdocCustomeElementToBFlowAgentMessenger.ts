@@ -1,4 +1,4 @@
-import { AgentConnection, AgentMessenger, type AgentInfo } from "@cleverflow/cleverflow.core";
+import { AgentConnection, AgentMessenger, type AgentInfo } from "@cleverflow-ai/cleverflow.core";
 
 export type InPayload = {
     text: string;

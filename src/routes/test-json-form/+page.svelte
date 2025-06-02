@@ -3,7 +3,7 @@
 
     onMount(async () => {
         await import(
-            "@cleverflow/cleverflow.core.frontend/webcomponents/json-form.js"
+            "@cleverflow-ai/cleverflow.core.frontend/webcomponents/json-form.js"
         );
     });
 </script>

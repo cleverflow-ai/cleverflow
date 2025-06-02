@@ -1,4 +1,4 @@
-import { AgentConnection } from "@cleverflow/cleverflow.core";
+import { AgentConnection } from "@cleverflow-ai/cleverflow.core";
 import FileUploadAgentMessenger, { type OutPayload } from "./FileUploadAgentMessenger.js";
 
 export default class FileUploadController {

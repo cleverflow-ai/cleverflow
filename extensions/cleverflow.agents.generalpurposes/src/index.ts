@@ -4,7 +4,7 @@ dotenvExpand.expand(dotenvFlow.config())
 
 console.log('process.env.OLLAMA_OPENAI_URL', process.env.OLLAMA_OPENAI_URL);
 
-import { monitorAgent, JsV8VmRunner } from '@cleverflow/cleverflow.core';
+import { monitorAgent, JsV8VmRunner } from '@cleverflow-ai/cleverflow.core';
 import MarkdocCustomElementToBFlowAgent from './bflow/MarkdocCustomeElementToBFlowAgent.js';
 import BFlowToBFlowVizAgent from './bflow/BFlowToBFlowVizAgent.js';
 import JsV8CodeGenerationAgent from './common/JsV8CodeGenerationAgent.js';

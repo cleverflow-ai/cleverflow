@@ -1,4 +1,4 @@
-import { Agent } from "@cleverflow/cleverflow.core";
+import { Agent } from "@cleverflow-ai/cleverflow.core";
 import { fileURLToPath } from 'node:url';
 import path from 'node:path';
 import fs from 'node:fs';

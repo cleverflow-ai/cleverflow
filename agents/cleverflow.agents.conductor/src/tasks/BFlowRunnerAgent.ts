@@ -1,7 +1,7 @@
 import { createInbox } from 'nats';
-import { monitorAgent } from '@cleverflow-ai/cleverflow.core';
+import { Agent, monitorAgent } from '@cleverflow-ai/cleverflow.core';
 import { BFlow, BFlowNode, BFlowNodeState, BFlowNodeType } from "../baml_client/types.js";
-import { Agent, type AgentInfo } from "@cleverflow-ai/cleverflow.core";
+import { type AgentInfo } from "@cleverflow-ai/cleverflow.core";
 import _ from 'lodash';
 
 export type InPayload = {

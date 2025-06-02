@@ -4,7 +4,7 @@
     import type {
         Task,
         TaskSendParams,
-    } from "@cleverflow/cleverflow.agents/schema";
+    } from "@cleverflow-ai/cleverflow.agents/schema";
     import { onMount } from "svelte";
     import postal from "postal";
 
@@ -21,7 +21,7 @@
     onMount(async () => {
         window.postal = postal;
         await import(
-            "@cleverflow/cleverflow.core.frontend/webcomponents/json-form.js"
+            "@cleverflow-ai/cleverflow.core.frontend/webcomponents/json-form.js"
         );
         const conductorServer = import.meta.env.VITE_A2A_CONDUCTOR_SERVER;
         console.log(`>>> conductorServer: ${conductorServer}`);

@@ -79,7 +79,7 @@ server: {
 6. At the Main Project, import Workspace Package via its name and the corresponding entry of Web Component.
 ```svelte
 onMount(async () => {
-    await import('@cleverflow/cleverflow.core/webcomponents/markdoc-editor.js');
+    await import('@cleverflow-ai/cleverflow.core/webcomponents/markdoc-editor.js');
 });
 ...
 <markdoc-editor></markdoc-editor>

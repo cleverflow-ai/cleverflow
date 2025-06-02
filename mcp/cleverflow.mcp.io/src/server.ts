@@ -5,7 +5,7 @@ import z from "zod";
 
 export function createServer() {
     const server = new McpServer({
-        name: "@cleverflow/cleverflow.mcp.io",
+        name: "@cleverflow-ai/cleverflow.mcp.io",
         version: "1.0.0"
     }, {
         capabilities: {

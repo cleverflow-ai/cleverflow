@@ -19,7 +19,7 @@ export default defineConfig({
             formats: ['es'],
         },
         rollupOptions: {
-            external: ['@cleverflow/cleverflow.core'],
+            external: ['@cleverflow-ai/cleverflow.core'],
             output: {
                 inlineDynamicImports: false,
             },

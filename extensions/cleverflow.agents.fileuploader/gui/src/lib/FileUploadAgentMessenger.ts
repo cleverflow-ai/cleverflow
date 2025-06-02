@@ -1,4 +1,4 @@
-import { AgentConnection, AgentMessenger } from "@cleverflow/cleverflow.core";
+import { AgentConnection, AgentMessenger } from "@cleverflow-ai/cleverflow.core";
 
 export type InPayload = {
     query: 'upload',

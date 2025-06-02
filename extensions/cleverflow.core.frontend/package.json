@@ -1,5 +1,5 @@
 {
-	"name": "@cleverflow/cleverflow.core.frontend",
+	"name": "@cleverflow-ai/cleverflow.core.frontend",
 	"version": "0.0.1",
 	"scripts": {
 		"dev": "vite dev",
@@ -83,7 +83,7 @@
 	},
 	"dependencies": {
 		"@cartamd/plugin-component": "^1.1.0",
-		"@cleverflow/cleverflow.core": "file:../cleverflow.core",
+		"@cleverflow-ai/cleverflow.core": "file:../cleverflow.core",
 		"@inlang/paraglide-sveltekit": "^0.15.5",
 		"@jsfe/form": "^0.4.0",
 		"@jsfe/shoelace": "^0.4.0",

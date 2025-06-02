@@ -1,6 +1,6 @@
 
-// import { GUIAgent } from '@cleverflow/cleverflow.core';
-// import type { GUIAgentInPayload, GUIAgentOutPayload } from '@cleverflow/cleverflow.core';
+// import { GUIAgent } from '@cleverflow-ai/cleverflow.core';
+// import type { GUIAgentInPayload, GUIAgentOutPayload } from '@cleverflow-ai/cleverflow.core';
 
 // export class CFGUIAgent extends GUIAgent {
 

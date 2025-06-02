@@ -1,5 +1,5 @@
 {
-  "name": "@cleverflow/cleverflow.agents.generalpurposes",
+  "name": "@cleverflow-ai/cleverflow.agents.generalpurposes",
   "type": "module",
   "version": "0.0.1",
   "main": "./dist/src/index.js",
@@ -12,9 +12,9 @@
     "typescript": "^5.8.3"
   },
   "dependencies": {
-    "@boundaryml/baml": "^0.88.0",
-    "@cleverflow/cleverflow.core": "file:../cleverflow.core",
-    "@cleverflow/cleverflow.a2a": "file:../cleverflow.a2a",
+    "@boundaryml/baml": "^0.89.0",
+    "@cleverflow-ai/cleverflow.core": "file:../cleverflow.core",
+    "@cleverflow-ai/cleverflow.a2a": "file:../cleverflow.a2a",
     "@nats-io/nats-core": "^3.0.2",
     "@nats-io/transport-node": "^3.0.2",
     "dotenv-expand": "^12.0.2",

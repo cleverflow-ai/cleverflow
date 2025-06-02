@@ -2,7 +2,7 @@
   import { Tabs } from "@skeletonlabs/skeleton-svelte";
   import { Pencil, Eye, Loader, CircleX, Check, Zap } from "lucide-svelte";
   import { onMount } from "svelte";
-  import MarkdocRendererController from "@cleverflow/cleverflow.core.frontend/webcomponents/markdoc-renderer-controller.js";
+  import MarkdocRendererController from "@cleverflow-ai/cleverflow.core.frontend/webcomponents/markdoc-renderer-controller.js";
 
   const eventServer = "ws://localhost:8080";
   const eventServerToken = "76de3ba222bec3af21f9dbfb01f3197b";
@@ -19,10 +19,10 @@
 
   onMount(async () => {
     await import(
-      "@cleverflow/cleverflow.core.frontend/webcomponents/markdoc-editor.js"
+      "@cleverflow-ai/cleverflow.core.frontend/webcomponents/markdoc-editor.js"
     );
     await import(
-      "@cleverflow/cleverflow.core.frontend/webcomponents/markdoc-renderer.js"
+      "@cleverflow-ai/cleverflow.core.frontend/webcomponents/markdoc-renderer.js"
     );
 
     markdocRendererController = new MarkdocRendererController(

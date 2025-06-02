@@ -19,7 +19,7 @@ export default defineConfig({
             output: {
                 inlineDynamicImports: true,
                 globals: {
-                    '@cleverflow/cleverflow.core': 'cleverflow_core'
+                    '@cleverflow-ai/cleverflow.core': 'cleverflow_core'
                 }
             },
         },

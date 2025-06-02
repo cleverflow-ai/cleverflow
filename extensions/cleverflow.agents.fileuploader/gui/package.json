@@ -1,5 +1,5 @@
 {
-	"name": "@cleverflow/cleverflow.agents.fileuploader.gui",
+	"name": "@cleverflow-ai/cleverflow.agents.fileuploader.gui",
 	"version": "0.0.1",
 	"scripts": {
 		"dev": "vite dev",
@@ -47,7 +47,7 @@
 		"vite": "^6.0.0"
 	},
 	"dependencies": {
-		"@cleverflow/cleverflow.core": "file:../cleverflow.core",
+		"@cleverflow-ai/cleverflow.core": "file:../cleverflow.core",
 		"@inlang/paraglide-sveltekit": "^0.15.5",
 		"@nats-io/nats-core": "^3.0.0-51",
 		"autoprefixer": "^10.4.20",

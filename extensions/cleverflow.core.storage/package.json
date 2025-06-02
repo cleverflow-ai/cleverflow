@@ -1,5 +1,5 @@
 {
-  "name": "@cleverflow/cleverflow.core.storage",
+  "name": "@cleverflow-ai/cleverflow.core.storage",
   "type": "module",
   "version": "0.0.1",
   "main": "./dist/src/index.js",

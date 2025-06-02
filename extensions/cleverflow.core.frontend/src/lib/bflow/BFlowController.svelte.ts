@@ -1,4 +1,4 @@
-import { AgentConnection, MonitorAgentMessenger, type AgentInfo } from "@cleverflow/cleverflow.core";
+import { AgentConnection, MonitorAgentMessenger, type AgentInfo } from "@cleverflow-ai/cleverflow.core";
 import MarkdocCustomeElementToBFlowAgentMessenger from "./agent/MarkdocCustomeElementToBFlowAgentMessenger.js";
 import BFlowToBFlowVizAgentMessenger from "./agent/BFlowToBFlowVizAgentMessenger.js";
 import _ from "lodash";

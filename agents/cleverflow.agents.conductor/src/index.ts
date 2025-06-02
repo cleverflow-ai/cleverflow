@@ -1,6 +1,6 @@
 import { A2AServer, TaskContext, TaskYieldUpdate } from '@cleverflow-ai/cleverflow.agents/dist/server.js';
 import * as schema from '@cleverflow-ai/cleverflow.agents/dist/schema.js';
-import { fetchOutlineFile } from './tasks/fetchOutlineFile.js';
+import { fetchOutlineFile } from './tasks/FetchOutlineFile.js';
 
 import dotenvFlow from 'dotenv-flow';
 import dotenvExpand from 'dotenv-expand';
@@ -19,7 +19,7 @@ console.log('✅ A2A Conductor is listening on port ', PORT);
 async function* handleTask(context: TaskContext): AsyncGenerator<TaskYieldUpdate, schema.Task | void, unknown> {
     console.log('>>>> context');
     console.log(JSON.stringify(context));
-    
+
     const taskName = context.task.metadata?.taskName;
 
     switch (taskName) {
