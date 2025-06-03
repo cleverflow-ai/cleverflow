@@ -3,7 +3,7 @@ import { StreamableHTTPClientTransport } from "@modelcontextprotocol/sdk/client/
 import { v4 as uuidv4 } from 'uuid';
 import z from "zod";
 
-export async function createClient(serverUrl: string, name: string, version: string): Promise<Client> {
+export async function createMcpClient(serverUrl: string, name: string, version: string): Promise<Client> {
     const client = new Client({
         name: name,
         version: version,

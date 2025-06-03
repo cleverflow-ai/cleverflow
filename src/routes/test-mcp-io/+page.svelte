@@ -1,6 +1,6 @@
 <script lang="ts">
     import { onMount } from "svelte";
-    import { createClient } from "@cleverflow-ai/cleverflow.mcp/dist/McpClient.js";
+    import { createMcpClient } from "@cleverflow-ai/cleverflow.mcp/dist/McpClient.js";
     import MarkdocRenderer from "$lib/components/MarkdocRenderer.svelte";
     import GlbViewer from "$lib/components/GlbViewer.svelte";
     import LoadingIndicator from "$lib/components/LoadingIndicator.svelte";
@@ -32,24 +32,14 @@
 
     onMount(async () => {
         setDefaultForm();
-        // const jsonForm = `{
-        //     "type": "object",
-        //     "properties": {
-        //         "name": {
-        //             "type": "string",
-        //             "title": "Name"
-        //         },
-        //         "email": {
-        //             "type": "string",
-        //             "title": "Email"
-        //         },
-        //         "message": {
-        //             "type": "string",
-        //             "title": "Message"
-        //         }
-        //     },
-        //     "required": ["name", "email", "message"]
-        // }` //await guiAgent.runTask(`generate-json-form`, `Please help me generate a .. with three text fields for ...`);
+        // const client = await createMcpClient(
+        //     "http://localhost:3000/mcp",
+        //     "@cleverflow-ao/cleverflow.mcp.io",
+        //     "1.0.0",
+        // );
+        // const tools = await client.listTools();
+        // console.log("Tools:");
+        // console.log(JSON.stringify(tools, null, 2));
     });
 
     function setDefaultForm(): void {
@@ -77,7 +67,7 @@
 
         isLoading = true;
 
-        const client = await createClient(
+        const client = await createMcpClient(
             "http://localhost:3000/mcp",
             "@cleverflow-ao/cleverflow.mcp.io",
             "1.0.0",
@@ -111,14 +101,7 @@
                     apiKey,
                 },
             },
-            z.object({
-                content: z.array(
-                    z.object({
-                        type: z.literal("text"),
-                        text: z.string(),
-                    }),
-                ),
-            }),
+            z.any(),
             {
                 timeout: 3600 * 1000,
             },
@@ -153,7 +136,7 @@
 
         isLoading = true;
 
-        const client = await createClient(
+        const client = await createMcpClient(
             "http://localhost:3000/mcp",
             "@cleverflow-ao/cleverflow.mcp.io",
             "1.0.0",
@@ -170,14 +153,7 @@
                     filePath,
                 },
             },
-            z.object({
-                content: z.array(
-                    z.object({
-                        type: z.literal("text"),
-                        text: z.string(),
-                    }),
-                ),
-            }),
+            z.any(),
             {
                 timeout: 3600 * 1000,
             },
@@ -215,7 +191,7 @@
 
         isLoading = true;
 
-        const client = await createClient(
+        const client = await createMcpClient(
             "http://localhost:4001/mcp",
             "@clevernow/clevernow.mcp.3d",
             "1.0.0",
@@ -230,15 +206,7 @@
                     rpModelName,
                 },
             },
-            z.object({
-                content: z.array(
-                    z.object({
-                        type: z.literal("text"),
-                        text: z.string(),
-                        uri: z.string(),
-                    }),
-                ),
-            }),
+            z.any(),
             {
                 timeout: 3600 * 1000,
             },

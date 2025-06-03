@@ -42,7 +42,8 @@
 
 	onMount(async () => {
 		if (text && controller.state === BFLowState.CONNECT_SUCCESS) {
-			await controller.convertTextToBFlow(text);
+			// Connected and text is provided, start the BFlow process
+			await start();
 		}
 	});
 
@@ -93,8 +94,10 @@
 
 	const start = async () => {
 		try {
-			await controller.connect();
-			await controller.convertTextToBFlow(text);
+			const isConnected = await controller.connect();
+			if (isConnected) {
+				await controller.convertTextToBFlow(text);
+			}
 		} catch (exception: any) {
 			console.error(exception);
 		}

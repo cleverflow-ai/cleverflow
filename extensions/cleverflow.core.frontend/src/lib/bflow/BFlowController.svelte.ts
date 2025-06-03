@@ -1,4 +1,3 @@
-import { AgentConnection, MonitorAgentMessenger, type AgentInfo } from "@cleverflow-ai/cleverflow.core";
 import _ from "lodash";
 import { BFLowState } from "./BFlowState.js";
 import Styles from './Styles.js';
@@ -18,7 +17,6 @@ export default class BFlowController {
     public state: BFLowState = $state(BFLowState.NONE);
     public stateKey = $state(0);
 
-    private agents: AgentInfo[] | undefined = [];
     public bflow: any;
     public rawBFlow: any;
     public bflowviz: any = $state(null);
@@ -36,15 +34,18 @@ export default class BFlowController {
         this.setState(BFLowState.CONNECTING);
         try {
             this.conductorAgent = new ConductorAgent(this.conductorServerUrl);
-            const isServerAnswered = this.conductorAgent?.ping();
-            if (!isServerAnswered) {
+            const pong = await this.ping();
+            if (!pong) {
                 this.setState(BFLowState.CONNECT_FAILED);
                 addToast("Failed to connect to the server", ToastType.ERROR);
-                return;
+                return false;
             }
             this.setState(BFLowState.CONNECT_SUCCESS);
+            return true;
         } catch (exception) {
+            console.error("Failed to connect to the server:", exception);
             this.setState(BFLowState.CONNECT_FAILED);
+            return false;
         }
     }
 
@@ -54,6 +55,23 @@ export default class BFlowController {
         } catch { }
 
         this.setState(BFLowState.NONE);
+    }
+
+    async ping() {
+        console.log("Pinging the server...");
+        try {
+            const isServerAnswered = await this.conductorAgent?.ping();
+            console.log("Server ping response:", isServerAnswered);
+            if (!isServerAnswered) {
+                this.setState(BFLowState.CONNECT_FAILED);
+                addToast("Failed to connect to the server", ToastType.ERROR);
+                return false;
+            }
+            return true;
+        } catch (exception) {
+            console.error("Failed to ping the server:", exception);
+            return false;
+        }
     }
 
     setState(state: BFLowState) {

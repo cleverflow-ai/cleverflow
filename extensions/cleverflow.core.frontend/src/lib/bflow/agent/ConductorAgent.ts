@@ -10,13 +10,9 @@ export class ConductorAgent {
     }
 
     public async sendTask(taskParams: TaskSendParams, onEvent: (event: Task) => void): Promise<void> {
-        try {
-            const stream = this.client.sendTaskSubscribe(taskParams);
-
-            for await (const event of stream) {
-                onEvent(event as Task);
-            }
-        } catch (error: any) {
+        const stream = this.client.sendTaskSubscribe(taskParams);
+        for await (const event of stream) {
+            onEvent(event as Task);
         }
     }
 
@@ -39,7 +35,9 @@ export class ConductorAgent {
                         resolve(true);
                     }
                 });
+                reject(new Error("Ping task was not completed successfully."));
             } catch (exception) {
+                console.error("Error sending ping task:", exception);
                 reject(exception);
             }
         });
