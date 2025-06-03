@@ -21,7 +21,7 @@ enum BFlowNodeState {
     WAITING_FOR_CLIENT
 }
 
-class BFlowNodeAgent {
+class BFlowNodeTool {
   name string
   description string
 }
@@ -36,7 +36,7 @@ class BFlowNode {
   config string?
   state BFlowNodeState?
   goto BFlowNode[]?
-  agent BFlowNodeAgent?
+  tool BFlowNodeTool?
   inputs string[]?
   output BFlowNodeOutput?
 }
@@ -48,7 +48,7 @@ class BFlowVizNode {
   name string?
   description string?
   config string?
-  agent BFlowNodeAgent?
+  tool BFlowNodeTool?
 }
 
 class BFlowVizEdge {
@@ -62,7 +62,7 @@ class BFlowViz {
   edges BFlowVizEdge[]
 }
 
-function ParseMarkdocBFlowElementToBFlow(text: string, agents: BFlowNodeAgent[]) -> BFlow {
+function ParseMarkdocBFlowElementToBFlow(text: string, tools: BFlowNodeTool[]) -> BFlow {
     client Ollama_Tool
     prompt #"
         As an expert in Markdoc and Behavior Tree:
@@ -81,12 +81,13 @@ function ParseMarkdocBFlowElementToBFlow(text: string, agents: BFlowNodeAgent[])
         - Each Node with type 'ACTION' or 'CONDITION' needs a corresponding Agent given in the Agents list. If you cannot decide which Agent to assign, just assign the default one.
         - Analyze on the description, identity the names of other previous Nodes whose outputs are required for it. Assign 'inputs' list with these Nodes' Ids. 
         - If Node doest not receive any input from another, just let its 'inputs' empty.
+        - Assign the tool to the Node if it is an ACTION node.
         ---
         Markdoc:
         {{ text }}
         ---
-        Agents:
-        {{ agents }}
+        Tools:
+        {{ tools }}
         ---
         {{ ctx.output_format }}
     "#
@@ -139,36 +140,15 @@ test Test_WithoutAssignedIds_ParseMarkdocBFlowElementToBFlow {
                 {% /sequence %}
             {% /b-flow %}
         "#,
-        // agents [
-        //     {
-        //         name "download-file"
-        //         description "Can be use for fetching file from a given URL."
-        //     }
-        //     {
-        //         name "generate-code"
-        //         description "Depending on the given instructions, can generate the code in Javascript for excuting the task ad hoc."
-        //     }
-        // ]
-        agents [
+        
+        tools [
             {
-                name "markdoc-custom-element-to-bflow",
-                description "Parse given Markdoc Custome Element (as Text) to B-Flow.",
-                instructions "SMELL: TODO"
+                name "fetch-outline-text-file",
+                description ""
             }
             {
-                name "bflow-to-bflowviz",
-                description "Parse given B-Flow to the Visualization Format.",
-                instructions "SMELL: TODO"
-            }
-            {
-                name "js-v8-code-generation",
-                description "\n                Generate Javascript (V8) code for executing Task ad hoc.\n                Can be used as default Agent.\n            ",
-                instructions "SMELL: TODO"
-            }
-            {
-                name "bflow-runner",
-                description "Run the given B-Flow.",
-                instructions "SMELL: TODO"
+                name "fetch-outline-text-file",
+                description ""
             }
         ]
     }
@@ -184,8 +164,8 @@ test Test_ParseBFlowToBFlowViz {
                 "description": null,
                 "root": {
                     "type": "SEQUENCE",
-                    "id": "sequence_0",
-                    "name": null,
+                    "id": "cleverflow-mcp-a2a",
+                    "name": "SEQUENCE",
                     "description": null,
                     "config": null,
                     "state": null,
@@ -197,10 +177,10 @@ test Test_ParseBFlowToBFlowViz {
                             "description": "Fetching a gitea file",
                             "config": null,
                             "state": null,
-                            "goto": null,
-                            "agent": {
-                                "name": "js-v8-code-generation",
-                                "description": "\n                Generate Javascript (V8) code for executing Task ad hoc.\n                Can be used as default Agent.\n            "
+                            "goto": [],
+                            "tool": {
+                                "name": "fetch-outline-text-file",
+                                "description": ""
                             },
                             "inputs": [],
                             "output": null
@@ -212,10 +192,10 @@ test Test_ParseBFlowToBFlowViz {
                             "description": "Fetching a outline file",
                             "config": null,
                             "state": null,
-                            "goto": null,
-                            "agent": {
-                                "name": "js-v8-code-generation",
-                                "description": "\n                Generate Javascript (V8) code for executing Task ad hoc.\n                Can be used as default Agent.\n            "
+                            "goto": [],
+                            "tool": {
+                                "name": "fetch-outline-text-file",
+                                "description": ""
                             },
                             "inputs": [],
                             "output": null
@@ -227,16 +207,16 @@ test Test_ParseBFlowToBFlowViz {
                             "description": "Convert a steps file to glb",
                             "config": null,
                             "state": null,
-                            "goto": null,
-                            "agent": {
-                                "name": "js-v8-code-generation",
-                                "description": "\n                Generate Javascript (V8) code for executing Task ad hoc.\n                Can be used as default Agent.\n            "
+                            "goto": [],
+                            "tool": {
+                                "name": "fetch-outline-text-file",
+                                "description": ""
                             },
                             "inputs": [],
                             "output": null
                         }
                     ],
-                    "agent": null,
+                    "tool": null,
                     "inputs": null,
                     "output": null
                 }

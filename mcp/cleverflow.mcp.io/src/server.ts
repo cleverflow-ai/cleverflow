@@ -62,6 +62,21 @@ function registerResources(server: McpServer) {
 
 function registerTools(server: McpServer) {
     server.tool(
+        "ping",
+        {},
+        async ({ }, extra) => {
+            return {
+                content: [
+                    {
+                        type: "text",
+                        text: "pong"
+                    }
+                ],
+            };
+        }
+    );
+
+    server.tool(
         "fetch-outline-text-file",
         {
             fileId: z.string(),
