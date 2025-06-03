@@ -28,7 +28,7 @@ client<llm> Ollama_Code {
   provider "openai-generic"
   options {
     base_url env.BASE_URL
-    model "qwen2.5-coder:3b"
+    model "devstral:latest"
     headers {
       "Api-Key" env.OLLAMA_API_KEY
     }

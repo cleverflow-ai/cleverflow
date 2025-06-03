@@ -63,64 +63,79 @@ class BFlowViz {
 }
 
 function ParseMarkdocBFlowElementToBFlow(text: string, tools: BFlowNodeTool[]) -> BFlow {
-    client Ollama_Tool
+    client Ollama_Code
     prompt #"
-        As an expert in Markdoc and Behavior Tree:
-        You consider my given Mardoc custom element which represents a Behavior Tree with different node types such as "sequence", "action", etc. 
-        You also consider my given list of Agents.
-        Please convert the given element with its children to a JSON format.
-        Just result and no verbose please!
-        
-        It is noted that:
-        - If Markdoc entry name is not <% entry %>, <% fallback %>, <% sequence %>, <% parallel %>, or <% condition %>, then it is an ACTION node.
-        - If there is any text locating before the Markdoc node-element, than extract it as the description of the corresponding node. Otherwise, auto generates the description based on the text inside the Markdoc element.
-        - The Tree / each Node needs a Unique Id. If there is no id given in the Markdoc element, assign it with a unique id which can be constructed with its name and its appearing order.
-        - If it is about ACTION node, the name of the node corresponds to the name of the Markdoc element.
-           - For example: '<% get-text %>' must be converted to { type: "ACTION", name: "get-text" }
-        - If markdoc element contains children, then they should be added to the 'goto' field of the nearest father node.
-        - Each Node with type 'ACTION' or 'CONDITION' needs a corresponding Agent given in the Agents list. If you cannot decide which Agent to assign, just assign the default one.
-        - Analyze on the description, identity the names of other previous Nodes whose outputs are required for it. Assign 'inputs' list with these Nodes' Ids. 
-        - If Node doest not receive any input from another, just let its 'inputs' empty.
-        - Assign the tool to the Node if it is an ACTION node.
-        ---
+        You are an expert in Markdoc and Behavior Trees.
+
+        ## Task: Convert Markdoc to JSON Tree
+        Convert the given Markdoc element (representing a Behavior Tree) into a structured JSON format. Follow these rules:
+
+        - The following are **non-ACTION nodes**: <% entry %>, <% fallback %>, <% sequence %>, <% parallel %>, <% condition %>. All other tags are treated as **ACTION** nodes.
+        - For ACTION nodes, set:
+        ```json
+        { "type": "ACTION", "name": "<tag-name-without-<%%>>" }
+        ```
+        For example: <% outline-file-fetching %> becomes "name": "outline-file-fetching".
+
+        If there is text before a Markdoc element, use it as that node’s description.
+        Otherwise, auto-generate the description from inside the element.
+
+        Each node must have a unique id.
+        If missing, generate one using the element name and its order of appearance.
+
+        If a node has children, assign them to its goto field.
+
+        Nodes of type ACTION or CONDITION must be assigned a Tool from the provided list.
+        If not sure, use a default tool.
+
+        Analyze each description to detect references to outputs from previous nodes.
+        Add those node ids to the inputs array.
+        If none, leave inputs empty.
+
+        Return only the final JSON result — no extra explanations.
+
         Markdoc:
         {{ text }}
-        ---
+
         Tools:
         {{ tools }}
-        ---
+
         {{ ctx.output_format }}
     "#
 }
 
 function ParseBFlowToBFlowViz(bflow: string) -> BFlowViz {
-    client Ollama_Tool
+    client Ollama_Code
     prompt #"
         You are an expert in Markdoc, Behavior Tree, and JSON processing.
-        
-        Task 1: Flatten JSON into Array of Objects
-            Flatten the nested JSON tree into an array of objects, starting from the root.
-            Assign a unique random 10-character string as id to each node.
-            Add a parentNodeId field (null if no parent).
-            Add a level field to each node (0 for the root, 1 for children of the root, and so on).
-            Ensure each node has a position field.
-            If node type is ACTION, keep its name.
-            
-        Task 2: Generate Parent-Child Relationships as edges
-            Create an array of objects representing parent-child relationships with:
-                id: A unique random 10-character string, can not be null.
-                source: The parentNodeId of the child.
-                target: The id of the child.
 
-        Return only the final results for each task—no extra explanations.
+        ## Task 1: Flatten JSON Tree into Node Array
+        - Traverse the input JSON tree from root, and flatten it into an array of node objects.
+        - Each node must have:
+            - a unique 10-character random string as `id`.
+            - a `parentNodeId` (null for root).
+        - Preserve all existing fields in each node.
+        - If the node has type `ACTION`, ensure the following:
+            - Keep its `name` as-is.
+            - Keep its `tool` field **as an object**, exactly as defined in the original node (do not convert or remove it).
+        
+        ## Task 2: Generate Edges
+        - Create an array of edge objects representing parent-child relationships.
+        - Each edge must include:
+            - `id`: a unique 10-character random string.
+            - `source`: the parent node's `id`.
+            - `target`: the child's `id`.
+
+        Return only the final results in JSON. Do not explain anything.
         ---
         {{ bflow }}
         ---
         {{ ctx.output_format }}
+
     "#
 }
 
-test Test_WithoutAssignedIds_ParseMarkdocBFlowElementToBFlow {
+test Test_ParseMarkdocBFlowElementToBFlow {
     functions [ParseMarkdocBFlowElementToBFlow]
     args {
         text #"
@@ -145,9 +160,13 @@ test Test_WithoutAssignedIds_ParseMarkdocBFlowElementToBFlow {
             {
                 name "fetch-outline-text-file",
                 description ""
-            }
+            },
             {
-                name "fetch-outline-text-file",
+                name "fetch-gitea-text-file",
+                description ""
+            },
+            {
+                name "convert-step-to-glb",
                 description ""
             }
         ]
@@ -159,60 +178,73 @@ test Test_ParseBFlowToBFlowViz {
     args {
         bflow #"
             {
-                "id": "cleverflow-mcp-a2a",
-                "name": "cleverflow-mcp-a2a",
+                "id": null,
+                "name": null,
                 "description": null,
                 "root": {
-                    "type": "SEQUENCE",
-                    "id": "cleverflow-mcp-a2a",
-                    "name": "SEQUENCE",
+                    "type": "ENTRY",
+                    "id": "entry_1",
+                    "name": null,
                     "description": null,
                     "config": null,
                     "state": null,
                     "goto": [
                         {
-                            "type": "ACTION",
-                            "id": "action_1",
-                            "name": "gitea-file-fetching",
-                            "description": "Fetching a gitea file",
+                            "type": "SEQUENCE",
+                            "id": "sequence_1",
+                            "name": null,
+                            "description": null,
                             "config": null,
                             "state": null,
-                            "goto": [],
-                            "tool": {
-                                "name": "fetch-outline-text-file",
-                                "description": ""
-                            },
-                            "inputs": [],
-                            "output": null
-                        },
-                        {
-                            "type": "ACTION",
-                            "id": "action_2",
-                            "name": "outline-file-fetching",
-                            "description": "Fetching a outline file",
-                            "config": null,
-                            "state": null,
-                            "goto": [],
-                            "tool": {
-                                "name": "fetch-outline-text-file",
-                                "description": ""
-                            },
-                            "inputs": [],
-                            "output": null
-                        },
-                        {
-                            "type": "ACTION",
-                            "id": "action_3",
-                            "name": "convert-steps-to-glb",
-                            "description": "Convert a steps file to glb",
-                            "config": null,
-                            "state": null,
-                            "goto": [],
-                            "tool": {
-                                "name": "fetch-outline-text-file",
-                                "description": ""
-                            },
-                            "inputs": [],
+                            "goto": [
+                                {
+                                    "type": "ACTION",
+                                    "id": "action_1",
+                                    "name": "gitea-file-fetching",
+                                    "description": "Fetching a gitea file",
+                                    "config": null,
+                                    "state": null,
+                                    "goto": null,
+                                    "tool": {
+                                        "name": "fetch-gitea-text-file",
+                                        "description": ""
+                                    },
+                                    "inputs": [],
+                                    "output": {}
+                                },
+                                {
+                                    "type": "ACTION",
+                                    "id": "action_2",
+                                    "name": "outline-file-fetching",
+                                    "description": "Fetching a outline file",
+                                    "config": null,
+                                    "state": null,
+                                    "goto": null,
+                                    "tool": {
+                                        "name": "fetch-outline-text-file",
+                                        "description": ""
+                                    },
+                                    "inputs": [],
+                                    "output": {}
+                                },
+                                {
+                                    "type": "ACTION",
+                                    "id": "action_3",
+                                    "name": "convert-steps-to-glb",
+                                    "description": "Convert a steps file to glb",
+                                    "config": null,
+                                    "state": null,
+                                    "goto": null,
+                                    "tool": {
+                                        "name": "convert-step-to-glb",
+                                        "description": ""
+                                    },
+                                    "inputs": [],
+                                    "output": {}
+                                }
+                            ],
+                            "tool": null,
+                            "inputs": null,
                             "output": null
                         }
                     ],
