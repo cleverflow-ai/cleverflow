@@ -9,20 +9,37 @@ export class ConductorAgent {
         this.client = new A2AClient(serverUrl);
     }
 
-    public async sendTask(taskParams: TaskSendParams, onComplete: (event: Task) => void): Promise<void> {
-        try {
-            const stream = this.client.sendTaskSubscribe(taskParams);
-
-            for await (const event of stream) {
-                this.handleEvent(event as Task);
-            }
-        } catch (error: any) {
+    public async sendTask(taskParams: TaskSendParams, onEvent: (event: Task) => void): Promise<void> {
+        const stream = this.client.sendTaskSubscribe(taskParams);
+        for await (const event of stream) {
+            onEvent(event as Task);
         }
     }
 
-    private handleEvent(event: Task) {
-        const state = event.status?.state;
-        console.log(event);
-
+    public async ping(): Promise<boolean> {
+        return new Promise<boolean>(async (resolve, reject) => {
+            try {
+                const taskParams: TaskSendParams = {
+                    id: crypto.randomUUID(),
+                    message: {
+                        role: "user",
+                        parts: [],
+                    },
+                    metadata: {
+                        taskName: "ping",
+                    },
+                };
+                await this.sendTask(taskParams, (event: Task) => {
+                    const state = event.status?.state;
+                    if (state === 'completed') {
+                        resolve(true);
+                    }
+                });
+                reject(new Error("Ping task was not completed successfully."));
+            } catch (exception) {
+                console.error("Error sending ping task:", exception);
+                reject(exception);
+            }
+        });
     }
 }

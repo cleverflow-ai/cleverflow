@@ -1,15 +1,20 @@
 import type { schema, TaskContext, TaskYieldUpdate } from '@cleverflow-ai/cleverflow.agents/server';
 import { convertTextToBFlow } from './tasks/TextToBFlow.js';
 import { runBFlow } from './tasks/BFlowRunner.js';
+import { convertSchemaToJsonForm } from './tasks/SchemaToJsonForm.js';
 
 export async function* handleTask(context: TaskContext): AsyncGenerator<TaskYieldUpdate, schema.Task | void, unknown> {
-    // console.log('>>>> context');
-    // console.log(JSON.stringify(context));
 
     const taskName = context.task.metadata?.taskName;
     console.log(`Handling task: ${taskName}`);
 
     switch (taskName) {
+        case 'text-to-bflow':
+            return yield* convertTextToBFlow(context);
+        case 'run-bflow':
+            return yield* runBFlow(context);
+        case 'schema-to-json-form':
+            return yield* convertSchemaToJsonForm(context);
         case 'ping':
             yield {
                 state: 'completed',
@@ -22,10 +27,6 @@ export async function* handleTask(context: TaskContext): AsyncGenerator<TaskYiel
                 }
             };
             return;
-        case 'text-to-bflow':
-            return yield* convertTextToBFlow(context);
-        case 'run-bflow':
-            return yield* runBFlow(context);
         default:
             throw new Error(`Unknown task: ${context}`);
     }
