@@ -1,7 +1,7 @@
 <script>
 	import { Handle, Position } from "@xyflow/svelte";
 	import { onMount } from "svelte";
-	import { BFlowNodeState } from "../agent/models/BFlowNodeState.js";
+	import { BFlowNodeState } from "../BFlowNodeState.js";
 
 	let { data } = $props();
 

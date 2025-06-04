@@ -4,7 +4,7 @@ import Styles from './Styles.js';
 import { addToast, ToastType } from '../common/components/toast/ToastStore.js';
 import * as MarkocNodeUtil from '../common/utils/MarkdocNodeUtil.js';
 import * as JsonUtil from '../common/utils/JsonUtil.js';
-import { BFlowNodeState } from "./agent/models/BFlowNodeState.js";
+import { BFlowNodeState } from "./BFlowNodeState.js";
 import { ConductorAgent } from "./agent/ConductorAgent.js";
 import postal from "postal";
 import type { Task, TaskSendParams } from "@cleverflow-ai/cleverflow.agents/schema";

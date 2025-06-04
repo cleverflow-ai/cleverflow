@@ -14,7 +14,7 @@
 	import Drawer from "../../common/components/Drawer.svelte";
 	import RunNodeResult from "./RunNodeResult.svelte";
 	import _ from "lodash";
-	import { BFlowNodeState } from "../agent/models/BFlowNodeState.js";
+	import { BFlowNodeState } from "../BFlowNodeState.js";
 
 	const channel = postal.channel("b-flow-view");
 

@@ -22,8 +22,6 @@ export async function* runBFlow(context: TaskContext): AsyncGenerator<TaskYieldU
     const queue: TaskYieldUpdate[] = [];
     const outs = new Map<string, any>();
 
-
-
     yield {
         state: 'working',
         message: { role: 'agent', parts: [{ type: 'text', text: 'Working on it...' }] }
@@ -73,7 +71,7 @@ export async function* runBFlow(context: TaskContext): AsyncGenerator<TaskYieldU
         }
         const taskYieldUpdate = queue.shift();
         yield taskYieldUpdate;
-        if (taskYieldUpdate.state === 'completed') {
+        if (['input-required', 'completed', 'failed'].includes(taskYieldUpdate.state)) {
             console.log('BFlow execution completed, yielding final result.');
             isDone = true;
         }

@@ -28,40 +28,101 @@ export abstract class InteractiveClient {
             const stream = this.client.sendTaskSubscribe(taskParams);
 
             for await (const event of stream) {
-                this.handleEvent(event as Task);
+                await this.handleEvent(event as Task);
             }
         } catch (error: any) {
             this.handleError(error);
         }
     }
 
-    private handleEvent(event: Task) {
-        const state = event.status?.state;
+    public async ping(): Promise<boolean> {
+        return new Promise<boolean>(async (resolve, reject) => {
+            try {
+                const taskParams: TaskSendParams = {
+                    id: crypto.randomUUID(),
+                    message: {
+                        role: "user",
+                        parts: [],
+                    },
+                    metadata: {
+                        taskName: "ping",
+                    },
+                };
+                await this.sendTask(taskParams, (event: Task) => {
+                    const state = event.status?.state;
+                    if (state === 'completed') {
+                        resolve(true);
+                    }
+                });
+                reject(new Error("Ping task was not completed successfully."));
+            } catch (exception) {
+                console.error("Error sending ping task:", exception);
+                reject(exception);
+            }
+        });
+    }
 
+    private async handleEvent(event: Task) {
+
+        this.onEvent(event);
+
+        const state = event.status?.state;
         if (state === 'input-required') {
-            this.requestShowDynamicForm(event);
-        } else {
-            this.onEvent(event);
+            await this.requestShowDynamicForm(event);
+        } else if (state === 'completed') {
+            const onComplete = this.callbacks.get(event.id);
+            this.callbacks.delete(event.id);
+            if (onComplete) {
+                onComplete(event);
+            }
         }
     }
 
-    private requestShowDynamicForm = (event: Task) => {
-        const parts = event.status?.message?.parts;
-        const jsonFormPart = _.find(parts, (part) => {
-            if (part && part.type === 'data' && part.data?.jsonForm) {
-                return true;
+    private requestShowDynamicForm = async (event: Task): Promise<void> => {
+        const partData = event.status?.message?.parts?.find(
+            (part) => part.type === "data",
+        );
+
+        const inputSchema = partData?.data?.inputSchema;
+
+        if (!inputSchema) {
+            return;
+        }
+
+        const taskParams: TaskSendParams = {
+            id: crypto.randomUUID(),
+            message: {
+                role: "user",
+                parts: [
+                    {
+                        type: "data",
+                        data: {
+                            inputSchema,
+                        },
+                    },
+                ],
+            },
+            metadata: {
+                taskName: "schema-to-json-form",
+            },
+        };
+        await this.sendTask(taskParams, (event: Task) => {
+            const state = event.status?.state;
+            console.log(`>>> waiting for json form: state: ${state}`);
+            if (state === "completed") {
+                const partData = event.status?.message?.parts?.find(
+                    (part) => part.type === "data",
+                );
+                const jsonForm = partData?.data?.jsonForm;
+                if (jsonForm) {
+                    return this.channel?.publish("show-dynamic-form", {
+                        form: jsonForm,
+                        event: event,
+                    });
+                }
             }
-            return false;
         });
 
-        const jsonFormDataPart: DataPart = jsonFormPart as DataPart;
-
-        if (jsonFormDataPart) {
-            return this.channel?.publish("show-dynamic-form", {
-                form: jsonFormDataPart.data?.jsonForm,
-                event: event,
-            });
-        }
     };
 
     private onDynamicFormSubmit = async (payload: any) => {

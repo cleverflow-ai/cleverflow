@@ -2,7 +2,7 @@
 	import { Handle, Position } from "@xyflow/svelte";
 	import { Bot } from "lucide-svelte";
 	import { onMount } from "svelte";
-	import { BFlowNodeState } from "../agent/models/BFlowNodeState.js";
+	import { BFlowNodeState } from "../BFlowNodeState.js";
 	import postal from "postal";
 
 	const channel = postal.channel("b-flow-view");
