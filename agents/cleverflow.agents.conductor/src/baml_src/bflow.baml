@@ -77,20 +77,15 @@ function ParseMarkdocBFlowElementToBFlow(text: string, tools: BFlowNodeTool[]) -
         ```
         For example: <% outline-file-fetching %> becomes "name": "outline-file-fetching".
 
-        If there is text before a Markdoc element, use it as that node’s description.
-        Otherwise, auto-generate the description from inside the element.
+        If there is text before a Markdoc element, use it as that node’s description. Otherwise, auto-generate the description from inside the element.
 
-        Each node must have a unique id.
-        If missing, generate one using the element name and its order of appearance.
+        Each node must have a unique id. If missing, generate one using the element name and its order of appearance.
 
         If a node has children, assign them to its goto field.
 
-        Nodes of type ACTION or CONDITION must be assigned a Tool from the provided list.
-        If not sure, use a default tool.
+        Nodes of type ACTION or CONDITION must be assigned a Tool from the provided list. If not sure, use a default tool.
 
-        Analyze each description to detect references to outputs from previous nodes.
-        Add those node ids to the inputs array.
-        If none, leave inputs empty.
+        Analyze each description to detect references to outputs from previous nodes. Add those node ids to the inputs array. If none, leave inputs empty.
 
         Return only the final JSON result — no extra explanations.
 

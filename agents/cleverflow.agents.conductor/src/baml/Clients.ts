@@ -86,7 +86,7 @@ export default class Clients {
                 // @ts-ignore: Object literal may only specify known properties, and 'base_url' does not exist in type '{ [x: number]: any; }'
                 base_url: process.env.OLLAMA_OPENAI_URL,
                 api_key: 'ollama',
-                model: 'qwen2.5-coder:3b',
+                model: 'devstral:latest',
                 temperature: 0,
                 headers: {
                     "Api-Key": process.env.OLLAMA_API_KEY

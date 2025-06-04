@@ -57,11 +57,11 @@
 			</div>
 		{/if}
 	</div>
-	{#if data.agent}
+	{#if data.tool}
 		<div class="w-full flex items-center justify-start gap-2">
 			<Bot class="w-3 h-3" />
 			<span class="flex-1 text-[10px] text-wrap">
-				{data.agent.name}
+				{data.tool.name}
 			</span>
 		</div>
 	{/if}

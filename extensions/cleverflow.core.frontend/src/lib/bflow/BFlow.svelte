@@ -174,9 +174,16 @@
 
 {#snippet runBFlowButton()}
 	{#if controller.state === BFLowState.RUN_BFLOW || controller.state === BFLowState.RUN_BFLOW_IN_PROGRESS}
-		<button class="btn preset-filled-warning-500">
+		<!-- <button class="btn preset-filled-warning-500">
 			<Flame class="animate-spin w-5 h-5" />
 			Running
+		</button> -->
+		<button
+			onclick={async () => await controller.runBFlow()}
+			class="btn preset-filled-success-500"
+		>
+			<Flame class="text-white-700 w-5 h-5" />
+			(TEST) Run
 		</button>
 	{:else if controller.state === BFLowState.RUN_BFLOW_SUCCESS}
 		<button

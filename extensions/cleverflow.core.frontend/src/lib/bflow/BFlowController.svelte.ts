@@ -93,17 +93,6 @@ export default class BFlowController {
 
         const result = this.extractGeneratedData(text);
 
-        if (result.agents) {
-            this.agents = result.agents;
-            this.setState(BFLowState.LIST_AGENTS_SUCCESS);
-        } else {
-            // TODO:
-            // this.agents = await this.loadAgents();
-            this.agents = [];
-            this.setState(BFLowState.LIST_AGENTS_SUCCESS);
-            console.warn("TODO: No agents found in the document, using empty agents list.");
-        }
-
         if (result.bflow && result.bflowviz) {
             this.bflow = result.bflow;
             this.setState(BFLowState.CONVERT_MARKDOC_ELEMENT_TO_BFLOW_SUCCESS);
@@ -150,7 +139,6 @@ export default class BFlowController {
 
     private extractGeneratedData(content: string): any {
         const result = {
-            agents: null,
             bflow: null,
             bflowviz: null,
             outs: null,
@@ -159,13 +147,6 @@ export default class BFlowController {
             const generatedData = MarkocNodeUtil.getNodeByName(content, 'generated-data');
             if (!generatedData) {
                 return result;
-            }
-
-            let agentsContent = MarkocNodeUtil.extractNodeContent(generatedData, 'agents');
-            agentsContent = JsonUtil.fixJsonString(agentsContent ?? '');
-
-            if (agentsContent) {
-                result.agents = JSON.parse(agentsContent);
             }
 
             const bflowContent = JsonUtil.fixJsonString(MarkocNodeUtil.extractNodeContent(generatedData, 'bflow') ?? '');
@@ -187,22 +168,6 @@ export default class BFlowController {
         }
         return result;
     }
-
-    // async loadAgents() {
-    //     this.setState(BFLowState.LIST_AGENTS);
-
-    //     try {
-    //         const result = await this.monitorAgentMessenger?.request({
-    //             query: "list",
-    //         });
-
-    //         this.setState(BFLowState.LIST_AGENTS_SUCCESS);
-    //         return result?.agents;
-    //     } catch (e: any) {
-    //         console.log(">>>>> Error:", e);
-    //         this.setState(BFLowState.LIST_AGENTS_FAILED);
-    //     }
-    // };
 
     async runConvertTextToBFlowTask() {
         return new Promise((resolve, reject) => {
@@ -277,29 +242,70 @@ export default class BFlowController {
     //     creatingBFlowRunnerAgentMessenger = null;
     // }
 
-    // async runBFlow() {
-    //     if (this.state === BFLowState.RUN_BFLOW) {
-    //         return;
-    //     }
+    async runBFlow() {
+        if (this.state === BFLowState.RUN_BFLOW) {
+            return;
+        }
 
-    //     await this.createBFlowRunnerAgent();
+        this.setState(BFLowState.RUN_BFLOW);
 
-    //     this.setState(BFLowState.RUN_BFLOW);
-
-    //     try {
-    //         const runningBflowResult = await this.bflowRunnerAgentMessenger?.run(this.rawBFlow);
-    //         if (runningBflowResult) {
-    //             this.onRunBFlowFinished(runningBflowResult);
-    //         } else {
-    //             this.setState(BFLowState.RUN_BFLOW_FAILED);
-    //             addToast("Failed to run BFlow", ToastType.ERROR)
-    //         }
-    //     } catch (e: any) {
-    //         console.error(e);
-    //         this.setState(BFLowState.RUN_BFLOW_FAILED);
-    //         addToast("Failed to run BFlow", ToastType.ERROR)
-    //     }
-    // }
+        try {
+            const taskParams: TaskSendParams = {
+                id: crypto.randomUUID(),
+                message: {
+                    role: "user",
+                    parts: [{
+                        type: "data",
+                        data: {
+                            bflow: this.rawBFlow,
+                        },
+                    }],
+                },
+                metadata: {
+                    taskName: "run-bflow",
+                },
+            };
+            this.conductorAgent?.sendTask(taskParams, (event: Task) => {
+                const state = event.status?.state;
+                if (state === 'completed') {
+                    console.log(">>> BFlow run completed successfully");
+                    // const bflow = event.status?.message?.parts?.[0]?.data?.bflow;
+                    // const bflowviz = event.status?.message?.parts?.[0]?.data?.bflowViz;
+                    this.setState(BFLowState.RUN_BFLOW_SUCCESS);
+                    this.bflow = event.status?.message?.parts?.[0]?.data?.bflow;
+                    this.bflowRunResult = event.status?.message?.parts?.[0]?.data?.outs;
+                    this.updateBFlowRunResult();
+                    addToast("Successfully ran BFlow", ToastType.SUCCESS);
+                } else if (state === 'failed') {
+                    console.error(">>> BFlow run failed");
+                    this.setState(BFLowState.RUN_BFLOW_FAILED);
+                    addToast("Failed to run BFlow", ToastType.ERROR);
+                } else if (state === 'working') {
+                    const text = event.status?.message?.parts?.[0]?.text;
+                    console.log("Working on converting text to BFlow:", text);
+                    if (text in BFLowState) {
+                        const state = BFLowState[text as keyof typeof BFLowState];
+                        this.setState(state);
+                    }
+                } else {
+                    console.error(`Unexpected state: ${state}`);
+                    this.setState(BFLowState.RUN_BFLOW_FAILED);
+                    addToast("Unexpected state while running BFlow", ToastType.ERROR);
+                }
+            });
+            // const runningBflowResult = await this.bflowRunnerAgentMessenger?.run(this.rawBFlow);
+            // if (runningBflowResult) {
+            //     this.onRunBFlowFinished(runningBflowResult);
+            // } else {
+            //     this.setState(BFLowState.RUN_BFLOW_FAILED);
+            //     addToast("Failed to run BFlow", ToastType.ERROR)
+            // }
+        } catch (e: any) {
+            console.error(e);
+            this.setState(BFLowState.RUN_BFLOW_FAILED);
+            addToast("Failed to run BFlow", ToastType.ERROR)
+        }
+    }
 
     // async resumeBFlow() {
     //     if (this.state === BFLowState.RUN_BFLOW) {

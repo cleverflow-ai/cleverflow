@@ -46,10 +46,9 @@ class McpClientManager {
             console.error(`Failed to create MCP client for ${name} at ${serverUrl}:`, error);
             return false;
         }
-
     }
 
-    async getClient(name: string): Promise<McpClient | undefined> {
+    getClient(name: string): McpClient | undefined {
         return this.clients.find((c) => c.name === name);
     }
 

@@ -1,168 +1,324 @@
-// import { b } from '../baml_client/async_client.js';
-// import Clients from '../baml/Clients.js';
-// import { TaskContext, TaskYieldUpdate } from '@cleverflow-ai/cleverflow.agents/server';
-// import * as schema from '@cleverflow-ai/cleverflow.agents/schema';
-// import _ from 'lodash';
-// import { BFlowNode, BFlowNodeState, BFlowNodeType } from '../baml_client/types.js';
+import { TaskContext, TaskYieldUpdate } from '@cleverflow-ai/cleverflow.agents/server';
+import * as schema from '@cleverflow-ai/cleverflow.agents/schema';
+import _ from 'lodash';
+import { BFlow, BFlowNode, BFlowNodeState, BFlowNodeType } from '../baml_client/types.js';
+import mcpClientManager from '../mcp/McpClientManager.js';
+import { z } from "zod";
 
-// const runNode = async (node: BFlowNode, config: {
-//     onProgress: () => Promise<void>,
-// }): Promise<BFlowNodeState> => {
+export async function* runBFlow(context: TaskContext): AsyncGenerator<TaskYieldUpdate, schema.Task | void, unknown> {
+    const dataPart = context.userMessage.parts.find((part) => part.type === 'data');
 
-//     if (node.state === BFlowNodeState.SUCCESS) {
-//         return node.state;
-//     }
+    if (!dataPart || !dataPart.data || !dataPart.data.bflow) {
+        yield {
+            state: 'input-required',
+            message: { role: 'agent', parts: [{ type: 'text', text: 'BFlow was missing' }] }
+        };
+        return;
+    }
 
-//     if (node.type === BFlowNodeType.ENTRY) {
+    const bflow = dataPart.data.bflow as BFlow;
+    console.log('Running BFlow:', bflow);
 
-//         for (const child of node.goto!) {
-//             const status = await runNode(child, config);
-//             if (status === BFlowNodeState.WAITING_FOR_CLIENT) {
-//                 return BFlowNodeState.WAITING_FOR_CLIENT;
-//             }
-//         }
-
-//     } else if (node.type === BFlowNodeType.FALLBACK) {
-
-//         for (const child of node.goto!) {
-//             const status = await runNode(child, config);
-//             if (status === BFlowNodeState.SUCCESS) {
-//                 node.state = BFlowNodeState.SUCCESS;
-//                 await config.onProgress();
-//                 return node.state;
-//             } else if (status === BFlowNodeState.WAITING_FOR_CLIENT) {
-//                 return BFlowNodeState.WAITING_FOR_CLIENT;
-//             }
-//         }
-
-//         node.state = BFlowNodeState.FAILURE;
-//         await config.onProgress();
-//         return node.state;
-
-//     } else if (node.type === BFlowNodeType.SEQUENCE) {
-
-//         for (const child of node.goto!) {
-//             const status = await runNode(child, config);
-//             if (status === BFlowNodeState.FAILURE) {
-//                 node.state = BFlowNodeState.FAILURE;
-//                 await config.onProgress();
-//                 return node.state;
-//             } else if (status === BFlowNodeState.WAITING_FOR_CLIENT) {
-//                 return BFlowNodeState.WAITING_FOR_CLIENT;
-//             }
-//         }
-
-//         node.state = BFlowNodeState.SUCCESS;
-//         await config.onProgress();
-//         return node.state;
-
-//     } else if (node.type === BFlowNodeType.ACTION || node.type === BFlowNodeType.CONDITION) {
-
-//         const candidateAgent = await this.getAgent(node);
-//         if (candidateAgent && candidateAgent.guiEnabled) {
-//             if (this.hasNodeResult(node)) {
-//                 node.state = BFlowNodeState.SUCCESS;
-//             } else {
-//                 const guiData = await this.loadAgentGUI(candidateAgent);
-//                 if (guiData) {
-//                     this.publish({
-//                         guiEnabled: true,
-//                         guiData: guiData
-//                     }, {});
-//                 }
-//                 node.state = BFlowNodeState.WAITING_FOR_CLIENT;
-//                 this.savePoint(node);
-//             }
-//             return node.state;
-//         }
-
-//         if (this.connection && node.agent) {
-//             let inputs: any[] = [];
-
-//             if (node.inputs) {
-//                 // Each Input corresponds a Node Id
-//                 for (const nodeId of node.inputs) {
-//                     // Get saved Output of required Node
-//                     const out = this._outs.get(nodeId);
-//                     const outResult = out?.result;
-//                     if (outResult) {
-//                         inputs.push(outResult);
-//                     }
-//                 }
-//             }
-
-//             node.state = BFlowNodeState.RUNNING;
-//             await config.onProgress();
-
-//             const reply = await this.connection.request(
-//                 `${node.agent.name}.server`,
-//                 this.codec.encode({
-//                     description: node.description,
-//                     config: node.config,
-//                     inputs: inputs,
-//                 }),
-//                 {
-//                     timeout: 1000 * 3600
-//                 });
-//             const result = this.codec.decode(reply.data);
-//             if (node.id) {
-//                 this._outs.set(node.id, result);
-//                 node.state = BFlowNodeState.SUCCESS;
-//                 await config.onProgress();
-//                 return node.state;
-//             }
-//         }
-
-//         return BFlowNodeState.FAILURE;
-//     }
-
-//     return BFlowNodeState.FAILURE;
-// }
+    const queue: TaskYieldUpdate[] = [];
+    const outs = new Map<string, any>();
 
 
-// export async function* runBFlow(context: TaskContext): AsyncGenerator<TaskYieldUpdate, schema.Task | void, unknown> {
-//     let _outs = new Map<string, any>();
 
-//     yield {
-//         state: 'working',
-//         message: {
-//             role: 'agent',
-//             parts: [{ type: 'text', text: 'Working on it...' }]
-//         }
-//     };
+    yield {
+        state: 'working',
+        message: { role: 'agent', parts: [{ type: 'text', text: 'Working on it...' }] }
+    };
 
-//     const input = context.task.metadata?.input as any;
-//     const bflow = input?.bflow;
+    (async () => {
+        try {
+            await runNode(bflow.root, outs,
+                (taskYieldUpdate: TaskYieldUpdate) => {
+                    queue.push(taskYieldUpdate);
+                }
+            );
+        } catch (err: any) {
+            queue.push({
+                state: 'failed',
+                message: {
+                    role: 'agent',
+                    parts: [{ type: 'text', text: `Error: ${err.message}` }]
+                }
+            });
+        } finally {
+            queue.push({
+                state: 'completed',
+                message: {
+                    role: 'agent',
+                    parts: [{
+                        type: 'text',
+                        text: 'BFlow execution completed successfully.'
+                    }, {
+                        type: 'data',
+                        data: {
+                            bflow,
+                            outs: Object.fromEntries(outs)
+                        }
+                    }]
+                }
+            });
+        }
+    })();
 
-//     await this.runNode(bflow.root, {
-//         onProgress: async () => {
-//                 yield {
-//                 state: 'working',
-//                     message: {
-//                     role: 'agent',
-//                         parts: [{
-//                             type: 'data', data: {
-//                                 bflow: bflow,
-//                                 outs: Object.fromEntries(_outs)
-//                             }]
-//                 }
-//             };
-//         },
-//     });
+    let isDone = false;
+    while (!isDone) {
+        if (queue.length === 0) {
+            // If the queue is empty, wait for a while before checking again
+            await sleep(100);
+            continue;
+        }
+        const taskYieldUpdate = queue.shift();
+        yield taskYieldUpdate;
+        if (taskYieldUpdate.state === 'completed') {
+            console.log('BFlow execution completed, yielding final result.');
+            isDone = true;
+        }
+    }
 
-//     yield {
-//         state: 'completed',
-//         message: {
-//             role: 'agent',
-//             parts: [{
-//                 type: 'data',
-//                 data: {
-//                     bflow: bflow,
-//                     outs: Object.fromEntries(this._outs)
-//                 }
-//             }]
-//         }
-//     };
+    console.log('BFlow execution completed, yielding final result.');
+}
 
+function sleep(ms) {
+    return new Promise(resolve => setTimeout(resolve, ms));
+}
 
-// }
+const runNode = async (node: BFlowNode, outs: Map<string, any>, yieldUpdate: (taskYieldUpdate: TaskYieldUpdate) => void): Promise<BFlowNodeState> => {
+
+    console.log(`Running node: ${node.id} (${node.type})`);
+    if (node.state === BFlowNodeState.SUCCESS) {
+        return node.state;
+    }
+
+    if (node.type === BFlowNodeType.ENTRY) {
+
+        for (const child of node.goto!) {
+            const status = await runNode(child, outs, yieldUpdate);
+            if (status === BFlowNodeState.WAITING_FOR_CLIENT) {
+                return BFlowNodeState.WAITING_FOR_CLIENT;
+            }
+        }
+
+    } else if (node.type === BFlowNodeType.FALLBACK) {
+
+        for (const child of node.goto!) {
+            const status = await runNode(child, outs, yieldUpdate);
+            if (status === BFlowNodeState.SUCCESS) {
+                node.state = BFlowNodeState.SUCCESS;
+                yieldUpdate({
+                    state: 'working',
+                    message: {
+                        role: 'agent',
+                        parts: [{
+                            type: 'text',
+                            text: 'update'
+                        }, {
+                            type: 'data',
+                            data: {
+                                bflow: {},
+                                outs: Object.fromEntries(outs)
+                            }
+                        }]
+                    }
+                });
+                return node.state;
+            } else if (status === BFlowNodeState.WAITING_FOR_CLIENT) {
+                return BFlowNodeState.WAITING_FOR_CLIENT;
+            }
+        }
+
+        node.state = BFlowNodeState.FAILURE;
+        yieldUpdate({
+            state: 'working',
+            message: {
+                role: 'agent',
+                parts: [{
+                    type: 'text',
+                    text: 'update'
+                }, {
+                    type: 'data',
+                    data: {
+                        bflow: {},
+                        outs: Object.fromEntries(outs)
+                    }
+                }]
+            }
+        });
+        return node.state;
+
+    } else if (node.type === BFlowNodeType.SEQUENCE) {
+
+        for (const child of node.goto!) {
+            const status = await runNode(child, outs, yieldUpdate);
+            if (status === BFlowNodeState.FAILURE) {
+                node.state = BFlowNodeState.FAILURE;
+                yieldUpdate({
+                    state: 'working',
+                    message: {
+                        role: 'agent',
+                        parts: [{
+                            type: 'text',
+                            text: 'update'
+                        }, {
+                            type: 'data',
+                            data: {
+                                bflow: {},
+                                outs: Object.fromEntries(outs)
+                            }
+                        }]
+                    }
+                });
+                return node.state;
+            } else if (status === BFlowNodeState.WAITING_FOR_CLIENT) {
+                return BFlowNodeState.WAITING_FOR_CLIENT;
+            }
+        }
+
+        node.state = BFlowNodeState.SUCCESS;
+        yieldUpdate({
+            state: 'working',
+            message: {
+                role: 'agent',
+                parts: [{
+                    type: 'text',
+                    text: 'update'
+                }, {
+                    type: 'data',
+                    data: {
+                        bflow: {},
+                        outs: Object.fromEntries(outs)
+                    }
+                }]
+            }
+        });
+        return node.state;
+
+    } else if (node.type === BFlowNodeType.ACTION || node.type === BFlowNodeType.CONDITION) {
+        if (node.tool) {
+            let inputs: any[] = [];
+
+            if (node.inputs) {
+                // Each Input corresponds a Node Id
+                for (const nodeId of node.inputs) {
+                    // Get saved Output of required Node
+                    const out = outs.get(nodeId);
+                    const outResult = out?.result;
+                    if (outResult) {
+                        inputs.push(outResult);
+                    }
+                }
+            }
+
+            node.state = BFlowNodeState.RUNNING;
+            yieldUpdate({
+                state: 'working',
+                message: {
+                    role: 'agent',
+                    parts: [{
+                        type: 'text',
+                        text: 'update'
+                    }, {
+                        type: 'data',
+                        data: {
+                            bflow: {},
+                            outs: Object.fromEntries(outs)
+                        }
+                    }]
+                }
+            });
+
+            const mcpClient = mcpClientManager.getClientByToolName(node.tool.name);
+            console.log(`>>> mcpClient: ${mcpClient}`);
+            if (mcpClient) {
+                const mcpTool = mcpClient.tools.find((tool) => tool.name === node.tool.name);
+                const requiredParameters = mcpTool.inputSchema?.required;
+                const userInput: any = node.userInput || {};
+                const canCallTool = isValidInput(requiredParameters || [], userInput)
+                console.log(`>>> canCallTool: ${canCallTool}`);
+                if (!canCallTool) {
+                    console.error(`Invalid input for tool ${mcpTool.name}. Required parameters: ${requiredParameters}`);
+                    node.state = BFlowNodeState.FAILURE;
+                    yieldUpdate({
+                        state: 'input-required',
+                        message: {
+                            role: 'agent',
+                            parts: [{
+                                type: 'text',
+                                text: 'update'
+                            }, {
+                                type: 'data',
+                                data: {
+                                    inputSchema: mcpTool.inputSchema
+                                }
+                            }]
+                        }
+                    });
+                    return node.state;
+                }
+                const result = await mcpClient.client.callTool(
+                    {
+                        name: mcpTool.name,
+                        arguments: userInput,
+                    },
+                    z.any(),
+                    {
+                        timeout: 3600 * 1000,
+                    },
+                );
+                if (node.id) {
+                    outs.set(node.id, result);
+                    node.state = BFlowNodeState.SUCCESS;
+                    yieldUpdate({
+                        state: 'working',
+                        message: {
+                            role: 'agent',
+                            parts: [{
+                                type: 'text',
+                                text: 'update'
+                            }, {
+                                type: 'data',
+                                data: {
+                                    bflow: {},
+                                    outs: Object.fromEntries(outs)
+                                }
+                            }]
+                        }
+                    });
+                    return node.state;
+                }
+            }
+        } else {
+            node.state = BFlowNodeState.SUCCESS;
+            yieldUpdate({
+                state: 'working',
+                message: {
+                    role: 'agent',
+                    parts: [{
+                        type: 'text',
+                        text: 'update'
+                    }, {
+                        type: 'data',
+                        data: {
+                            bflow: {},
+                            outs: Object.fromEntries(outs)
+                        }
+                    }]
+                }
+            });
+            return node.state;
+        }
+    }
+
+    return BFlowNodeState.FAILURE;
+}
+
+const isValidInput = (required, userInput) => {
+    return required.every(key => {
+        const value = userInput[key];
+        return value !== undefined && value !== null && value !== '';
+    });
+}
+
