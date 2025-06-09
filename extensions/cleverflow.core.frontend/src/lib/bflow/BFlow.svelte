@@ -22,6 +22,7 @@
 		addToast,
 		ToastType,
 	} from "../common/components/toast/ToastStore.js";
+	import JsonForm from "../dynamicform/JsonForm.svelte";
 
 	let props = $props();
 	let { text = "", id = null, theme = "crimson" } = props;
@@ -61,12 +62,6 @@
 				return "Connected successfully";
 			case BFLowState.CONNECT_FAILED:
 				return "Failed to connect. Please try again.";
-			case BFLowState.LIST_AGENTS:
-				return "Loading agents...";
-			case BFLowState.LIST_AGENTS_SUCCESS:
-				return "Agents loaded successfully";
-			case BFLowState.LIST_AGENTS_FAILED:
-				return "Failed to load agents";
 			case BFLowState.CONVERT_MARKDOC_ELEMENT_TO_BFLOW:
 				return "Converting Markdoc Custom Element to BFlow...";
 			case BFLowState.CONVERT_MARKDOC_ELEMENT_TO_BFLOW_SUCCESS:
@@ -96,7 +91,7 @@
 		try {
 			const isConnected = await controller.connect();
 			if (isConnected) {
-				await controller.convertTextToBFlow(text);
+				await controller.generateBFlow(text);
 			}
 		} catch (exception: any) {
 			console.error(exception);
@@ -104,7 +99,7 @@
 	};
 
 	const reload = async () => {
-		await controller.convertTextToBFlow(text);
+		await controller.generateBFlow(text);
 	};
 
 	const onServerWebComponentFinished = () => {
@@ -317,4 +312,5 @@
 	<div bind:this={serverWebComponentContainer}></div>
 
 	<Toast />
+	<JsonForm />
 </main>

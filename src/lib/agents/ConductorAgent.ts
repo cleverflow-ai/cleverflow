@@ -8,6 +8,6 @@ export class ConductorAgent extends InteractiveClient {
     }
 
     protected onEvent(event: Task): void {
-        console.log(event);
+        // console.log(event);
     }
 }

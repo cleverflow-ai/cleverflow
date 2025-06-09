@@ -1,6 +1,5 @@
 import { A2AServer } from '@cleverflow-ai/cleverflow.agents/server';
 import { handleTask } from './Handler.js';
-import { registerAllMcpClients } from './mcp/Setup.js';
 
 import dotenvFlow from 'dotenv-flow';
 import dotenvExpand from 'dotenv-expand';
@@ -11,8 +10,6 @@ console.log('>>>> Environment Variables');
 console.log(JSON.stringify(process.env, null, 2));
 
 (async () => {
-    await registerAllMcpClients();
-
     const rawPort = process.env.PORT;
     const PORT = rawPort !== undefined && !isNaN(Number(rawPort)) ? Number(rawPort) : 41241;
 

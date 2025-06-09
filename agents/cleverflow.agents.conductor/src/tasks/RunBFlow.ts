@@ -2,11 +2,20 @@ import { TaskContext, TaskYieldUpdate } from '@cleverflow-ai/cleverflow.agents/s
 import * as schema from '@cleverflow-ai/cleverflow.agents/schema';
 import _ from 'lodash';
 import { BFlow, BFlowNode, BFlowNodeState, BFlowNodeType } from '../baml_client/types.js';
-import mcpClientManager from '../mcp/McpClientManager.js';
+import mcpClientManager from '../sessions/SessionsManager.js';
 import { z } from "zod";
+import Session from '../sessions/Session.js';
 
-export async function* runBFlow(context: TaskContext): AsyncGenerator<TaskYieldUpdate, schema.Task | void, unknown> {
+export async function* runBFlow(session: Session, context: TaskContext): AsyncGenerator<TaskYieldUpdate, schema.Task | void, unknown> {
+
+    console.log('>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> ');
+    console.log(JSON.stringify(context));
+
     const dataPart = context.userMessage.parts.find((part) => part.type === 'data');
+
+    const userInput: any = dataPart && dataPart.data && dataPart.data.userInput ? dataPart.data.userInput : {};
+
+    // TODO: pick bflow from history if not provided in the current message
 
     if (!dataPart || !dataPart.data || !dataPart.data.bflow) {
         yield {
@@ -17,6 +26,7 @@ export async function* runBFlow(context: TaskContext): AsyncGenerator<TaskYieldU
     }
 
     const bflow = dataPart.data.bflow as BFlow;
+
     console.log('Running BFlow:', bflow);
 
     const queue: TaskYieldUpdate[] = [];
@@ -29,12 +39,13 @@ export async function* runBFlow(context: TaskContext): AsyncGenerator<TaskYieldU
 
     (async () => {
         try {
-            await runNode(bflow.root, outs,
+            await runNode(bflow.root, userInput, outs,
                 (taskYieldUpdate: TaskYieldUpdate) => {
                     queue.push(taskYieldUpdate);
                 }
             );
         } catch (err: any) {
+            console.error('Error during BFlow execution:', err);
             queue.push({
                 state: 'failed',
                 message: {
@@ -72,7 +83,6 @@ export async function* runBFlow(context: TaskContext): AsyncGenerator<TaskYieldU
         const taskYieldUpdate = queue.shift();
         yield taskYieldUpdate;
         if (['input-required', 'completed', 'failed'].includes(taskYieldUpdate.state)) {
-            console.log('BFlow execution completed, yielding final result.');
             isDone = true;
         }
     }
@@ -84,7 +94,7 @@ function sleep(ms) {
     return new Promise(resolve => setTimeout(resolve, ms));
 }
 
-const runNode = async (node: BFlowNode, outs: Map<string, any>, yieldUpdate: (taskYieldUpdate: TaskYieldUpdate) => void): Promise<BFlowNodeState> => {
+const runNode = async (node: BFlowNode, userInput: Map<string, any>, outs: Map<string, any>, yieldUpdate: (taskYieldUpdate: TaskYieldUpdate) => void): Promise<BFlowNodeState> => {
 
     console.log(`Running node: ${node.id} (${node.type})`);
     if (node.state === BFlowNodeState.SUCCESS) {
@@ -94,7 +104,7 @@ const runNode = async (node: BFlowNode, outs: Map<string, any>, yieldUpdate: (ta
     if (node.type === BFlowNodeType.ENTRY) {
 
         for (const child of node.goto!) {
-            const status = await runNode(child, outs, yieldUpdate);
+            const status = await runNode(child, userInput, outs, yieldUpdate);
             if (status === BFlowNodeState.WAITING_FOR_CLIENT) {
                 return BFlowNodeState.WAITING_FOR_CLIENT;
             }
@@ -103,7 +113,7 @@ const runNode = async (node: BFlowNode, outs: Map<string, any>, yieldUpdate: (ta
     } else if (node.type === BFlowNodeType.FALLBACK) {
 
         for (const child of node.goto!) {
-            const status = await runNode(child, outs, yieldUpdate);
+            const status = await runNode(child, userInput, outs, yieldUpdate);
             if (status === BFlowNodeState.SUCCESS) {
                 node.state = BFlowNodeState.SUCCESS;
                 yieldUpdate({
@@ -150,7 +160,7 @@ const runNode = async (node: BFlowNode, outs: Map<string, any>, yieldUpdate: (ta
     } else if (node.type === BFlowNodeType.SEQUENCE) {
 
         for (const child of node.goto!) {
-            const status = await runNode(child, outs, yieldUpdate);
+            const status = await runNode(child, userInput, outs, yieldUpdate);
             if (status === BFlowNodeState.FAILURE) {
                 node.state = BFlowNodeState.FAILURE;
                 yieldUpdate({
@@ -233,23 +243,25 @@ const runNode = async (node: BFlowNode, outs: Map<string, any>, yieldUpdate: (ta
             if (mcpClient) {
                 const mcpTool = mcpClient.tools.find((tool) => tool.name === node.tool.name);
                 const requiredParameters = mcpTool.inputSchema?.required;
-                const userInput: any = node.userInput || {};
-                const canCallTool = isValidInput(requiredParameters || [], userInput)
-                console.log(`>>> canCallTool: ${canCallTool}`);
+                const input: any = userInput[node.id] || {};
+                const canCallTool = isValidInput(requiredParameters || [], input)
                 if (!canCallTool) {
                     console.error(`Invalid input for tool ${mcpTool.name}. Required parameters: ${requiredParameters}`);
                     node.state = BFlowNodeState.FAILURE;
+                    console.log('>>> node');
+                    console.log(JSON.stringify(node, null, 2));
                     yieldUpdate({
                         state: 'input-required',
                         message: {
                             role: 'agent',
                             parts: [{
-                                type: 'text',
-                                text: 'update'
-                            }, {
                                 type: 'data',
                                 data: {
-                                    inputSchema: mcpTool.inputSchema
+                                    node: {
+                                        id: node.id
+                                    },
+                                    userInput,
+                                    inputSchema: mcpTool,
                                 }
                             }]
                         }
@@ -259,7 +271,7 @@ const runNode = async (node: BFlowNode, outs: Map<string, any>, yieldUpdate: (ta
                 const result = await mcpClient.client.callTool(
                     {
                         name: mcpTool.name,
-                        arguments: userInput,
+                        arguments: input,
                     },
                     z.any(),
                     {

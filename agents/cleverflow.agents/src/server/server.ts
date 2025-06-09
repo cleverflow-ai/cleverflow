@@ -274,8 +274,8 @@ export class A2AServer {
             {
               type: "text",
               text: `Handler failed: ${handlerError instanceof Error
-                  ? handlerError.message
-                  : String(handlerError)
+                ? handlerError.message
+                : String(handlerError)
                 }`,
             },
           ],
@@ -442,8 +442,8 @@ export class A2AServer {
             {
               type: "text",
               text: `Handler failed: ${handlerError instanceof Error
-                  ? handlerError.message
-                  : String(handlerError)
+                ? handlerError.message
+                : String(handlerError)
                 }`,
             },
           ],

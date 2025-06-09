@@ -2,11 +2,13 @@ import BFlowController from "../../bflow/BFlowController.svelte.js";
 import Markdoc from "@markdoc/markdoc";
 import * as MarkdocNodeUtil from '../../common/utils/MarkdocNodeUtil.js';
 
+
 export default class MarkdocRendererController {
 
     conductorServerUrl: string;
 
     markdoc: string | undefined = $state("");
+    frontMatter: string = '';
     ast: any = $state(null);
     astContent: any = $state(null);
     bflowControllers: Map<string, BFlowController> = new Map();
@@ -17,10 +19,19 @@ export default class MarkdocRendererController {
 
     setMarkdoc(markdoc: string) {
         this.markdoc = markdoc;
+        this.frontMatter = this.extractFrontmatterText();
         this.ast = Markdoc.parse(this.convertToMarkdocStringForTransform(markdoc));
         this.astContent = Markdoc.transform(this.ast, {
             tags: this.getTransformConfigTags(),
         });
+    }
+
+    extractFrontmatterText() {
+        const match = this.markdoc?.match(/^---\s*\n([\s\S]*?)\n---\s*\n?/);
+        if (match) {
+            return `---\n${match[1].trim()}\n---`;
+        }
+        return `---\n \n---`;
     }
 
     getTransformConfigTags() {
@@ -37,7 +48,8 @@ export default class MarkdocRendererController {
     }
 
     getBFlowById(id: string) {
-        return MarkdocNodeUtil.getNodeById(this.markdoc ?? '', 'b-flow', id);
+        const bflowText = MarkdocNodeUtil.getNodeById(this.markdoc ?? '', 'b-flow', id);
+        return `${this.frontMatter}\n${bflowText}`;
     }
 
     getBFlowController(bflowId: string): BFlowController | undefined | null {

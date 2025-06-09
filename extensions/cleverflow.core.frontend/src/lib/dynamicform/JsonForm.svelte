@@ -39,7 +39,10 @@
 	});
 
 	const onSubmit = (data: any) => {
-		console.log(data);
+		channel?.publish("dynamic-form-submit", {
+			event,
+			formData: data,
+		});
 	};
 </script>
 
@@ -58,7 +61,7 @@
 		{#snippet content()}
 			<div class="flex flex-col items-center justify-center h-full">
 				<div
-					class="bg-white dark:bg-surface-950 mx-auto p-4 max-w-full max-w-3xl flex flex-col items-center justify-center card shadow-lg"
+					class="json-form-container bg-white dark:bg-surface-950 mx-auto p-4 flex flex-col items-center justify-center card shadow-lg"
 				>
 					<SimpleForm
 						theme={skeletonTheme}

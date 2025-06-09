@@ -26,6 +26,9 @@ export default class BFlowController {
 
     private bflowPostalChannel = postal.channel("b-flow");
 
+    private dataId = 'empty-dataId';
+    private sessionId = crypto.randomUUID();
+
     constructor(conductorServerUrl: string) {
         this.conductorServerUrl = conductorServerUrl;
     }
@@ -87,7 +90,7 @@ export default class BFlowController {
         return this.text !== text;
     }
 
-    async convertTextToBFlow(text: string) {
+    async generateBFlow(text: string) {
         this.text = text;
         this.bflowviz = null;
 
@@ -106,7 +109,7 @@ export default class BFlowController {
             try {
                 this.setState(BFLowState.CONVERT_MARKDOC_ELEMENT_TO_BFLOW);
 
-                const taskResult = await this.runConvertTextToBFlowTask();
+                const taskResult = await this.runGenerateBFlow();
 
                 this.bflow = taskResult?.bflow;
                 this.setState(BFLowState.CONVERT_MARKDOC_ELEMENT_TO_BFLOW_SUCCESS);
@@ -169,21 +172,20 @@ export default class BFlowController {
         return result;
     }
 
-    async runConvertTextToBFlowTask() {
+    async runGenerateBFlow() {
         return new Promise((resolve, reject) => {
             const taskParams: TaskSendParams = {
-                id: crypto.randomUUID(),
+                id: `${this.dataId}|${this.sessionId}|generate-bflow`,
                 message: {
                     role: "user",
-                    parts: [],
-                },
-                metadata: {
-                    taskName: "text-to-bflow",
-                    input: {
-                        text: this.text,
-                    },
+                    parts: [{
+                        type: 'text',
+                        text: this.text ?? ''
+                    }],
                 },
             };
+            console.log(`>>> send task`);
+            console.log(taskParams);
             this.conductorAgent?.sendTask(taskParams, (event: Task) => {
                 const state = event.status?.state;
                 if (state === 'completed') {

@@ -3,9 +3,9 @@ import Clients from '../baml/Clients.js';
 import { TaskContext, TaskYieldUpdate } from '@cleverflow-ai/cleverflow.agents/server';
 import * as schema from '@cleverflow-ai/cleverflow.agents/schema';
 import _ from 'lodash';
-import mcpClientManager from '../mcp/McpClientManager.js';
+import Session from '../sessions/Session.js';
 
-export async function* convertTextToBFlow(context: TaskContext): AsyncGenerator<TaskYieldUpdate, schema.Task | void, unknown> {
+export async function* generateBFlow(session: Session, context: TaskContext): AsyncGenerator<TaskYieldUpdate, schema.Task | void, unknown> {
     yield {
         state: 'working',
         message: {
@@ -14,17 +14,20 @@ export async function* convertTextToBFlow(context: TaskContext): AsyncGenerator<
         }
     };
 
-    const input = context.task.metadata?.input as any;
-    const text = input?.text;
+    const textPart = context.userMessage.parts.find((part) => part.type === 'text');
+
+    if (!textPart || !textPart.text) {
+        yield {
+            state: 'input-required',
+            message: { role: 'agent', parts: [{ type: 'text', text: 'text was missing' }] }
+        };
+        return;
+    }
+    const text = textPart.text;
 
     const bflow = await b.ParseMarkdocBFlowElementToBFlow(
         text,
-        mcpClientManager.listTools().map(tool => {
-            return {
-                name: tool.name,
-                description: `Tool ${tool.name} from MCP client`
-            };
-        }),
+        session.getMcpClientInfo(),
         {
             clientRegistry: new Clients({ primary: Clients.OllamaCode }).registry
         });
@@ -50,11 +53,6 @@ export async function* convertTextToBFlow(context: TaskContext): AsyncGenerator<
             parts: [{ type: 'text', text: 'CONVERT_BFLOW_TO_BFLOWVIZ_SUCCESS' }]
         }
     };
-
-    console.log('bflow');
-    console.log(JSON.stringify(bflow, null, 2));
-    console.log('bflowViz');
-    console.log(JSON.stringify(bflowViz, null, 2));
 
     yield {
         state: 'completed',

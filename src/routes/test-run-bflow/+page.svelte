@@ -18,7 +18,11 @@
         completeFormModalState = false;
     }
 
-    onMount(async () => {});
+    onMount(async () => {
+        await import(
+            "@cleverflow-ai/cleverflow.core.frontend/webcomponents/json-form.js"
+        );
+    });
 
     const runBFlow = async () => {
         const conductorServer = import.meta.env.VITE_A2A_CONDUCTOR_SERVER;
@@ -128,7 +132,7 @@
     };
 </script>
 
-<!-- <json-form theme="crimson"></json-form> -->
+<json-form theme="crimson"></json-form>
 <div>
     <button
         onclick={async () => await runBFlow()}

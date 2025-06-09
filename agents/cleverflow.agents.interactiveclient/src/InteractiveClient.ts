@@ -24,6 +24,9 @@ export abstract class InteractiveClient {
 
     public async sendTask(taskParams: TaskSendParams, onComplete: (event: Task) => void): Promise<void> {
         try {
+
+            console.log('>>> interactive client');
+            console.log(taskParams);
             this.callbacks.set(taskParams.id, onComplete);
             const stream = this.client.sendTaskSubscribe(taskParams);
 
@@ -39,13 +42,10 @@ export abstract class InteractiveClient {
         return new Promise<boolean>(async (resolve, reject) => {
             try {
                 const taskParams: TaskSendParams = {
-                    id: crypto.randomUUID(),
+                    id: 'unknown|unknown|ping',
                     message: {
                         role: "user",
                         parts: [],
-                    },
-                    metadata: {
-                        taskName: "ping",
                     },
                 };
                 await this.sendTask(taskParams, (event: Task) => {
@@ -64,6 +64,9 @@ export abstract class InteractiveClient {
 
     private async handleEvent(event: Task) {
 
+        console.log(`>>> Event received:`);
+        console.log(JSON.stringify(event));
+
         this.onEvent(event);
 
         const state = event.status?.state;
@@ -78,8 +81,8 @@ export abstract class InteractiveClient {
         }
     }
 
-    private requestShowDynamicForm = async (event: Task): Promise<void> => {
-        const partData = event.status?.message?.parts?.find(
+    private requestShowDynamicForm = async (inputRequiredEvent: Task): Promise<void> => {
+        const partData = inputRequiredEvent.status?.message?.parts?.find(
             (part) => part.type === "data",
         );
 
@@ -117,7 +120,7 @@ export abstract class InteractiveClient {
                 if (jsonForm) {
                     return this.channel?.publish("show-dynamic-form", {
                         form: jsonForm,
-                        event: event,
+                        event: inputRequiredEvent,
                     });
                 }
             }
@@ -127,16 +130,34 @@ export abstract class InteractiveClient {
 
     private onDynamicFormSubmit = async (payload: any) => {
         const event: Task = payload.event;
-        const metadata = event.status?.message?.metadata ?? {};
-        metadata.input = payload.formData;
+        console.log('>>>> onDynamicFormSubmit');
+        console.log(event);
+        const partData = event.status?.message?.parts?.find(
+            (part) => part.type === "data",
+        );
+        console.log('>>>> partData');
+        console.log(partData);
+
+        const userInput = partData?.data?.userInput ?? {};
+        const node: any = partData?.data?.node ?? { id: "unknown" };
+
+        userInput[node.id] = payload.formData;
         const taskParams: TaskSendParams = {
-            id: crypto.randomUUID(),
+            id: event.id,
             message: {
                 role: "user",
-                parts: [],
+                parts: [{
+                    type: "data",
+                    data: {
+                        userInput,
+                    },
+                }],
             },
-            metadata: metadata,
         };
+
+        console.log(`>>> Dynamic form submitted for event: ${event.id}`);
+        console.log(taskParams);
+
         const onComplete = this.callbacks.get(event.id);
         this.callbacks.delete(event.id);
         this.sendTask(taskParams, onComplete);

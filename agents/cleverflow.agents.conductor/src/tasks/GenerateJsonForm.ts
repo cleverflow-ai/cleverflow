@@ -3,8 +3,9 @@ import * as schema from '@cleverflow-ai/cleverflow.agents/schema';
 import _ from 'lodash';
 import { b } from '../baml_client/async_client.js';
 import Clients from '../baml/Clients.js';
+import Session from '../sessions/Session.js';
 
-export async function* convertSchemaToJsonForm(context: TaskContext): AsyncGenerator<TaskYieldUpdate, schema.Task | void, unknown> {
+export async function* generateJsonForm(session: Session, context: TaskContext): AsyncGenerator<TaskYieldUpdate, schema.Task | void, unknown> {
     const dataPart = context.userMessage.parts.find((part) => part.type === 'data');
 
     if (!dataPart || !dataPart.data || !dataPart.data.inputSchema) {

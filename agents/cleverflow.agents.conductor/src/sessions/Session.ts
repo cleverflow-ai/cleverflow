@@ -1,36 +1,35 @@
-
-import { createMcpClient } from "@cleverflow-ai/cleverflow.mcp/dist/McpClient.js";
 import { Client } from "@modelcontextprotocol/sdk/client/index.js";
+import { createMcpClient } from "@cleverflow-ai/cleverflow.mcp/dist/McpClient.js";
 
-type McpClient = {
+type McpClientForSession = {
     serverUrl: string;
     name: string;
     version: string;
+    description: string;
     client: Client;
     tools: any[];
 };
 
-type McpClientTool = {
-    name: string;
-}
+type McpClientInfo = {
+    name: string,
+    description: string;
+};
 
-class McpClientManager {
-    private clients: McpClient[];
+export default class Session {
+    id: string;
+    mcpClients: McpClientForSession[] = [];
 
-    constructor() {
-        this.clients = [];
+    constructor(sessionId: string) {
+        this.id = sessionId;
     }
 
-    async addClient(serverUrl: string, name: string, version: string): Promise<boolean> {
-        if (this.clients.some((c) => c.name === name)) {
-            console.log(`MCP client '${name}' already exists`);
-            return;
-        }
+    async addClient(serverUrl: string, name: string, version: string, description: string): Promise<boolean> {
+
         try {
             const client = await createMcpClient(serverUrl, name, version);
             if (client) {
                 const result = await client.listTools();
-                this.clients.push({ serverUrl, name, version, client, tools: result.tools });
+                this.mcpClients.push({ serverUrl, name, description, version, client, tools: result.tools });
                 console.log(`MCP client '${name}' created successfully at ${serverUrl}`);
                 if (!result.tools || result.tools.length === 0) {
                     console.warn(`No tools found for MCP client '${name}' at ${serverUrl}`);
@@ -48,19 +47,10 @@ class McpClientManager {
         }
     }
 
-    getClient(name: string): McpClient | undefined {
-        return this.clients.find((c) => c.name === name);
-    }
-
-    listTools(): McpClientTool[] {
-        return this.clients.flatMap((c) => c.tools.map((tool) => ({ name: tool.name })));
-    }
-
-    getClientByToolName(toolName: string): McpClient | undefined {
-        return this.clients.find((c) => c.tools.some((tool) => tool.name === toolName));
+    getMcpClientInfo(): McpClientInfo[] {
+        return this.mcpClients.flatMap((c) => c.tools.map((tool) => ({
+            name: tool.name,
+            description: `Tool ${tool.name} from MCP client`
+        })));
     }
 }
-
-const mcpClientManager = new McpClientManager();
-
-export default mcpClientManager;
