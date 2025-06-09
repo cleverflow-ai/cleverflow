@@ -4,13 +4,14 @@ import type {
     Part,
     Task,
     TaskSendParams,
+    TaskState,
 } from "@cleverflow-ai/cleverflow.agents/schema";
 import _ from 'lodash';
 
-export abstract class InteractiveClient {
+export class InteractiveClient {
     private client: A2AClient;
 
-    public callbacks = new Map<string, (task: Task) => void>();
+    public callbacks = new Map<string, (state: TaskState, task: Task) => void>();
 
     private channel = window ? window.postal?.channel("dynamic-form-channel") : null;
     private dynamicFormSubmitSubscription: any;
@@ -22,12 +23,10 @@ export abstract class InteractiveClient {
         );
     }
 
-    public async sendTask(taskParams: TaskSendParams, onComplete: (event: Task) => void): Promise<void> {
+    public async sendTask(taskParams: TaskSendParams, onEvent: (state: TaskState, event: Task) => void): Promise<void> {
         try {
 
-            console.log('>>> interactive client');
-            console.log(taskParams);
-            this.callbacks.set(taskParams.id, onComplete);
+            this.callbacks.set(taskParams.id, onEvent);
             const stream = this.client.sendTaskSubscribe(taskParams);
 
             for await (const event of stream) {
@@ -48,8 +47,7 @@ export abstract class InteractiveClient {
                         parts: [],
                     },
                 };
-                await this.sendTask(taskParams, (event: Task) => {
-                    const state = event.status?.state;
+                await this.sendTask(taskParams, (state: TaskState, event: Task) => {
                     if (state === 'completed') {
                         resolve(true);
                     }
@@ -63,20 +61,13 @@ export abstract class InteractiveClient {
     }
 
     private async handleEvent(event: Task) {
-
-        console.log(`>>> Event received:`);
-        console.log(JSON.stringify(event));
-
-        this.onEvent(event);
-
         const state = event.status?.state;
         if (state === 'input-required') {
             await this.requestShowDynamicForm(event);
-        } else if (state === 'completed') {
-            const onComplete = this.callbacks.get(event.id);
-            this.callbacks.delete(event.id);
-            if (onComplete) {
-                onComplete(event);
+        } else {
+            const onEvent = this.callbacks.get(event.id);
+            if (onEvent) {
+                onEvent(state, event);
             }
         }
     }
@@ -109,8 +100,7 @@ export abstract class InteractiveClient {
                 taskName: "schema-to-json-form",
             },
         };
-        await this.sendTask(taskParams, (event: Task) => {
-            const state = event.status?.state;
+        await this.sendTask(taskParams, (state: TaskState, event: Task) => {
             console.log(`>>> waiting for json form: state: ${state}`);
             if (state === "completed") {
                 const partData = event.status?.message?.parts?.find(
@@ -130,13 +120,9 @@ export abstract class InteractiveClient {
 
     private onDynamicFormSubmit = async (payload: any) => {
         const event: Task = payload.event;
-        console.log('>>>> onDynamicFormSubmit');
-        console.log(event);
         const partData = event.status?.message?.parts?.find(
             (part) => part.type === "data",
         );
-        console.log('>>>> partData');
-        console.log(partData);
 
         const userInput = partData?.data?.userInput ?? {};
         const node: any = partData?.data?.node ?? { id: "unknown" };
@@ -155,12 +141,9 @@ export abstract class InteractiveClient {
             },
         };
 
-        console.log(`>>> Dynamic form submitted for event: ${event.id}`);
-        console.log(taskParams);
-
-        const onComplete = this.callbacks.get(event.id);
+        const onEvent = this.callbacks.get(event.id);
         this.callbacks.delete(event.id);
-        this.sendTask(taskParams, onComplete);
+        this.sendTask(taskParams, onEvent);
     };
 
     private handleError(error: any) {
@@ -177,6 +160,4 @@ export abstract class InteractiveClient {
         this.dynamicFormSubmitSubscription?.unsubscribe();
         this.dynamicFormSubmitSubscription = null;
     }
-
-    protected abstract onEvent(event: Task): void;
 }

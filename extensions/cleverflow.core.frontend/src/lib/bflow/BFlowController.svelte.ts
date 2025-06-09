@@ -5,14 +5,14 @@ import { addToast, ToastType } from '../common/components/toast/ToastStore.js';
 import * as MarkocNodeUtil from '../common/utils/MarkdocNodeUtil.js';
 import * as JsonUtil from '../common/utils/JsonUtil.js';
 import { BFlowNodeState } from "./BFlowNodeState.js";
-import { ConductorAgent } from "./agent/ConductorAgent.js";
+import type { Task, TaskSendParams, TaskState } from "@cleverflow-ai/cleverflow.agents/schema";
+import { InteractiveClient } from "@cleverflow-ai/cleverflow.agents.interactiveclient";
 import postal from "postal";
-import type { Task, TaskSendParams } from "@cleverflow-ai/cleverflow.agents/schema";
 
 export default class BFlowController {
 
     private conductorServerUrl: string;
-    private conductorAgent?: ConductorAgent;
+    private conductorClient?: InteractiveClient;
 
     public state: BFLowState = $state(BFLowState.NONE);
     public stateKey = $state(0);
@@ -26,6 +26,7 @@ export default class BFlowController {
 
     private bflowPostalChannel = postal.channel("b-flow");
 
+    // SMELL:
     private dataId = 'empty-dataId';
     private sessionId = crypto.randomUUID();
 
@@ -36,7 +37,7 @@ export default class BFlowController {
     async connect() {
         this.setState(BFLowState.CONNECTING);
         try {
-            this.conductorAgent = new ConductorAgent(this.conductorServerUrl);
+            this.conductorClient = new InteractiveClient(this.conductorServerUrl);
             const pong = await this.ping();
             if (!pong) {
                 this.setState(BFLowState.CONNECT_FAILED);
@@ -54,7 +55,7 @@ export default class BFlowController {
 
     async disconnect() {
         try {
-            this.conductorAgent = undefined;
+            this.conductorClient = undefined;
         } catch { }
 
         this.setState(BFLowState.NONE);
@@ -63,7 +64,7 @@ export default class BFlowController {
     async ping() {
         console.log("Pinging the server...");
         try {
-            const isServerAnswered = await this.conductorAgent?.ping();
+            const isServerAnswered = await this.conductorClient?.ping();
             console.log("Server ping response:", isServerAnswered);
             if (!isServerAnswered) {
                 this.setState(BFLowState.CONNECT_FAILED);
@@ -184,10 +185,8 @@ export default class BFlowController {
                     }],
                 },
             };
-            console.log(`>>> send task`);
-            console.log(taskParams);
-            this.conductorAgent?.sendTask(taskParams, (event: Task) => {
-                const state = event.status?.state;
+            this.conductorClient?.sendTask(taskParams, (state: TaskState, event: Task) => {
+                console.log(`>>> state: ${state}`);
                 if (state === 'completed') {
                     const bflow = event.status?.message?.parts?.[0]?.data?.bflow;
                     const bflowviz = event.status?.message?.parts?.[0]?.data?.bflowViz;
@@ -211,39 +210,6 @@ export default class BFlowController {
 
     }
 
-    // async createBFlowRunnerAgent() {
-    //     let creatingBFlowRunnerAgentMessenger: BFlowRunnerAgentMessenger | null = new BFlowRunnerAgentMessenger({
-    //         connection: this.agentConnection,
-    //     });
-    //     const subject = await creatingBFlowRunnerAgentMessenger.create();
-
-    //     this.bflowRunnerAgentMessenger = new BFlowRunnerAgentMessenger({
-    //         connection: this.agentConnection,
-    //         subject: subject ?? undefined, // ?
-    //         onProcess: (payload) => {
-    //             if (payload.guiEnabled) {
-    //                 if (payload.guiData) {
-    //                     addToast("Server want to show a web component", ToastType.WARNING);
-    //                     this.bflowPostalChannel.publish("show-server-web-component", {
-    //                         guiData: payload.guiData
-    //                     });
-    //                 } else {
-    //                     addToast("Server want to show a web component but GUI data was missing", ToastType.ERROR);
-    //                 }
-    //             } else {
-    //                 this.bflow = payload.bflow;
-    //                 this.bflowRunResult = payload.outs;
-    //                 this.updateBFlowRunResult();
-    //                 this.setState(payload.isFinished ? BFLowState.RUN_BFLOW_SUCCESS : BFLowState.RUN_BFLOW_IN_PROGRESS);
-    //             }
-    //         }
-    //     });
-
-    //     await this.bflowRunnerAgentMessenger.start();
-
-    //     creatingBFlowRunnerAgentMessenger = null;
-    // }
-
     async runBFlow() {
         if (this.state === BFLowState.RUN_BFLOW) {
             return;
@@ -253,7 +219,7 @@ export default class BFlowController {
 
         try {
             const taskParams: TaskSendParams = {
-                id: crypto.randomUUID(),
+                id: `${this.dataId}|${this.sessionId}|run-bflow`,
                 message: {
                     role: "user",
                     parts: [{
@@ -263,12 +229,8 @@ export default class BFlowController {
                         },
                     }],
                 },
-                metadata: {
-                    taskName: "run-bflow",
-                },
             };
-            this.conductorAgent?.sendTask(taskParams, (event: Task) => {
-                const state = event.status?.state;
+            this.conductorClient?.sendTask(taskParams, (state: TaskState, event: Task) => {
                 if (state === 'completed') {
                     console.log(">>> BFlow run completed successfully");
                     // const bflow = event.status?.message?.parts?.[0]?.data?.bflow;
@@ -410,7 +372,6 @@ export default class BFlowController {
     isStateLoading() {
         return (
             this.state === BFLowState.CONNECTING ||
-            this.state === BFLowState.LIST_AGENTS ||
             this.state === BFLowState.CONVERT_MARKDOC_ELEMENT_TO_BFLOW ||
             this.state === BFLowState.CONVERT_BFLOW_TO_BFLOWVIZ ||
             this.state === BFLowState.RUN_BFLOW ||
@@ -421,7 +382,6 @@ export default class BFlowController {
     isFailedState() {
         return (
             this.state === BFLowState.CONNECT_FAILED ||
-            this.state === BFLowState.LIST_AGENTS_FAILED ||
             this.state === BFLowState.CONVERT_MARKDOC_ELEMENT_TO_BFLOW_FAILED ||
             this.state === BFLowState.CONVERT_BFLOW_TO_BFLOWVIZ_FAILED ||
             this.state === BFLowState.RUN_BFLOW_FAILED
@@ -431,7 +391,6 @@ export default class BFlowController {
     isFinishedState() {
         return (
             this.state === BFLowState.CONNECT_SUCCESS ||
-            this.state === BFLowState.LIST_AGENTS_SUCCESS ||
             this.state === BFLowState.CONVERT_MARKDOC_ELEMENT_TO_BFLOW_SUCCESS ||
             this.state === BFLowState.CONVERT_BFLOW_TO_BFLOWVIZ_SUCCESS ||
             this.state === BFLowState.RUN_BFLOW_SUCCESS
