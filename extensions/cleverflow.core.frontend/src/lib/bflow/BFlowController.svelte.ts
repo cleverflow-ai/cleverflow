@@ -28,7 +28,7 @@ export default class BFlowController {
 
     // SMELL:
     private dataId = 'empty-dataId';
-    private sessionId = crypto.randomUUID();
+    private sessionId = 'single-session';// crypto.randomUUID();
 
     constructor(conductorServerUrl: string) {
         this.conductorServerUrl = conductorServerUrl;
@@ -38,12 +38,6 @@ export default class BFlowController {
         this.setState(BFLowState.CONNECTING);
         try {
             this.conductorClient = new InteractiveClient(this.conductorServerUrl);
-            const pong = await this.ping();
-            if (!pong) {
-                this.setState(BFLowState.CONNECT_FAILED);
-                addToast("Failed to connect to the server", ToastType.ERROR);
-                return false;
-            }
             this.setState(BFLowState.CONNECT_SUCCESS);
             return true;
         } catch (exception) {
@@ -59,23 +53,6 @@ export default class BFlowController {
         } catch { }
 
         this.setState(BFLowState.NONE);
-    }
-
-    async ping() {
-        console.log("Pinging the server...");
-        try {
-            const isServerAnswered = await this.conductorClient?.ping();
-            console.log("Server ping response:", isServerAnswered);
-            if (!isServerAnswered) {
-                this.setState(BFLowState.CONNECT_FAILED);
-                addToast("Failed to connect to the server", ToastType.ERROR);
-                return false;
-            }
-            return true;
-        } catch (exception) {
-            console.error("Failed to ping the server:", exception);
-            return false;
-        }
     }
 
     setState(state: BFLowState) {

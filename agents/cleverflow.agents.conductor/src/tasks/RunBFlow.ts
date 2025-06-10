@@ -2,7 +2,6 @@ import { TaskContext, TaskYieldUpdate } from '@cleverflow-ai/cleverflow.agents/s
 import * as schema from '@cleverflow-ai/cleverflow.agents/schema';
 import _ from 'lodash';
 import { BFlow, BFlowNode, BFlowNodeState, BFlowNodeType } from '../baml_client/types.js';
-import mcpClientManager from '../sessions/SessionsManager.js';
 import { z } from "zod";
 import Session from '../sessions/Session.js';
 
@@ -11,35 +10,56 @@ export async function* runBFlow(session: Session, context: TaskContext): AsyncGe
     console.log('>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> ');
     console.log(JSON.stringify(context));
 
-    const dataPart = context.userMessage.parts.find((part) => part.type === 'data');
+    console.log(`>>>> session: ${session.id}`);
 
-    const userInput: any = dataPart && dataPart.data && dataPart.data.userInput ? dataPart.data.userInput : {};
+    const { bflow, userInput } = extractData(context);
 
-    // TODO: pick bflow from history if not provided in the current message
-
-    if (!dataPart || !dataPart.data || !dataPart.data.bflow) {
+    if (!bflow) {
         yield {
             state: 'input-required',
-            message: { role: 'agent', parts: [{ type: 'text', text: 'BFlow was missing' }] }
+            message: {
+                role: 'agent',
+                parts: [{
+                    type: 'text',
+                    text: 'BFlow was missing'
+                }, {
+                    type: 'data',
+                    data: {
+                        createdAt: new Date(),
+                    }
+                }]
+            }
         };
         return;
     }
 
-    const bflow = dataPart.data.bflow as BFlow;
-
-    console.log('Running BFlow:', bflow);
+    console.log('>>>>> Running BFlow:');
+    console.log(bflow.root);
+    console.log('>>>>> userInput');
+    console.log(userInput);
 
     const queue: TaskYieldUpdate[] = [];
     const outs = new Map<string, any>();
 
     yield {
         state: 'working',
-        message: { role: 'agent', parts: [{ type: 'text', text: 'Working on it...' }] }
+        message: {
+            role: 'agent',
+            parts: [{
+                type: 'text',
+                text: 'Working on it...'
+            }, {
+                type: 'data',
+                data: {
+                    createdAt: new Date(),
+                }
+            }]
+        }
     };
 
     (async () => {
         try {
-            await runNode(bflow.root, userInput, outs,
+            await runNode(session, bflow.root, userInput, outs,
                 (taskYieldUpdate: TaskYieldUpdate) => {
                     queue.push(taskYieldUpdate);
                 }
@@ -50,7 +70,15 @@ export async function* runBFlow(session: Session, context: TaskContext): AsyncGe
                 state: 'failed',
                 message: {
                     role: 'agent',
-                    parts: [{ type: 'text', text: `Error: ${err.message}` }]
+                    parts: [{
+                        type: 'text',
+                        text: `Error: ${err.message}`
+                    }, {
+                        type: 'data',
+                        data: {
+                            createdAt: new Date(),
+                        }
+                    }]
                 }
             });
         } finally {
@@ -65,7 +93,8 @@ export async function* runBFlow(session: Session, context: TaskContext): AsyncGe
                         type: 'data',
                         data: {
                             bflow,
-                            outs: Object.fromEntries(outs)
+                            outs: Object.fromEntries(outs),
+                            createdAt: new Date(),
                         }
                     }]
                 }
@@ -94,7 +123,8 @@ function sleep(ms) {
     return new Promise(resolve => setTimeout(resolve, ms));
 }
 
-const runNode = async (node: BFlowNode, userInput: Map<string, any>, outs: Map<string, any>, yieldUpdate: (taskYieldUpdate: TaskYieldUpdate) => void): Promise<BFlowNodeState> => {
+const runNode = async (session: Session, node: BFlowNode, userInput: Map<string, any>, outs: Map<string, any>, yieldUpdate: (taskYieldUpdate: TaskYieldUpdate) => void): Promise<BFlowNodeState> => {
+
 
     console.log(`Running node: ${node.id} (${node.type})`);
     if (node.state === BFlowNodeState.SUCCESS) {
@@ -104,7 +134,7 @@ const runNode = async (node: BFlowNode, userInput: Map<string, any>, outs: Map<s
     if (node.type === BFlowNodeType.ENTRY) {
 
         for (const child of node.goto!) {
-            const status = await runNode(child, userInput, outs, yieldUpdate);
+            const status = await runNode(session, child, userInput, outs, yieldUpdate);
             if (status === BFlowNodeState.WAITING_FOR_CLIENT) {
                 return BFlowNodeState.WAITING_FOR_CLIENT;
             }
@@ -113,7 +143,7 @@ const runNode = async (node: BFlowNode, userInput: Map<string, any>, outs: Map<s
     } else if (node.type === BFlowNodeType.FALLBACK) {
 
         for (const child of node.goto!) {
-            const status = await runNode(child, userInput, outs, yieldUpdate);
+            const status = await runNode(session, child, userInput, outs, yieldUpdate);
             if (status === BFlowNodeState.SUCCESS) {
                 node.state = BFlowNodeState.SUCCESS;
                 yieldUpdate({
@@ -127,7 +157,8 @@ const runNode = async (node: BFlowNode, userInput: Map<string, any>, outs: Map<s
                             type: 'data',
                             data: {
                                 bflow: {},
-                                outs: Object.fromEntries(outs)
+                                outs: Object.fromEntries(outs),
+                                createdAt: new Date(),
                             }
                         }]
                     }
@@ -150,7 +181,8 @@ const runNode = async (node: BFlowNode, userInput: Map<string, any>, outs: Map<s
                     type: 'data',
                     data: {
                         bflow: {},
-                        outs: Object.fromEntries(outs)
+                        outs: Object.fromEntries(outs),
+                        createdAt: new Date(),
                     }
                 }]
             }
@@ -160,7 +192,7 @@ const runNode = async (node: BFlowNode, userInput: Map<string, any>, outs: Map<s
     } else if (node.type === BFlowNodeType.SEQUENCE) {
 
         for (const child of node.goto!) {
-            const status = await runNode(child, userInput, outs, yieldUpdate);
+            const status = await runNode(session, child, userInput, outs, yieldUpdate);
             if (status === BFlowNodeState.FAILURE) {
                 node.state = BFlowNodeState.FAILURE;
                 yieldUpdate({
@@ -174,7 +206,8 @@ const runNode = async (node: BFlowNode, userInput: Map<string, any>, outs: Map<s
                             type: 'data',
                             data: {
                                 bflow: {},
-                                outs: Object.fromEntries(outs)
+                                outs: Object.fromEntries(outs),
+                                createdAt: new Date(),
                             }
                         }]
                     }
@@ -197,7 +230,8 @@ const runNode = async (node: BFlowNode, userInput: Map<string, any>, outs: Map<s
                     type: 'data',
                     data: {
                         bflow: {},
-                        outs: Object.fromEntries(outs)
+                        outs: Object.fromEntries(outs),
+                        createdAt: new Date(),
                     }
                 }]
             }
@@ -232,14 +266,14 @@ const runNode = async (node: BFlowNode, userInput: Map<string, any>, outs: Map<s
                         type: 'data',
                         data: {
                             bflow: {},
-                            outs: Object.fromEntries(outs)
+                            outs: Object.fromEntries(outs),
+                            createdAt: new Date(),
                         }
                     }]
                 }
             });
 
-            const mcpClient = mcpClientManager.getClientByToolName(node.tool.name);
-            console.log(`>>> mcpClient: ${mcpClient}`);
+            const mcpClient = session.getClientByToolName(node.tool.name);
             if (mcpClient) {
                 const mcpTool = mcpClient.tools.find((tool) => tool.name === node.tool.name);
                 const requiredParameters = mcpTool.inputSchema?.required;
@@ -262,6 +296,7 @@ const runNode = async (node: BFlowNode, userInput: Map<string, any>, outs: Map<s
                                     },
                                     userInput,
                                     inputSchema: mcpTool,
+                                    createdAt: new Date(),
                                 }
                             }]
                         }
@@ -292,7 +327,8 @@ const runNode = async (node: BFlowNode, userInput: Map<string, any>, outs: Map<s
                                 type: 'data',
                                 data: {
                                     bflow: {},
-                                    outs: Object.fromEntries(outs)
+                                    outs: Object.fromEntries(outs),
+                                    createdAt: new Date(),
                                 }
                             }]
                         }
@@ -313,7 +349,8 @@ const runNode = async (node: BFlowNode, userInput: Map<string, any>, outs: Map<s
                         type: 'data',
                         data: {
                             bflow: {},
-                            outs: Object.fromEntries(outs)
+                            outs: Object.fromEntries(outs),
+                            createdAt: new Date(),
                         }
                     }]
                 }
@@ -330,5 +367,51 @@ const isValidInput = (required, userInput) => {
         const value = userInput[key];
         return value !== undefined && value !== null && value !== '';
     });
+}
+
+const extractData = (context: TaskContext) => {
+
+    let bflowPart = context.userMessage.parts.find((part) => {
+        return part.type === 'data' && part.data && part.data.bflow;
+    });
+
+    let userInputPart = context.userMessage.parts.find((part) => {
+        return part.type === 'data' && part.data && part.data.userInput;
+    });
+
+    if (!bflowPart && context.history && context.history.length > 0) {
+        // find bflowPart from history
+        const latestBflowEntry = [...context.history].reverse().find(entry =>
+            entry.role === 'user' && entry.parts.some(part => part.type === 'data' && part.data && part.data.bflow)
+        );
+        console.log('>>>>>> latestBflowEntry');
+        console.log(latestBflowEntry);
+
+        if (latestBflowEntry) {
+            bflowPart = latestBflowEntry.parts.find((part) => {
+                return part.type === 'data' && part.data && part.data.bflow;
+            });
+
+            console.log('>>>>> bflowPart');
+            console.log(bflowPart);
+        }
+    }
+
+    if (!userInputPart && context.history && context.history.length > 0) {
+        // find bflowPart from history
+        const latestUserInputEntry = [...context.history].reverse().find(entry =>
+            entry.role === 'user' && entry.parts.some(part => part.type === 'data' && part.data && part.data.userInput)
+        );
+        if (latestUserInputEntry) {
+            userInputPart = latestUserInputEntry.parts.find((part) => {
+                return part.type === 'data' && part.data && part.data.userInput;
+            });
+        }
+    }
+
+    return {
+        bflow: bflowPart ? bflowPart.data.bflow : null,
+        userInput: userInputPart ? userInputPart.data.userInput : {},
+    };
 }
 

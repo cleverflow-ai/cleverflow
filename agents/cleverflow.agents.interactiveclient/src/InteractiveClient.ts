@@ -37,29 +37,6 @@ export class InteractiveClient {
         }
     }
 
-    public async ping(): Promise<boolean> {
-        return new Promise<boolean>(async (resolve, reject) => {
-            try {
-                const taskParams: TaskSendParams = {
-                    id: 'unknown|unknown|ping',
-                    message: {
-                        role: "user",
-                        parts: [],
-                    },
-                };
-                await this.sendTask(taskParams, (state: TaskState, event: Task) => {
-                    if (state === 'completed') {
-                        resolve(true);
-                    }
-                });
-                reject(new Error("Ping task was not completed successfully."));
-            } catch (exception) {
-                console.error("Error sending ping task:", exception);
-                reject(exception);
-            }
-        });
-    }
-
     private async handleEvent(event: Task) {
         const state = event.status?.state;
         if (state === 'input-required') {
@@ -83,8 +60,9 @@ export class InteractiveClient {
             return;
         }
 
+        const [dataId, sessionId] = inputRequiredEvent.id.split('|');
         const taskParams: TaskSendParams = {
-            id: crypto.randomUUID(),
+            id: `${dataId}|${sessionId}|generate-json-form`,
             message: {
                 role: "user",
                 parts: [
@@ -95,9 +73,6 @@ export class InteractiveClient {
                         },
                     },
                 ],
-            },
-            metadata: {
-                taskName: "schema-to-json-form",
             },
         };
         await this.sendTask(taskParams, (state: TaskState, event: Task) => {

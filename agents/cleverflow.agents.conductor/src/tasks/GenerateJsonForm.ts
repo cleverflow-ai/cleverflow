@@ -11,14 +11,36 @@ export async function* generateJsonForm(session: Session, context: TaskContext):
     if (!dataPart || !dataPart.data || !dataPart.data.inputSchema) {
         yield {
             state: 'input-required',
-            message: { role: 'agent', parts: [{ type: 'text', text: 'Input schema was missing' }] }
+            message: {
+                role: 'agent',
+                parts: [{
+                    type: 'text',
+                    text: 'Input schema was missing'
+                }, {
+                    type: 'data',
+                    data: {
+                        createdAt: new Date(),
+                    }
+                }]
+            }
         };
         return;
     }
 
     yield {
         state: 'working',
-        message: { role: 'agent', parts: [{ type: 'text', text: 'Working on it...' }] }
+        message: {
+            role: 'agent',
+            parts: [{
+                type: 'text',
+                text: `Working on it...`
+            }, {
+                type: 'data',
+                data: {
+                    createdAt: new Date(),
+                }
+            }]
+        }
     };
 
     const inputSchema = dataPart.data.inputSchema;

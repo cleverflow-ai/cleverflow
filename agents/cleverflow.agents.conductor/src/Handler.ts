@@ -14,72 +14,59 @@ export async function* handleTask(context: TaskContext): AsyncGenerator<TaskYiel
     console.log(taskId);
     const [dataId, sessionId, task] = taskId.split('|');
 
-    console.log(`Handling task: ${task}`);
+    console.log(`Handling task: ${task}, session: ${sessionId}`);
     let session: Session;
-
     switch (task) {
         case TASKS.GENERATE_BFLOW:
-            session = await generateSession(sessionId, context);
-            sessionsManager.addSession(session);
+            await generateSession(sessionId, context);
+            session = sessionsManager.getSession(sessionId);
+            if (!session) {
+                yield {
+                    state: 'failed',
+                    message: { role: 'agent', parts: [{ type: 'text', text: 'Session was not created!' }] }
+                };
+                return;
+            }
             return yield* generateBFlow(session, context);
         case TASKS.RUN_BFLOW:
             session = sessionsManager.getSession(sessionId);
+            if (!session) {
+                yield {
+                    state: 'failed',
+                    message: { role: 'agent', parts: [{ type: 'text', text: 'Session was not created!' }] }
+                };
+                return;
+            }
             return yield* runBFlow(session, context);
         case TASKS.GENERATE_JSON_FORM:
-            session = sessionsManager.getSession(sessionId);
             return yield* generateJsonForm(session, context);
-
-        // case 'demo-json-form':
-        //     const toolName = 'fetch-outline-text-file';
-        //     const mcpClient = mcpClientManager.getClientByToolName(toolName);
-        //     const mcpTool = mcpClient.tools.find((tool) => tool.name === toolName);
-        //     yield {
-        //         state: 'input-required',
-        //         message: {
-        //             role: 'agent',
-        //             parts: [{
-        //                 type: 'text',
-        //                 text: 'update'
-        //             }, {
-        //                 type: 'data',
-        //                 data: {
-        //                     inputSchema: mcpTool.inputSchema
-        //                 }
-        //             }]
-        //         }
-        //     };
-        //     return;
-        case TASKS.PING:
-            yield {
-                state: 'completed',
-                message: {
-                    role: 'agent',
-                    parts: [{
-                        type: 'text',
-                        text: 'pong'
-                    }]
-                }
-            };
-            return;
         default:
-            throw new Error(`Unknown task: ${context}`);
+            throw new Error(`Unknown task: ${task}`);
     }
 }
 
 const generateSession = async (sessionId: string, context: TaskContext) => {
-    const textPart = context.userMessage.parts.find((part) => part.type === 'text');
-    const text = textPart.text;
-    const result = matter(text);
-    const mcp = result.data?.MCP;
-    const session = new Session(sessionId);
-
-    for (const s of mcp) {
-        if (s.url && s.name) {
-            await session.addClient(s.url, s.name ?? '', s.description ?? '', s.version ?? '');
-        } else {
-            console.warn('[MCP] Skipped invalid MCP config:', s);
+    try {
+        const existedSession = sessionsManager.getSession(sessionId);
+        if (existedSession) {
+            return;
         }
-    }
+        const textPart = context.userMessage.parts.find((part) => part.type === 'text');
+        const text = textPart.text;
+        const result = matter(text);
+        const mcp = result.data?.MCP;
+        const session = new Session(sessionId);
 
-    return session;
+        for (const s of mcp) {
+            if (s.url && s.name) {
+                await session.addClient(s.url, s.name ?? '', s.description ?? '', s.version ?? '');
+            } else {
+                console.warn('[MCP] Skipped invalid MCP config:', s);
+            }
+        }
+
+        sessionsManager.addSession(session);
+    } catch (exception) {
+        console.error(exception);
+    }
 }

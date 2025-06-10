@@ -53,4 +53,8 @@ export default class Session {
             description: `Tool ${tool.name} from MCP client`
         })));
     }
+
+    getClientByToolName(toolName: string): McpClientForSession | null {
+        return this.mcpClients.find((c) => c.tools.some((tool) => tool.name === toolName));
+    }
 }

@@ -10,7 +10,15 @@ export async function* generateBFlow(session: Session, context: TaskContext): As
         state: 'working',
         message: {
             role: 'agent',
-            parts: [{ type: 'text', text: 'CONVERT_MARKDOC_ELEMENT_TO_BFLOW' }]
+            parts: [{
+                type: 'text',
+                text: 'CONVERT_MARKDOC_ELEMENT_TO_BFLOW'
+            }, {
+                type: 'data',
+                data: {
+                    createdAt: new Date(),
+                }
+            }]
         }
     };
 
@@ -19,7 +27,18 @@ export async function* generateBFlow(session: Session, context: TaskContext): As
     if (!textPart || !textPart.text) {
         yield {
             state: 'input-required',
-            message: { role: 'agent', parts: [{ type: 'text', text: 'text was missing' }] }
+            message: {
+                role: 'agent',
+                parts: [{
+                    type: 'text',
+                    text: 'text was missing'
+                }, {
+                    type: 'data',
+                    data: {
+                        createdAt: new Date(),
+                    }
+                }]
+            }
         };
         return;
     }
@@ -36,7 +55,15 @@ export async function* generateBFlow(session: Session, context: TaskContext): As
         state: 'working',
         message: {
             role: 'agent',
-            parts: [{ type: 'text', text: 'CONVERT_BFLOW_TO_BFLOWVIZ' }]
+            parts: [{
+                type: 'text',
+                text: 'CONVERT_BFLOW_TO_BFLOWVIZ'
+            }, {
+                type: 'data',
+                data: {
+                    createdAt: new Date(),
+                }
+            }]
         }
     };
 
@@ -50,7 +77,15 @@ export async function* generateBFlow(session: Session, context: TaskContext): As
         state: 'working',
         message: {
             role: 'agent',
-            parts: [{ type: 'text', text: 'CONVERT_BFLOW_TO_BFLOWVIZ_SUCCESS' }]
+            parts: [{
+                type: 'text',
+                text: 'CONVERT_BFLOW_TO_BFLOWVIZ_SUCCESS'
+            }, {
+                type: 'data',
+                data: {
+                    createdAt: new Date(),
+                }
+            }]
         }
     };
 

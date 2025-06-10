@@ -1,16 +1,98 @@
 <script lang="ts">
     import { Modal } from "@skeletonlabs/skeleton-svelte";
-    import { ConductorAgent } from "$lib/agents/ConductorAgent";
+    import { InteractiveClient } from "@cleverflow-ai/cleverflow.agents.interactiveclient";
     import type {
         Task,
         TaskSendParams,
+        TaskState,
     } from "@cleverflow-ai/cleverflow.agents/schema";
+
     import { onMount } from "svelte";
     import postal from "postal";
 
-    let conductorAgent: ConductorAgent;
+    let conductorClient: InteractiveClient;
 
     let resultText = $state("");
+
+    const bflow = {
+        id: null,
+        name: null,
+        description: null,
+        root: {
+            type: "ENTRY",
+            id: "entry_1",
+            name: null,
+            description: null,
+            config: null,
+            state: null,
+            goto: [
+                {
+                    type: "SEQUENCE",
+                    id: "sequence_1",
+                    name: null,
+                    description: null,
+                    config: null,
+                    state: null,
+                    goto: [
+                        {
+                            type: "ACTION",
+                            id: "action_1",
+                            name: "task-1",
+                            description: "Fetching a gitea file",
+                            config: null,
+                            state: null,
+                            goto: null,
+                            tool: {
+                                name: "fetch-gitea-text-file",
+                                description:
+                                    "Tool fetch-gitea-text-file from MCP client",
+                            },
+                            inputs: [],
+                            output: {},
+                        },
+                        {
+                            type: "ACTION",
+                            id: "action_2",
+                            name: "task-2",
+                            description: "Fetching a outline file",
+                            config: null,
+                            state: null,
+                            goto: null,
+                            tool: {
+                                name: "fetch-outline-text-file",
+                                description:
+                                    "Tool fetch-outline-text-file from MCP client",
+                            },
+                            inputs: [],
+                            output: {},
+                        },
+                        {
+                            type: "ACTION",
+                            id: "action_3",
+                            name: "task-3",
+                            description: "Convert a steps file to glb",
+                            config: null,
+                            state: null,
+                            goto: null,
+                            tool: {
+                                name: "convert-step-to-glb",
+                                description:
+                                    "Tool convert-step-to-glb from MCP client",
+                            },
+                            inputs: [],
+                            output: {},
+                        },
+                    ],
+                    tool: null,
+                    inputs: null,
+                    output: {},
+                },
+            ],
+            tool: null,
+            inputs: null,
+            output: {},
+        },
+    };
 
     let completeFormModalState = $state(false);
 
@@ -27,108 +109,28 @@
     const runBFlow = async () => {
         const conductorServer = import.meta.env.VITE_A2A_CONDUCTOR_SERVER;
         console.log(`>>> conductorServer: ${conductorServer}`);
-        conductorAgent = new ConductorAgent(conductorServer);
+        conductorClient = new InteractiveClient(conductorServer);
+        console.log(bflow.root.id);
         const taskParams: TaskSendParams = {
-            id: crypto.randomUUID(),
+            id: `empty-dataId|single-session|run-bflow`,
             message: {
                 role: "user",
                 parts: [
                     {
                         type: "data",
                         data: {
-                            bflow: {
-                                id: null,
-                                name: null,
-                                description: null,
-                                root: {
-                                    type: "ENTRY",
-                                    id: "entry_1",
-                                    name: null,
-                                    description: null,
-                                    config: null,
-                                    state: null,
-                                    goto: [
-                                        {
-                                            type: "SEQUENCE",
-                                            id: "sequence_1",
-                                            name: null,
-                                            description: null,
-                                            config: null,
-                                            state: null,
-                                            goto: [
-                                                {
-                                                    type: "ACTION",
-                                                    id: "action_1",
-                                                    name: "file-fetching",
-                                                    description:
-                                                        "Fetching a gitea file",
-                                                    config: null,
-                                                    state: null,
-                                                    goto: null,
-                                                    tool: {
-                                                        name: "fetch-gitea-text-file",
-                                                        description:
-                                                            "Tool fetch-gitea-text-file from MCP client",
-                                                    },
-                                                    inputs: [],
-                                                    output: {},
-                                                },
-                                                {
-                                                    type: "ACTION",
-                                                    id: "action_2",
-                                                    name: "file-fetching",
-                                                    description:
-                                                        "Fetching a outline file",
-                                                    config: null,
-                                                    state: null,
-                                                    goto: null,
-                                                    tool: {
-                                                        name: "fetch-outline-text-file",
-                                                        description:
-                                                            "Tool fetch-outline-text-file from MCP client",
-                                                    },
-                                                    inputs: [],
-                                                    output: {},
-                                                },
-                                                {
-                                                    type: "ACTION",
-                                                    id: "action_3",
-                                                    name: "file-convert",
-                                                    description:
-                                                        "Convert a steps file to glb",
-                                                    config: null,
-                                                    state: null,
-                                                    goto: null,
-                                                    tool: {
-                                                        name: "convert-step-to-glb",
-                                                        description:
-                                                            "Tool convert-step-to-glb from MCP client",
-                                                    },
-                                                    inputs: [],
-                                                    output: {},
-                                                },
-                                            ],
-                                            tool: null,
-                                            inputs: [],
-                                            output: {},
-                                        },
-                                    ],
-                                    tool: null,
-                                    inputs: [],
-                                    output: {},
-                                },
-                            },
+                            bflow,
                         },
                     },
                 ],
             },
-            metadata: {
-                taskName: "run-bflow",
-            },
         };
-        conductorAgent.sendTask(taskParams, (event: Task) => {
-            console.log(event);
-        });
+        conductorClient.sendTask(
+            taskParams,
+            (state: TaskState, event: Task) => {
+                console.log(event);
+            },
+        );
     };
 </script>
 
