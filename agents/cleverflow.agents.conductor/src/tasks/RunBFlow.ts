@@ -138,14 +138,32 @@ const runNode = async (session: Session, bflow: BFlow, userInput: Map<string, an
     if (node.type === BFlowNodeType.ENTRY) {
 
         for (const child of node.goto!) {
-            const status = await runNode(session, bflow, userInput, outs, child, yieldUpdate);
-            if (status === BFlowNodeState.WAITING_FOR_CLIENT) {
-                return BFlowNodeState.WAITING_FOR_CLIENT;
+            const state = await runNode(session, bflow, userInput, outs, child, yieldUpdate);
+            if (state === BFlowNodeState.FAILURE || state === BFlowNodeState.RUNNING) {
+                node.state = state;
+                yieldUpdate({
+                    state: 'working',
+                    message: {
+                        role: 'agent',
+                        parts: [{
+                            type: 'text',
+                            text: 'update'
+                        }, {
+                            type: 'data',
+                            data: {
+                                bflow: bflow,
+                                outs: outs,
+                                createdAt: new Date(),
+                            }
+                        }]
+                    }
+                });
+                return node.state;
             }
         }
+        node.state = BFlowNodeState.SUCCESS;
 
     } else if (node.type === BFlowNodeType.FALLBACK) {
-
         for (const child of node.goto!) {
             const status = await runNode(session, bflow, userInput, outs, child, yieldUpdate);
             if (status === BFlowNodeState.SUCCESS) {
@@ -168,8 +186,6 @@ const runNode = async (session: Session, bflow: BFlow, userInput: Map<string, an
                     }
                 });
                 return node.state;
-            } else if (status === BFlowNodeState.WAITING_FOR_CLIENT) {
-                return BFlowNodeState.WAITING_FOR_CLIENT;
             }
         }
 
@@ -196,9 +212,10 @@ const runNode = async (session: Session, bflow: BFlow, userInput: Map<string, an
     } else if (node.type === BFlowNodeType.SEQUENCE) {
         node.state = BFlowNodeState.RUNNING;
         for (const child of node.goto!) {
-            const status = await runNode(session, bflow, userInput, outs, child, yieldUpdate);
-            if (status === BFlowNodeState.FAILURE) {
-                node.state = BFlowNodeState.FAILURE;
+            const state = await runNode(session, bflow, userInput, outs, child, yieldUpdate);
+            console.log(`>>> state: ${state}`);
+            if (state === BFlowNodeState.FAILURE || state === BFlowNodeState.RUNNING) {
+                node.state = state;
                 yieldUpdate({
                     state: 'working',
                     message: {
@@ -217,11 +234,10 @@ const runNode = async (session: Session, bflow: BFlow, userInput: Map<string, an
                     }
                 });
                 return node.state;
-            } else if (status === BFlowNodeState.WAITING_FOR_CLIENT) {
-                return BFlowNodeState.WAITING_FOR_CLIENT;
             }
         }
 
+        console.log('>>>> set sequence node as success one');
         node.state = BFlowNodeState.SUCCESS;
         yieldUpdate({
             state: 'working',
@@ -306,10 +322,13 @@ const runNode = async (session: Session, bflow: BFlow, userInput: Map<string, an
                     });
                     return node.state;
                 }
+
                 const inputForCallTool = {
                     name: mcpTool.name,
                     arguments: input,
                 };
+                // TODO: callTool failed
+                // Cannot connect the server | input was invalid
                 const result = await mcpClient.client.callTool(
                     inputForCallTool,
                     z.any(),
@@ -321,9 +340,10 @@ const runNode = async (session: Session, bflow: BFlow, userInput: Map<string, an
                 console.log('>>> input');
                 console.log(inputForCallTool);
                 console.log(result);
+                node.state = BFlowNodeState.SUCCESS;
+
                 if (node.id) {
                     outs[node.id] = result;
-                    node.state = BFlowNodeState.SUCCESS;
                     yieldUpdate({
                         state: 'working',
                         message: {
@@ -341,9 +361,11 @@ const runNode = async (session: Session, bflow: BFlow, userInput: Map<string, an
                             }]
                         }
                     });
-                    return node.state;
                 }
+                return node.state;
             }
+            // TODO: No mcp client | no tool
+            return node.state;
         } else {
             node.state = BFlowNodeState.SUCCESS;
             yieldUpdate({
@@ -367,7 +389,7 @@ const runNode = async (session: Session, bflow: BFlow, userInput: Map<string, an
         }
     }
 
-    return BFlowNodeState.FAILURE;
+    return node.state;
 }
 
 const isValidInput = (required, userInput) => {

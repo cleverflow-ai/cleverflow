@@ -17,7 +17,6 @@
 				borderColor = "border-success-500";
 				break;
 			case BFlowNodeState.RUNNING:
-			case BFlowNodeState.WAITING_FOR_CLIENT:
 				borderColor = "border-warning-500";
 				break;
 			case BFlowNodeState.FAILURE:
