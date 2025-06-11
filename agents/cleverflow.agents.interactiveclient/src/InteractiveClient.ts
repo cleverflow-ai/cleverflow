@@ -24,20 +24,17 @@ export class InteractiveClient {
     }
 
     public async sendTask(taskParams: TaskSendParams, onEvent: (state: TaskState, event: Task) => void): Promise<void> {
-        try {
+        this.callbacks.set(taskParams.id, onEvent);
+        const stream = this.client.sendTaskSubscribe(taskParams);
 
-            this.callbacks.set(taskParams.id, onEvent);
-            const stream = this.client.sendTaskSubscribe(taskParams);
-
-            for await (const event of stream) {
-                await this.handleEvent(event as Task);
-            }
-        } catch (error: any) {
-            this.handleError(error);
+        for await (const event of stream) {
+            await this.handleEvent(event as Task);
         }
     }
 
     private async handleEvent(event: Task) {
+        console.log(`>>>>> handleEvent:`);
+        console.log(event);
         const state = event.status?.state;
         if (state === 'input-required') {
             await this.requestShowDynamicForm(event);
@@ -120,16 +117,6 @@ export class InteractiveClient {
         this.callbacks.delete(event.id);
         this.sendTask(taskParams, onEvent);
     };
-
-    private handleError(error: any) {
-        console.error(`❌ Error:`, error.message || error);
-        if (error.code) {
-            console.error(`Code: ${error.code}`);
-        }
-        if (error.data) {
-            console.error(`Data: ${JSON.stringify(error.data)}`);
-        }
-    }
 
     protected destroy = () => {
         this.dynamicFormSubmitSubscription?.unsubscribe();

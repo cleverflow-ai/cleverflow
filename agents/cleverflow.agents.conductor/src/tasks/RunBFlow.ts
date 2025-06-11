@@ -12,7 +12,7 @@ export async function* runBFlow(session: Session, context: TaskContext): AsyncGe
 
     console.log(`>>>> session: ${session.id}`);
 
-    const { bflow, userInput } = extractData(context);
+    const { bflow, userInput, outs } = extractData(context);
 
     if (!bflow) {
         yield {
@@ -37,9 +37,10 @@ export async function* runBFlow(session: Session, context: TaskContext): AsyncGe
     console.log(bflow.root);
     console.log('>>>>> userInput');
     console.log(userInput);
+    console.log('>>>> outs');
+    console.log(outs);
 
     const queue: TaskYieldUpdate[] = [];
-    const outs = new Map<string, any>();
 
     yield {
         state: 'working',
@@ -59,11 +60,32 @@ export async function* runBFlow(session: Session, context: TaskContext): AsyncGe
 
     (async () => {
         try {
-            await runNode(session, bflow.root, userInput, outs,
+            const node = bflow.root;
+            const result = await runNode(session, bflow, userInput, outs, node,
                 (taskYieldUpdate: TaskYieldUpdate) => {
                     queue.push(taskYieldUpdate);
                 }
             );
+            if (result === BFlowNodeState.SUCCESS) {
+                queue.push({
+                    state: 'completed',
+                    message: {
+                        role: 'agent',
+                        parts: [{
+                            type: 'text',
+                            text: 'BFlow execution completed successfully.'
+                        }, {
+                            type: 'data',
+                            data: {
+                                bflow,
+                                outs: outs,
+                                createdAt: new Date(),
+                            }
+                        }]
+                    }
+                });
+            }
+
         } catch (err: any) {
             console.error('Error during BFlow execution:', err);
             queue.push({
@@ -76,24 +98,6 @@ export async function* runBFlow(session: Session, context: TaskContext): AsyncGe
                     }, {
                         type: 'data',
                         data: {
-                            createdAt: new Date(),
-                        }
-                    }]
-                }
-            });
-        } finally {
-            queue.push({
-                state: 'completed',
-                message: {
-                    role: 'agent',
-                    parts: [{
-                        type: 'text',
-                        text: 'BFlow execution completed successfully.'
-                    }, {
-                        type: 'data',
-                        data: {
-                            bflow,
-                            outs: Object.fromEntries(outs),
                             createdAt: new Date(),
                         }
                     }]
@@ -123,8 +127,8 @@ function sleep(ms) {
     return new Promise(resolve => setTimeout(resolve, ms));
 }
 
-const runNode = async (session: Session, node: BFlowNode, userInput: Map<string, any>, outs: Map<string, any>, yieldUpdate: (taskYieldUpdate: TaskYieldUpdate) => void): Promise<BFlowNodeState> => {
-
+// bflow, userInput, outs, node
+const runNode = async (session: Session, bflow: BFlow, userInput: Map<string, any>, outs: Map<string, any>, node: BFlowNode, yieldUpdate: (taskYieldUpdate: TaskYieldUpdate) => void): Promise<BFlowNodeState> => {
 
     console.log(`Running node: ${node.id} (${node.type})`);
     if (node.state === BFlowNodeState.SUCCESS) {
@@ -134,7 +138,7 @@ const runNode = async (session: Session, node: BFlowNode, userInput: Map<string,
     if (node.type === BFlowNodeType.ENTRY) {
 
         for (const child of node.goto!) {
-            const status = await runNode(session, child, userInput, outs, yieldUpdate);
+            const status = await runNode(session, bflow, userInput, outs, child, yieldUpdate);
             if (status === BFlowNodeState.WAITING_FOR_CLIENT) {
                 return BFlowNodeState.WAITING_FOR_CLIENT;
             }
@@ -143,7 +147,7 @@ const runNode = async (session: Session, node: BFlowNode, userInput: Map<string,
     } else if (node.type === BFlowNodeType.FALLBACK) {
 
         for (const child of node.goto!) {
-            const status = await runNode(session, child, userInput, outs, yieldUpdate);
+            const status = await runNode(session, bflow, userInput, outs, child, yieldUpdate);
             if (status === BFlowNodeState.SUCCESS) {
                 node.state = BFlowNodeState.SUCCESS;
                 yieldUpdate({
@@ -156,8 +160,8 @@ const runNode = async (session: Session, node: BFlowNode, userInput: Map<string,
                         }, {
                             type: 'data',
                             data: {
-                                bflow: {},
-                                outs: Object.fromEntries(outs),
+                                bflow: bflow,
+                                outs: outs,
                                 createdAt: new Date(),
                             }
                         }]
@@ -180,8 +184,8 @@ const runNode = async (session: Session, node: BFlowNode, userInput: Map<string,
                 }, {
                     type: 'data',
                     data: {
-                        bflow: {},
-                        outs: Object.fromEntries(outs),
+                        bflow: bflow,
+                        outs: outs,
                         createdAt: new Date(),
                     }
                 }]
@@ -190,9 +194,9 @@ const runNode = async (session: Session, node: BFlowNode, userInput: Map<string,
         return node.state;
 
     } else if (node.type === BFlowNodeType.SEQUENCE) {
-
+        node.state = BFlowNodeState.RUNNING;
         for (const child of node.goto!) {
-            const status = await runNode(session, child, userInput, outs, yieldUpdate);
+            const status = await runNode(session, bflow, userInput, outs, child, yieldUpdate);
             if (status === BFlowNodeState.FAILURE) {
                 node.state = BFlowNodeState.FAILURE;
                 yieldUpdate({
@@ -205,8 +209,8 @@ const runNode = async (session: Session, node: BFlowNode, userInput: Map<string,
                         }, {
                             type: 'data',
                             data: {
-                                bflow: {},
-                                outs: Object.fromEntries(outs),
+                                bflow: bflow,
+                                outs: outs,
                                 createdAt: new Date(),
                             }
                         }]
@@ -229,8 +233,8 @@ const runNode = async (session: Session, node: BFlowNode, userInput: Map<string,
                 }, {
                     type: 'data',
                     data: {
-                        bflow: {},
-                        outs: Object.fromEntries(outs),
+                        bflow: bflow,
+                        outs: outs,
                         createdAt: new Date(),
                     }
                 }]
@@ -265,8 +269,8 @@ const runNode = async (session: Session, node: BFlowNode, userInput: Map<string,
                     }, {
                         type: 'data',
                         data: {
-                            bflow: {},
-                            outs: Object.fromEntries(outs),
+                            bflow: bflow,
+                            outs: outs,
                             createdAt: new Date(),
                         }
                     }]
@@ -281,7 +285,6 @@ const runNode = async (session: Session, node: BFlowNode, userInput: Map<string,
                 const canCallTool = isValidInput(requiredParameters || [], input)
                 if (!canCallTool) {
                     console.error(`Invalid input for tool ${mcpTool.name}. Required parameters: ${requiredParameters}`);
-                    node.state = BFlowNodeState.FAILURE;
                     console.log('>>> node');
                     console.log(JSON.stringify(node, null, 2));
                     yieldUpdate({
@@ -303,18 +306,23 @@ const runNode = async (session: Session, node: BFlowNode, userInput: Map<string,
                     });
                     return node.state;
                 }
+                const inputForCallTool = {
+                    name: mcpTool.name,
+                    arguments: input,
+                };
                 const result = await mcpClient.client.callTool(
-                    {
-                        name: mcpTool.name,
-                        arguments: input,
-                    },
+                    inputForCallTool,
                     z.any(),
                     {
                         timeout: 3600 * 1000,
                     },
                 );
+                console.log('>>>> call tool result');
+                console.log('>>> input');
+                console.log(inputForCallTool);
+                console.log(result);
                 if (node.id) {
-                    outs.set(node.id, result);
+                    outs[node.id] = result;
                     node.state = BFlowNodeState.SUCCESS;
                     yieldUpdate({
                         state: 'working',
@@ -326,8 +334,8 @@ const runNode = async (session: Session, node: BFlowNode, userInput: Map<string,
                             }, {
                                 type: 'data',
                                 data: {
-                                    bflow: {},
-                                    outs: Object.fromEntries(outs),
+                                    bflow: bflow,
+                                    outs: outs,
                                     createdAt: new Date(),
                                 }
                             }]
@@ -348,8 +356,8 @@ const runNode = async (session: Session, node: BFlowNode, userInput: Map<string,
                     }, {
                         type: 'data',
                         data: {
-                            bflow: {},
-                            outs: Object.fromEntries(outs),
+                            bflow: bflow,
+                            outs: outs,
                             createdAt: new Date(),
                         }
                     }]
@@ -371,14 +379,10 @@ const isValidInput = (required, userInput) => {
 
 const extractData = (context: TaskContext) => {
 
+    // extract bflow
     let bflowPart = context.userMessage.parts.find((part) => {
         return part.type === 'data' && part.data && part.data.bflow;
     });
-
-    let userInputPart = context.userMessage.parts.find((part) => {
-        return part.type === 'data' && part.data && part.data.userInput;
-    });
-
     if (!bflowPart && context.history && context.history.length > 0) {
         // find bflowPart from history
         const latestBflowEntry = [...context.history].reverse().find(entry =>
@@ -397,6 +401,10 @@ const extractData = (context: TaskContext) => {
         }
     }
 
+    // extract userInput
+    let userInputPart = context.userMessage.parts.find((part) => {
+        return part.type === 'data' && part.data && part.data.userInput;
+    });
     if (!userInputPart && context.history && context.history.length > 0) {
         // find bflowPart from history
         const latestUserInputEntry = [...context.history].reverse().find(entry =>
@@ -409,9 +417,25 @@ const extractData = (context: TaskContext) => {
         }
     }
 
+    // extract outs
+    const outs: any = {};
+
+    for (const entry of context.history) {
+        if (entry.role === 'agent') {
+            for (const part of entry.parts) {
+                if (part.type === 'data' && part.data && part.data.outs) {
+                    for (const [key, value] of Object.entries(part.data.outs)) {
+                        outs[key] = value;
+                    }
+                }
+            }
+        }
+    }
+
     return {
         bflow: bflowPart ? bflowPart.data.bflow : null,
         userInput: userInputPart ? userInputPart.data.userInput : {},
+        outs: outs,
     };
 }
 

@@ -2,7 +2,6 @@ import type { schema, TaskContext, TaskYieldUpdate } from '@cleverflow-ai/clever
 import { generateBFlow } from './tasks/GenerateBFlow.js';
 import { runBFlow } from './tasks/RunBFlow.js';
 import { generateJsonForm } from './tasks/GenerateJsonForm.js';
-import SessionsManager from './sessions/SessionsManager.js';
 import TASKS from './tasks/Tasks.js';
 import matter from 'gray-matter';
 import Session from './sessions/Session.js';

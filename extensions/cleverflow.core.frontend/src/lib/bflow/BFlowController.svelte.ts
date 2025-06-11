@@ -195,6 +195,8 @@ export default class BFlowController {
         this.setState(BFLowState.RUN_BFLOW);
 
         try {
+            console.log(`>>> run BFlow`);
+            console.log(this.rawBFlow);
             const taskParams: TaskSendParams = {
                 id: `${this.dataId}|${this.sessionId}|run-bflow`,
                 message: {
@@ -208,26 +210,31 @@ export default class BFlowController {
                 },
             };
             this.conductorClient?.sendTask(taskParams, (state: TaskState, event: Task) => {
-                if (state === 'completed') {
-                    console.log(">>> BFlow run completed successfully");
-                    // const bflow = event.status?.message?.parts?.[0]?.data?.bflow;
-                    // const bflowviz = event.status?.message?.parts?.[0]?.data?.bflowViz;
-                    this.setState(BFLowState.RUN_BFLOW_SUCCESS);
-                    this.bflow = event.status?.message?.parts?.[0]?.data?.bflow;
-                    this.bflowRunResult = event.status?.message?.parts?.[0]?.data?.outs;
-                    this.updateBFlowRunResult();
-                    addToast("Successfully ran BFlow", ToastType.SUCCESS);
+                if (['working', 'completed'].includes(state)) {
+                    let dataPart = event.status?.message?.parts?.find((part) => {
+                        return part.type === 'data' && part.data;
+                    });
+                    console.log(`>>> dataPart: `);
+                    console.log(dataPart);
+                    const bflow = dataPart?.data?.bflow;
+                    const bflowRunResult = dataPart?.data?.outs;
+
+                    if (bflow && bflowRunResult) {
+                        this.bflow = bflow;
+                        this.bflowRunResult = bflowRunResult;
+                        this.updateBFlowRunResult();
+                    }
+
+                    if (state === 'completed') {
+                        this.setState(BFLowState.RUN_BFLOW_SUCCESS);
+                        addToast("Successfully ran BFlow", ToastType.SUCCESS);
+                    } else {
+                        this.setState(BFLowState.RUN_BFLOW_IN_PROGRESS);
+                    }
                 } else if (state === 'failed') {
                     console.error(">>> BFlow run failed");
                     this.setState(BFLowState.RUN_BFLOW_FAILED);
                     addToast("Failed to run BFlow", ToastType.ERROR);
-                } else if (state === 'working') {
-                    const text = event.status?.message?.parts?.[0]?.text;
-                    console.log("Working on converting text to BFlow:", text);
-                    if (text in BFLowState) {
-                        const state = BFLowState[text as keyof typeof BFLowState];
-                        this.setState(state);
-                    }
                 } else {
                     console.error(`Unexpected state: ${state}`);
                     this.setState(BFLowState.RUN_BFLOW_FAILED);
@@ -296,6 +303,9 @@ export default class BFlowController {
     }
 
     updateBFlowNodeResult(node: any) {
+        if (!node) {
+            return;
+        }
         const vizNode = _.find(this.bflowviz.nodes, (vizNode: any) => {
             return node.id === vizNode.id;
         });

@@ -35,10 +35,12 @@
 	});
 
 	onDestroy(() => {
+		isVisible = false;
 		subscription?.unsubscribe();
 	});
 
 	const onSubmit = (data: any) => {
+		isVisible = false;
 		channel?.publish("dynamic-form-submit", {
 			event,
 			formData: data,
