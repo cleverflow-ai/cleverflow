@@ -104,6 +104,8 @@
 		"md5": "^2.3.0",
 		"nats": "^2.29.2",
 		"postal": "^2.0.6",
-		"postcss": "^8.5.3"
+		"postcss": "^8.5.3",
+		"@babylonjs/core": "^8.9.0",
+		"@babylonjs/loaders": "^8.9.0"
 	}
 }

@@ -255,45 +255,6 @@ export default class BFlowController {
         }
     }
 
-    // async resumeBFlow() {
-    //     if (this.state === BFLowState.RUN_BFLOW) {
-    //         return;
-    //     }
-
-    //     this.setState(BFLowState.RUN_BFLOW);
-
-    //     try {
-
-    //         const runningBflowResult = await this.bflowRunnerAgentMessenger?.run(this.bflow, this.bflowRunResult);
-    //         if (runningBflowResult) {
-    //             this.onRunBFlowFinished(runningBflowResult);
-    //         } else {
-    //             this.setState(BFLowState.RUN_BFLOW_FAILED);
-    //             addToast("Failed to run BFlow", ToastType.ERROR)
-    //         }
-    //     } catch (e: any) {
-    //         console.error(e);
-    //         this.setState(BFLowState.RUN_BFLOW_FAILED);
-    //         addToast("Failed to run BFlow", ToastType.ERROR)
-    //     }
-    // }
-
-    // onRunBFlowFinished(runningBflowResult: any) {
-    //     this.bflow = runningBflowResult.bflow;
-    //     this.bflowRunResult = runningBflowResult.outs;
-    //     this.updateBFlowRunResult();
-
-    //     const clientActionRequiredNode = this.findClientActionRequiredNode(runningBflowResult.bflow.root);
-    //     if (clientActionRequiredNode) {
-    //         this.setState(BFLowState.RUN_BFLOW_IN_PROGRESS);
-    //         addToast("Server requires an action from you", ToastType.WARNING);
-    //         // this.doActionRequired(clientActionRequiredNode);
-    //     } else {
-    //         this.setState(BFLowState.RUN_BFLOW_SUCCESS);
-    //         addToast("Successfully ran BFlow", ToastType.SUCCESS);
-    //     }
-    // }
-
     updateBFlowRunResult() {
         if (!this.bflowRunResult) {
             return;
@@ -332,28 +293,6 @@ export default class BFlowController {
             }
         }
         return null;
-    }
-
-    doActionRequired(node: any) {
-        switch (node.name.toLowerCase()) {
-            case 'upload-file':
-                this.bflowPostalChannel.publish("upload-file", {
-                    node
-                });
-                break;
-        }
-    }
-
-    addNodeResult(node: any, data: any) {
-        if (!this.bflowRunResult) {
-            this.bflowRunResult = {};
-        }
-
-        const input: any = {};
-        input[node.id] = {
-            result: data,
-        };
-        this.bflowRunResult = { ...this.bflowRunResult, ...input };
     }
 
     isStateLoading() {
