@@ -24,6 +24,11 @@ enum BFlowNodeState {
 class BFlowNodeTool {
   name string
   description string
+  inputSchema BFlowNodeToolInputSchema
+}
+
+class BFlowNodeToolInputSchema {
+    required string[]
 }
 
 class BFlowNodeOutput {}
@@ -37,6 +42,7 @@ class BFlowNode {
   state BFlowNodeState?
   goto BFlowNode[]?
   tool BFlowNodeTool?
+  toolInput string?
   inputs string[]?
   output BFlowNodeOutput?
 }
@@ -73,11 +79,14 @@ function ParseMarkdocBFlowElementToBFlow(text: string, tools: BFlowNodeTool[]) -
         - The following are **non-ACTION nodes**: <% entry %>, <% fallback %>, <% sequence %>, <% parallel %>, <% condition %>. All other tags are treated as **ACTION** nodes.
         - For ACTION nodes, set:
         ```json
-        { "type": "ACTION", "name": "<tag-name-without-<%%>>" }
+        { "type": "ACTION" }
         ```
-        For example: <% outline-file-fetching %> becomes "name": "outline-file-fetching".
-
-        If there is text before a Markdoc element, use it as that node’s description. Otherwise, auto-generate the description from inside the element.
+        Instead of using the raw tag name for name, generate a natural, human-readable name for the node based on its content (text inside the element). Use verbs and objects in the text to summarize the action meaningfully.
+        Example:
+            For a node like <% outline-file-fetching %> Fetching an outline file <% /outline-file-fetching %>
+            → "name": "Fetch Outline File"
+            For a node describing Convert a steps file to glb
+            → "name": "Convert Steps to GLB"
 
         Each node must have a unique id. If missing, generate one using the element name and its order of appearance.
 
@@ -85,8 +94,21 @@ function ParseMarkdocBFlowElementToBFlow(text: string, tools: BFlowNodeTool[]) -
 
         Nodes of type ACTION or CONDITION must be assigned a Tool from the provided list. If not sure, use a default tool.
 
-        Analyze each description to detect references to outputs from previous nodes. Add those node ids to the inputs array. If none, leave inputs empty.
+        Analyze each node's text content to:
 
+        Generate a description if not explicitly given.
+
+        Detect references to outputs from previous nodes, and include those node ids in the inputs array.
+
+        For ACTION nodes, if the tool's inputSchema.required contains known keys (like url, apiKey, fileId, repo, etc.), extract values from the node text using natural language understanding and map them into a toolInput field as a JSON string, using the required keys of the tool as a guide.
+
+        Example:
+        If the node text is
+        Fetching a gitea file from url https://example.com/api with key abc123
+        and the tool requires baseUrl, apiKey, then
+
+        "toolInput": "{ \"baseUrl\": \"https://example.com/api\", \"apiKey\": \"abc123\" }"
+        
         Return only the final JSON result — no extra explanations.
 
         Markdoc:
@@ -136,16 +158,19 @@ test Test_ParseMarkdocBFlowElementToBFlow {
         text #"
             {% b-flow id="cleverflow-mcp-a2a" %}
                 {% sequence %}                    
-                    {% gitea-file-fetching id="action_1" %}
-                        Fetching a gitea file
-                    {% /gitea-file-fetching %}
+                    {% task-1 id="action_1" %}
+                        Fetching README.md file in repo atlascopco-dasm which onwed by clevernow from url https://gitea-atlascopco-integration.clevernow.com/api/v1 with key 04f4b0dada8fa8632dc7541f2f2131c703693e7e
+                    {% /task-1 %}
 
-                    {% outline-file-fetching id="action_2" %}
-                        Fetching a outline file
-                    {% /outline-file-fetching %}
+                    {% task-2 id="action_2" %}
+                        Fetching a outline file by id sealing-technologies-rrOT5m2iSz from https://docs-atlascopco.clevernow.com/api with key ol_api_qHHZcDQ8EKJfx9tKwbi7E2zeT30Rnx5bq1uMfO
+                    {% /task-2 %}
 
                     {% convert-steps-to-glb id="action_3" %}
-                        Convert a steps file to glb
+                        Convert a steps file to glb, some information may be required
+                        - username: info@clevernow.com
+                        - password: CleverNow88
+                        - model name: 89971.000001
                     {% /convert-steps-to-glb %}
                 {% /sequence %}
             {% /b-flow %}
@@ -154,15 +179,38 @@ test Test_ParseMarkdocBFlowElementToBFlow {
         tools [
             {
                 name "fetch-outline-text-file",
-                description ""
+                description "",
+                inputSchema {
+                    required [
+                        "fileId",
+                        "baseUrl",
+                        "apiKey"
+                    ]
+                }
             },
             {
                 name "fetch-gitea-text-file",
-                description ""
+                description "",
+                inputSchema {
+                    required [
+                        "baseUrl",
+                        "apiKey",
+                        "repoOwner",
+                        "repo",
+                        "filePath"
+                    ]
+                }
             },
             {
                 name "convert-step-to-glb",
-                description ""
+                description "",
+                inputSchema {
+                    required [
+                        "username",
+                        "password",
+                        "modelName"
+                    ]
+                }
             }
         ]
     }
