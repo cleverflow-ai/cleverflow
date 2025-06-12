@@ -1,5 +1,6 @@
 import { Client } from "@modelcontextprotocol/sdk/client/index.js";
 import { createMcpClient } from "@cleverflow-ai/cleverflow.mcp/dist/McpClient.js";
+import { BFlowNodeTool } from "../baml_client";
 
 type McpClientForSession = {
     serverUrl: string;
@@ -10,10 +11,6 @@ type McpClientForSession = {
     tools: any[];
 };
 
-type McpClientInfo = {
-    name: string,
-    description: string;
-};
 
 export default class Session {
     id: string;
@@ -47,10 +44,13 @@ export default class Session {
         }
     }
 
-    getMcpClientInfo(): McpClientInfo[] {
+    getMcpClientTools(): BFlowNodeTool[] {
         return this.mcpClients.flatMap((c) => c.tools.map((tool) => ({
             name: tool.name,
-            description: `Tool ${tool.name} from MCP client`
+            description: `Tool ${tool.name} from MCP client`,
+            inputSchema: {
+                required: tool.inputSchema?.required ?? []
+            }
         })));
     }
 

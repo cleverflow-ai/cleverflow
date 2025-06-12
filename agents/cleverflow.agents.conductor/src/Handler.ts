@@ -26,8 +26,8 @@ export async function* handleTask(context: TaskContext): AsyncGenerator<TaskYiel
                 };
                 return;
             }
-            // return yield* generateBFlow(session, context);
-            return yield* generateBFlowTest(session, context);
+            return yield* generateBFlow(session, context);
+        // return yield* generateBFlowTest(session, context);
         case TASKS.RUN_BFLOW:
             session = sessionsManager.getSession(sessionId);
             if (!session) {
@@ -46,27 +46,25 @@ export async function* handleTask(context: TaskContext): AsyncGenerator<TaskYiel
 }
 
 const generateSession = async (sessionId: string, context: TaskContext) => {
-    try {
-        const existedSession = sessionsManager.getSession(sessionId);
-        if (existedSession) {
-            return;
-        }
-        const textPart = context.userMessage.parts.find((part) => part.type === 'text');
-        const text = textPart.text;
-        const result = matter(text);
-        const mcp = result.data?.MCP;
-        const session = new Session(sessionId);
-
-        for (const s of mcp) {
-            if (s.url && s.name) {
-                await session.addClient(s.url, s.name ?? '', s.description ?? '', s.version ?? '');
-            } else {
-                console.warn('[MCP] Skipped invalid MCP config:', s);
-            }
-        }
-
-        sessionsManager.addSession(session);
-    } catch (exception) {
-        console.error(exception);
+    const existedSession = sessionsManager.getSession(sessionId);
+    if (existedSession) {
+        return;
     }
+    const textPart = context.userMessage.parts.find((part) => part.type === 'text');
+    const text = textPart.text;
+    const result = matter(text);
+    const mcp = result.data?.MCP;
+    console.log(`>>> mcp`);
+    console.log(mcp);
+    const session = new Session(sessionId);
+
+    for (const s of mcp) {
+        if (s.url && s.name) {
+            await session.addClient(s.url, s.name ?? '', s.description ?? '', s.version ?? '');
+        } else {
+            console.warn('[MCP] Skipped invalid MCP config:', s);
+        }
+    }
+
+    sessionsManager.addSession(session);
 }

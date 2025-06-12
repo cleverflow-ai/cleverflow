@@ -43,7 +43,7 @@ class BFlowNode {
   goto BFlowNode[]?
   tool BFlowNodeTool?
   toolInput string?
-  inputs string[]?
+  inputs string?
   output BFlowNodeOutput?
 }
 
@@ -69,7 +69,7 @@ class BFlowViz {
 }
 
 function ParseMarkdocBFlowElementToBFlow(text: string, tools: BFlowNodeTool[]) -> BFlow {
-    client Ollama_Code
+    client Ollama_Tool
     prompt #"
         You are an expert in Markdoc and Behavior Trees.
 
@@ -129,7 +129,8 @@ function ParseBFlowToBFlowViz(bflow: string) -> BFlowViz {
         ## Task 1: Flatten JSON Tree into Node Array
         - Traverse the input JSON tree from root, and flatten it into an array of node objects.
         - Each node must have:
-            - a unique 10-character random string as `id`.
+            - Ensure each node has a unique id.
+            - Use the existing id if present; otherwise, generate a unique 10-character string.
             - a `parentNodeId` (null for root).
         - Preserve all existing fields in each node.
         - If the node has type `ACTION`, ensure the following:

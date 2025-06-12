@@ -210,6 +210,7 @@ export default class BFlowController {
                 },
             };
             this.conductorClient?.sendTask(taskParams, (state: TaskState, event: Task) => {
+                console.log('>>>>>>>> BFlowController Run BFlow on event:');
                 if (['working', 'completed'].includes(state)) {
                     let dataPart = event.status?.message?.parts?.find((part) => {
                         return part.type === 'data' && part.data;
@@ -259,6 +260,7 @@ export default class BFlowController {
         if (!this.bflowRunResult) {
             return;
         }
+        console.log('>>> updateBFlowRunResult');
         const root = this.bflow?.root;
         this.updateBFlowNodeResult(root);
     }

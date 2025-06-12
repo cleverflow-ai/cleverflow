@@ -1,6 +1,6 @@
 {
   "name": "@cleverflow-ai/cleverflow.mcp",
-  "version": "1.0.4",
+  "version": "1.0.5",
   "type": "module",
   "publishConfig": {
     "registry": "https://npm.pkg.github.com/"
@@ -25,9 +25,13 @@
   },
   "dependencies": {
     "@modelcontextprotocol/sdk": "^1.12.0",
-    "cors": "^2.8.5",
     "ts-node": "^10.9.2",
     "uuid": "^11.1.0",
-    "zod": "^3.25.28"
+    "zod": "^3.25.28",
+    "@types/cors": "^2.8.18",
+    "@types/express": "^5.0.1",
+    "body-parser": "^2.2.0",
+    "cors": "^2.8.5",
+    "express": "^5.1.0"
   }
 }

@@ -297,8 +297,17 @@ const runNode = async (session: Session, bflow: BFlow, userInput: Map<string, an
             if (mcpClient) {
                 const mcpTool = mcpClient.tools.find((tool) => tool.name === node.tool.name);
                 const requiredParameters = mcpTool.inputSchema?.required;
-                const input: any = userInput[node.id] || {};
-                const canCallTool = isValidInput(requiredParameters || [], input)
+                let userInputForCurrentNode: any = userInput[node.id] || {};
+                try {
+                    const extractedInputFromNodeContent = JSON.parse(node.toolInput ?? '{}');
+                    userInputForCurrentNode = { ...extractedInputFromNodeContent, ...userInputForCurrentNode };
+                } catch (exception) {
+                }
+
+                console.log(`>>>>> userInputForCurrentNode`);
+                console.log(userInputForCurrentNode);
+
+                const canCallTool = isValidInput(requiredParameters || [], userInputForCurrentNode)
                 if (!canCallTool) {
                     console.error(`Invalid input for tool ${mcpTool.name}. Required parameters: ${requiredParameters}`);
                     console.log('>>> node');
@@ -325,7 +334,7 @@ const runNode = async (session: Session, bflow: BFlow, userInput: Map<string, an
 
                 const inputForCallTool = {
                     name: mcpTool.name,
-                    arguments: input,
+                    arguments: userInputForCurrentNode,
                 };
                 // TODO: callTool failed
                 // Cannot connect the server | input was invalid
