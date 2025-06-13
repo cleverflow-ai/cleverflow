@@ -136,46 +136,51 @@
 
         isLoading = true;
 
-        const client = await createMcpClient(
-            "http://localhost:3000/mcp",
-            "@cleverflow-ao/cleverflow.mcp.io",
-            "1.0.0",
-        );
-
-        const result = await client.callTool(
-            {
-                name: "fetch-gitea-text-file",
-                arguments: {
-                    baseUrl,
-                    apiKey,
-                    repoOwner,
-                    repo,
-                    filePath,
-                },
-            },
-            z.any(),
-            {
-                timeout: 3600 * 1000,
-            },
-        );
-        const text =
-            result.content &&
-            Array.isArray(result.content) &&
-            result.content.length > 0
-                ? result.content[0].text
-                : null;
-        if (text) {
-            results = [
+        try {
+            const client = await createMcpClient(
+                "http://localhost:3000/mcp",
+                "@cleverflow-ao/cleverflow.mcp.io",
+                "1.0.0",
+            );
+            const result = await client.callTool(
                 {
-                    baseUrl,
-                    apiKey,
-                    repoOwner,
-                    repo,
-                    filePath,
-                    text,
+                    name: "fetch-gitea-text-file-1",
+                    arguments: {
+                        baseUrl,
+                        apiKey,
+                        repoOwner,
+                        repo,
+                        filePath,
+                    },
                 },
-                ...results,
-            ]; // Ensure results is an array
+                z.any(),
+                {
+                    timeout: 3600 * 1000,
+                },
+            );
+            console.log(">>> result.isError: ", result.isError);
+            const text =
+                result.content &&
+                Array.isArray(result.content) &&
+                result.content.length > 0
+                    ? result.content[0].text
+                    : null;
+            if (text) {
+                results = [
+                    {
+                        baseUrl,
+                        apiKey,
+                        repoOwner,
+                        repo,
+                        filePath,
+                        text,
+                    },
+                    ...results,
+                ]; // Ensure results is an array
+            }
+        } catch (exception) {
+            console.log(exception);
+            console.log(exception.message);
         }
 
         isLoading = false;

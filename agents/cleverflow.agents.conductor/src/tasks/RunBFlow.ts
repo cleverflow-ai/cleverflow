@@ -336,46 +336,101 @@ const runNode = async (session: Session, bflow: BFlow, userInput: Map<string, an
                     name: mcpTool.name,
                     arguments: userInputForCurrentNode,
                 };
-                // TODO: callTool failed
-                // Cannot connect the server | input was invalid
-                const result = await mcpClient.client.callTool(
-                    inputForCallTool,
-                    z.any(),
-                    {
-                        timeout: 3600 * 1000,
-                    },
-                );
-                console.log('>>>> call tool result');
-                console.log('>>> input');
-                console.log(inputForCallTool);
-                console.log(result);
-                node.state = BFlowNodeState.SUCCESS;
 
-                if (node.id) {
-                    outs[node.id] = result;
+                try {
+                    const callToolResult = await mcpClient.client.callTool(
+                        inputForCallTool,
+                        z.any(),
+                        {
+                            timeout: 3600 * 1000,
+                        },
+                    );
+                    console.log('>>>> callToolResult');
+                    console.log('>>> input');
+                    console.log(inputForCallTool);
+                    console.log(callToolResult);
+
+                    // callTool error
+                    if (callToolResult.isError) {
+                        const errorMessage =
+                            callToolResult.content &&
+                                Array.isArray(callToolResult.content) &&
+                                callToolResult.content.length > 0
+                                ? callToolResult.content[0].text
+                                : '';
+                        yieldUpdate({
+                            state: 'input-required',
+                            message: {
+                                role: 'agent',
+                                parts: [{
+                                    type: 'text',
+                                    text: errorMessage,
+                                }, {
+                                    type: 'data',
+                                    data: {
+                                        node: {
+                                            id: node.id
+                                        },
+                                        userInput,
+                                        inputSchema: mcpTool,
+                                        createdAt: new Date(),
+                                    }
+                                }]
+                            }
+                        });
+                        return node.state;
+                    }
+
+                    node.state = BFlowNodeState.SUCCESS;
+
+                    if (node.id) {
+                        outs[node.id] = callToolResult;
+                        yieldUpdate({
+                            state: 'working',
+                            message: {
+                                role: 'agent',
+                                parts: [{
+                                    type: 'text',
+                                    text: 'update'
+                                }, {
+                                    type: 'data',
+                                    data: {
+                                        bflow: bflow,
+                                        outs: outs,
+                                        createdAt: new Date(),
+                                    }
+                                }]
+                            }
+                        });
+                    }
+
+                } catch (callToolException) {
                     yieldUpdate({
-                        state: 'working',
+                        state: 'input-required',
                         message: {
                             role: 'agent',
                             parts: [{
                                 type: 'text',
-                                text: 'update'
+                                text: callToolException.message ?? 'Tool did not respond',
                             }, {
                                 type: 'data',
                                 data: {
-                                    bflow: bflow,
-                                    outs: outs,
+                                    node: {
+                                        id: node.id
+                                    },
+                                    userInput,
+                                    inputSchema: mcpTool,
                                     createdAt: new Date(),
                                 }
                             }]
                         }
                     });
                 }
-                return node.state;
             }
             // TODO: No mcp client | no tool
             return node.state;
         } else {
+            // TODO: No mcp client | no tool
             node.state = BFlowNodeState.SUCCESS;
             yieldUpdate({
                 state: 'working',
@@ -469,4 +524,3 @@ const extractData = (context: TaskContext) => {
         outs: outs,
     };
 }
-

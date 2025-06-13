@@ -51,6 +51,12 @@ export class InteractiveClient {
             (part) => part.type === "data",
         );
 
+        const textData = inputRequiredEvent.status?.message?.parts?.find(
+            (part) => part.type === "text",
+        );
+
+        const serverMessage = textData ? textData.text : '';
+
         const inputSchema = partData?.data?.inputSchema;
 
         if (!inputSchema) {
@@ -83,6 +89,7 @@ export class InteractiveClient {
                     return this.channel?.publish("show-dynamic-form", {
                         form: jsonForm,
                         event: inputRequiredEvent,
+                        serverMessage,
                     });
                 }
             }

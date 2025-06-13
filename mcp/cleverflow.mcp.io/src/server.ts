@@ -127,7 +127,7 @@ function registerTools(server: McpServer) {
 
             const gitea = new Gitea(baseUrl, apiKey);
             const text = await gitea.fetch(repoOwner, repo, filePath);
-
+            console.log(`>>>> text: ${text}`);
             return {
                 content: [
                     {

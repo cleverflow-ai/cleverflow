@@ -19,3 +19,8 @@ pre {
     background-color: var(--color-surface-950) !important;
     color: var(--color-surface-contrast-950) !important;
 }
+
+/* Required by JSON Form web component */
+.json-form form {
+    width: 100% !important;
+}

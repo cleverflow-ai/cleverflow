@@ -1,5 +1,5 @@
 import type { schema, TaskContext, TaskYieldUpdate } from '@cleverflow-ai/cleverflow.agents/server';
-import { generateBFlow, generateBFlowTest } from './tasks/GenerateBFlow.js';
+import { generateBFlow } from './tasks/GenerateBFlow.js';
 import { runBFlow } from './tasks/RunBFlow.js';
 import { generateJsonForm } from './tasks/GenerateJsonForm.js';
 import TASKS from './tasks/Tasks.js';
@@ -27,7 +27,6 @@ export async function* handleTask(context: TaskContext): AsyncGenerator<TaskYiel
                 return;
             }
             return yield* generateBFlow(session, context);
-        // return yield* generateBFlowTest(session, context);
         case TASKS.RUN_BFLOW:
             session = sessionsManager.getSession(sessionId);
             if (!session) {

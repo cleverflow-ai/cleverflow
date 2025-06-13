@@ -13,8 +13,9 @@ export default class Outline {
             },
         });
 
+        console.log(response.ok);
         if (!response.ok) {
-            throw new Error(`Failed to fetch outline file content: ${response.statusText}`);
+            throw new Error(`Failed to fetch gitea file content: ${response.statusText}`);
         }
         const result = await response.json();
         if (result.content) {
