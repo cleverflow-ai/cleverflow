@@ -61,27 +61,13 @@ function registerResources(server: McpServer) {
 }
 
 function registerTools(server: McpServer) {
-    server.tool(
-        "ping",
-        {},
-        async ({ }, extra) => {
-            return {
-                content: [
-                    {
-                        type: "text",
-                        text: "pong"
-                    }
-                ],
-            };
-        }
-    );
 
     server.tool(
         "fetch-outline-text-file",
         {
-            fileId: z.string(),
             baseUrl: z.string(),
-            apiKey: z.string()
+            apiKey: z.string(),
+            fileId: z.string(),
         },
         async ({ fileId, baseUrl, apiKey }, extra) => {
             await extra.sendNotification({
@@ -109,7 +95,6 @@ function registerTools(server: McpServer) {
     server.tool(
         "fetch-gitea-text-file",
         {
-
             baseUrl: z.string(),
             apiKey: z.string(),
             repoOwner: z.string(),

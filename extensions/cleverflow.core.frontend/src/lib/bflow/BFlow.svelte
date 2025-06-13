@@ -4,52 +4,23 @@
 	import { onMount, onDestroy } from "svelte";
 	import css from "../../app.css?inline";
 	import xyflowCss from "@xyflow/svelte/dist/style.css?inline";
-	import {
-		CircleX,
-		RefreshCcw,
-		Zap,
-		Network,
-		Flame,
-		TriangleAlert,
-	} from "lucide-svelte";
+	import { CircleX, RefreshCcw, Zap, Network, Flame } from "lucide-svelte";
 	import type BFlowController from "./BFlowController.js";
 	import BFlowView from "./visualization/BFlowView.svelte";
 	import LoadingIndicator from "../common/components/LoadingIndicator.svelte";
 	import { BFLowState } from "./BFlowState.js";
 	import Toast from "../common/components/toast/Toast.svelte";
-	import postal from "postal";
-	import {
-		addToast,
-		ToastType,
-	} from "../common/components/toast/ToastStore.js";
 	import JsonForm from "../dynamicform/JsonForm.svelte";
 
 	let props = $props();
 	let { text = "", id = null, theme = "crimson" } = props;
 	let { controller }: { controller: BFlowController } = props;
 
-	let serverWebComponentContainer: any = $state();
-	let serverWebComponentData: any = $state(null);
-
-	const bflowPostalChannel = postal.channel("b-flow");
-	const showRunNodeResultSubscriber = bflowPostalChannel.subscribe(
-		"show-server-web-component",
-		async (payload: any) => {
-			serverWebComponentData = payload.guiData;
-			showWebServerComponent();
-			addToast("Web component imported successfully!", ToastType.SUCCESS);
-		},
-	);
-
 	onMount(async () => {
 		if (text && controller.state === BFLowState.CONNECT_SUCCESS) {
 			// Connected and text is provided, start the BFlow process
 			await start();
 		}
-	});
-
-	onDestroy(() => {
-		showRunNodeResultSubscriber.unsubscribe();
 	});
 
 	const convertStateToMessage = (state: BFLowState) => {
@@ -101,56 +72,6 @@
 	const reload = async () => {
 		await controller.generateBFlow(text);
 	};
-
-	const onServerWebComponentFinished = () => {
-		serverWebComponentData = null;
-	};
-
-	const showWebServerComponent = async () => {
-		const binaryData = new Uint8Array(serverWebComponentData.buffer.data);
-		const blob = new Blob([binaryData], {
-			type: "application/javascript",
-		});
-		const moduleUrl = URL.createObjectURL(blob);
-
-		try {
-			if (!customElements.get(serverWebComponentData.webcomponent)) {
-				await import(moduleUrl);
-			}
-		} catch (exception) {}
-
-		if (serverWebComponentContainer) {
-			let attributes = "";
-			if (serverWebComponentData.attributes) {
-				attributes = Object.entries(serverWebComponentData.attributes)
-					.map(([key, value]) => `${key}="${value}"`)
-					.join(" ");
-			}
-			serverWebComponentContainer.innerHTML = `<${serverWebComponentData.webcomponent} ${attributes} onFinished={onServerWebComponentFinished}></${serverWebComponentData.webcomponent}>`;
-			requestAnimationFrame(() => {
-				const webComponent = serverWebComponentContainer.querySelector(
-					serverWebComponentData.webcomponent,
-				);
-
-				if (webComponent) {
-					webComponent.addOnFinishedListener(
-						onServerWebComponentFinished,
-					);
-				}
-			});
-			// setTimeout(() => {
-			// 	const webComponent = serverWebComponentContainer.querySelector(
-			// 		serverWebComponentData.webcomponent,
-			// 	);
-
-			// 	if (webComponent) {
-			// 		webComponent.addOnFinishedListener(
-			// 			onServerWebComponentFinished,
-			// 		);
-			// 	}
-			// }, 1000);
-		}
-	};
 </script>
 
 <svelte:element this={"style"}>{@html css}</svelte:element>
@@ -169,17 +90,17 @@
 
 {#snippet runBFlowButton()}
 	{#if controller.state === BFLowState.RUN_BFLOW || controller.state === BFLowState.RUN_BFLOW_IN_PROGRESS}
-		<!-- <button class="btn preset-filled-warning-500">
+		<button class="btn preset-filled-warning-500">
 			<Flame class="animate-spin w-5 h-5" />
 			Running
-		</button> -->
-		<button
+		</button>
+		<!-- <button
 			onclick={async () => await controller.runBFlow()}
 			class="btn preset-filled-success-500"
 		>
 			<Flame class="text-white-700 w-5 h-5" />
 			(TEST) Run
-		</button>
+		</button> -->
 	{:else if controller.state === BFLowState.RUN_BFLOW_SUCCESS}
 		<button
 			onclick={async () => await controller.runBFlow()}
@@ -207,21 +128,6 @@
 	{/if}
 {/snippet}
 
-{#snippet serverWebComponentTriggerButton()}
-	<div class="flex flex-col items-end gap-1">
-		<div class="text-error-500 text-sm bold animate-bounce">
-			Server is waiting for you
-		</div>
-		<button
-			onclick={async () => await showWebServerComponent()}
-			class="btn preset-filled-primary-500"
-		>
-			<TriangleAlert class="text-white-700 w-5 h-5" />
-			Action Required
-		</button>
-	</div>
-{/snippet}
-
 <main data-theme={theme}>
 	<div class="flex items-end justify-between gap-2">
 		{#if id}
@@ -232,11 +138,7 @@
 				{#if controller.isDocumentChanged(text)}
 					{@render reloadBFlowButton()}
 				{/if}
-				{#if serverWebComponentData}
-					{@render serverWebComponentTriggerButton()}
-				{:else}
-					{@render runBFlowButton()}
-				{/if}
+				{@render runBFlowButton()}
 			</div>
 		{/if}
 	</div>
@@ -309,8 +211,6 @@
 			{/if}
 		{/key}
 	</div>
-	<div bind:this={serverWebComponentContainer}></div>
-
 	<Toast />
 	<JsonForm />
 </main>

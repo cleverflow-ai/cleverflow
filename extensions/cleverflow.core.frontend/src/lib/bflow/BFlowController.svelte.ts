@@ -24,8 +24,6 @@ export default class BFlowController {
 
     private text: string | undefined;
 
-    private bflowPostalChannel = postal.channel("b-flow");
-
     // SMELL:
     private dataId = 'empty-dataId';
     private sessionId = 'single-session';// crypto.randomUUID();
@@ -242,13 +240,6 @@ export default class BFlowController {
                     addToast("Unexpected state while running BFlow", ToastType.ERROR);
                 }
             });
-            // const runningBflowResult = await this.bflowRunnerAgentMessenger?.run(this.rawBFlow);
-            // if (runningBflowResult) {
-            //     this.onRunBFlowFinished(runningBflowResult);
-            // } else {
-            //     this.setState(BFLowState.RUN_BFLOW_FAILED);
-            //     addToast("Failed to run BFlow", ToastType.ERROR)
-            // }
         } catch (e: any) {
             console.error(e);
             this.setState(BFLowState.RUN_BFLOW_FAILED);
@@ -260,7 +251,6 @@ export default class BFlowController {
         if (!this.bflowRunResult) {
             return;
         }
-        console.log('>>> updateBFlowRunResult');
         const root = this.bflow?.root;
         this.updateBFlowNodeResult(root);
     }
@@ -273,6 +263,7 @@ export default class BFlowController {
             return node.id === vizNode.id;
         });
         if (vizNode) {
+            this.bflowviz.currentDate = new Date();
             vizNode.data.state = node.state;
         }
         if (node.goto && node.goto.length > 0) {

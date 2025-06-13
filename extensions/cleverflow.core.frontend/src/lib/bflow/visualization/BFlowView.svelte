@@ -47,20 +47,21 @@
 		_.forEach(bflowviz.edges, (edge: any) => {
 			edge.animated = false;
 		});
-		const runningNode = _.find(bflowviz.nodes, (node: any) => {
-			return node?.data?.state === BFlowNodeState.RUNNING;
-		});
-		if (runningNode) {
-			const edge = _.find(bflowviz.edges, (edge: any) => {
-				return (
-					edge.source === runningNode.parentNodeId &&
-					edge.target === runningNode.id
-				);
-			});
-			if (edge) {
-				edge.animated = true;
+		_.forEach(bflowviz.nodes, (runningNode) => {
+			if (runningNode?.data?.state === BFlowNodeState.RUNNING) {
+				const edge = _.find(bflowviz.edges, (edge: any) => {
+					return (
+						edge.source === runningNode.parentNodeId &&
+						edge.target === runningNode.id
+					);
+				});
+
+				if (edge) {
+					edge.animated = true;
+				}
 			}
-		}
+		});
+
 		nodes = writable(bflowviz.nodes);
 		edges = writable(bflowviz.edges);
 		isInitialize = true;
