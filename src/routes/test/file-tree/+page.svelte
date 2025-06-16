@@ -34,7 +34,7 @@
   const fetchFolderChildren = async (node: any) => {
     const callToolResult = await client?.callTool(
       {
-        name: "fetch-gitea",
+        name: "get_file_contents",
         arguments: {
           baseUrl,
           apiKey,

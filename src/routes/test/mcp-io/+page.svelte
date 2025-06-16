@@ -144,7 +144,7 @@
             );
             const result = await client.callTool(
                 {
-                    name: "fetch-gitea",
+                    name: "get_file_contents",
                     arguments: {
                         baseUrl,
                         apiKey,

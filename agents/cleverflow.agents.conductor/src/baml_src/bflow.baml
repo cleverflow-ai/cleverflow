@@ -190,7 +190,7 @@ test Test_ParseMarkdocBFlowElementToBFlow {
                 }
             },
             {
-                name "fetch-gitea",
+                name "get_file_contents",
                 description "",
                 inputSchema {
                     required [
@@ -250,7 +250,7 @@ test Test_ParseBFlowToBFlowViz {
                                     "state": null,
                                     "goto": null,
                                     "tool": {
-                                        "name": "fetch-gitea",
+                                        "name": "get_file_contents",
                                         "description": ""
                                     },
                                     "inputs": [],

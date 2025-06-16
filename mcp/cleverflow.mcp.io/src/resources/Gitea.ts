@@ -2,8 +2,11 @@ export default class Outline {
     constructor(private baseUrl: string, private apiKey: string) {
     }
 
-    public async fetch(repoOwner: string, repo: string, filePath: string): Promise<string | Array<any> | null> {
-        const url = `${this.baseUrl}/repos/${repoOwner}/${repo}/contents/${filePath}?token=${this.apiKey}`;
+    public async fetch(branch: string, owner: string, repo: string, path: string): Promise<string | Array<any> | null> {
+        let url = `${this.baseUrl}/repos/${owner}/${repo}/contents/${path}?token=${this.apiKey}`;
+        if (branch) {
+            url += `&ref=${branch}`;
+        }
         console.log(url);
         console.log(this.apiKey);
         const response = await fetch(url, {

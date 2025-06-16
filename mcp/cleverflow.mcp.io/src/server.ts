@@ -93,15 +93,16 @@ function registerTools(server: McpServer) {
     );
 
     server.tool(
-        "fetch-gitea",
+        "get_file_contents",
         {
-            baseUrl: z.string(),
-            apiKey: z.string(),
-            repoOwner: z.string(),
+            url: z.string(),
+            token: z.string(),
+            branch: z.string(),
+            owner: z.string(),
             repo: z.string(),
-            filePath: z.string(),
+            path: z.string(),
         },
-        async ({ repoOwner, repo, filePath, baseUrl, apiKey }, extra) => {
+        async ({ url, token, branch, owner, repo, path, }, extra) => {
             await extra.sendNotification({
                 method: "notifications/message",
                 params: {
@@ -111,8 +112,8 @@ function registerTools(server: McpServer) {
             });
 
             try {
-                const gitea = new Gitea(baseUrl, apiKey);
-                const result = await gitea.fetch(repoOwner, repo, filePath);
+                const gitea = new Gitea(url, token);
+                const result = await gitea.fetch(branch, owner, repo, path);
                 if (Array.isArray(result)) {
                     return {
                         content: [

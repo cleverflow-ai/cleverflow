@@ -8,9 +8,10 @@
 
     let client: any;
 
-    let baseUrl = "";
-    let apiKey = "";
-    let repoOwner = "";
+    let url = "";
+    let token = "";
+    let branch = "";
+    let owner = "";
     let repo = "";
     const root = {
         id: "__root__",
@@ -55,44 +56,49 @@
         selectedFileContent = null;
         errorMessage = null;
 
-        const callToolResult = await client?.callTool(
-            {
-                name: "fetch-gitea",
-                arguments: {
-                    baseUrl,
-                    apiKey,
-                    repoOwner,
-                    repo,
-                    filePath: node?.path ?? "",
+        try {
+            const callToolResult = await client?.callTool(
+                {
+                    name: "get_file_contents",
+                    arguments: {
+                        url,
+                        token,
+                        branch,
+                        owner,
+                        repo,
+                        path: node?.path ?? "",
+                    },
                 },
-            },
-            z.any(),
-            {
-                timeout: 3600 * 1000,
-            },
-        );
+                z.any(),
+                {
+                    timeout: 3600 * 1000,
+                },
+            );
 
-        if (callToolResult.error) {
-            errorMessage = callToolResult.error.message ?? "Unknown error";
-            return;
-        }
-        const content =
-            callToolResult.content &&
-            Array.isArray(callToolResult.content) &&
-            callToolResult.content.length > 0
-                ? callToolResult.content[0]
-                : null;
-        if (content) {
-            if (content.type === "data" && Array.isArray(content.data)) {
-                return content.data.map((item: any) => ({
-                    id: item.sha,
-                    name: item.name,
-                    type: item.type === "dir" ? "folder" : "file",
-                    path: item.path,
-                }));
-            } else if (content.type === "text" && content.text) {
-                return content.text;
+            if (callToolResult.error) {
+                errorMessage = callToolResult.error.message ?? "Unknown error";
+                return;
             }
+            const content =
+                callToolResult.content &&
+                Array.isArray(callToolResult.content) &&
+                callToolResult.content.length > 0
+                    ? callToolResult.content[0]
+                    : null;
+            if (content) {
+                if (content.type === "data" && Array.isArray(content.data)) {
+                    return content.data.map((item: any) => ({
+                        id: item.sha,
+                        name: item.name,
+                        type: item.type === "dir" ? "folder" : "file",
+                        path: item.path,
+                    }));
+                } else if (content.type === "text" && content.text) {
+                    return content.text;
+                }
+            }
+        } catch (exception: any) {
+            errorMessage = exception.message ?? "Unknown client error";
         }
         return null;
     };
@@ -102,38 +108,43 @@
         selectedFileContent = null;
         errorMessage = null;
 
-        const callToolResult = await client?.callTool(
-            {
-                name: "fetch-gitea",
-                arguments: {
-                    baseUrl,
-                    apiKey,
-                    repoOwner,
-                    repo,
-                    filePath: node?.path ?? "",
+        try {
+            const callToolResult = await client?.callTool(
+                {
+                    name: "get_file_contents",
+                    arguments: {
+                        url,
+                        token,
+                        branch,
+                        owner,
+                        repo,
+                        path: node?.path ?? "",
+                    },
                 },
-            },
-            z.any(),
-            {
-                timeout: 3600 * 1000,
-            },
-        );
+                z.any(),
+                {
+                    timeout: 3600 * 1000,
+                },
+            );
 
-        if (callToolResult.error) {
-            errorMessage = callToolResult.error.message ?? "Unknown error";
-            return;
-        }
-
-        const content =
-            callToolResult.content &&
-            Array.isArray(callToolResult.content) &&
-            callToolResult.content.length > 0
-                ? callToolResult.content[0]
-                : null;
-        if (content) {
-            if (content.type === "text" && content.text) {
-                selectedFileContent = content.text;
+            if (callToolResult.error) {
+                errorMessage = callToolResult.error.message ?? "Unknown error";
+                return;
             }
+
+            const content =
+                callToolResult.content &&
+                Array.isArray(callToolResult.content) &&
+                callToolResult.content.length > 0
+                    ? callToolResult.content[0]
+                    : null;
+            if (content) {
+                if (content.type === "text" && content.text) {
+                    selectedFileContent = content.text;
+                }
+            }
+        } catch (exception: any) {
+            errorMessage = exception.message ?? "Unknown client error";
         }
     };
 
@@ -225,34 +236,44 @@
                 <div class="space-y-2">
                     <div>
                         <!-- svelte-ignore a11y_label_has_associated_control -->
-                        <label class="block text-sm font-medium mb-1"
-                            >Base URL</label
+                        <label class="block text-sm font-medium mb-1">URL</label
                         >
                         <input
                             type="text"
-                            bind:value={baseUrl}
+                            bind:value={url}
                             class="w-full border px-2 py-1 rounded"
                         />
                     </div>
 
                     <div>
                         <label class="block text-sm font-medium mb-1"
-                            >API Key</label
+                            >Token</label
                         >
                         <input
                             type="text"
-                            bind:value={apiKey}
+                            bind:value={token}
                             class="w-full border px-2 py-1 rounded"
                         />
                     </div>
 
                     <div>
                         <label class="block text-sm font-medium mb-1"
-                            >Repo Owner</label
+                            >Branch</label
                         >
                         <input
                             type="text"
-                            bind:value={repoOwner}
+                            bind:value={branch}
+                            class="w-full border px-2 py-1 rounded"
+                        />
+                    </div>
+
+                    <div>
+                        <label class="block text-sm font-medium mb-1"
+                            >Owner</label
+                        >
+                        <input
+                            type="text"
+                            bind:value={owner}
                             class="w-full border px-2 py-1 rounded"
                         />
                     </div>
