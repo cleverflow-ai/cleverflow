@@ -8,7 +8,9 @@
 
 	let { controller } = $props();
 
-	onMount(() => {});
+	onMount(() => {
+		console.log(controller.tree);
+	});
 </script>
 
 <svelte:element this={"style"}>{@html css}</svelte:element>

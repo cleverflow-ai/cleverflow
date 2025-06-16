@@ -3,13 +3,17 @@
     import TreeNodeSelf from "./TreeNode.svelte";
     import { onMount } from "svelte";
     import type { FileNode } from "./FileNode.js";
+    import LoadingIndicator from "../common/components/LoadingIndicator.svelte";
+
     const { node, controller } = $props();
 
     let expanded: Record<string, boolean> = $state({});
+    let isLoading = $state(false);
 
     onMount(() => {});
 
     const onSelect = async (node: FileNode) => {
+        isLoading = true;
         if (node.type === "file") {
             controller.open(node);
         } else {
@@ -20,6 +24,7 @@
                 expanded[node.id] = !expanded[node.id];
             }
         }
+        isLoading = false;
     };
 </script>
 
@@ -41,6 +46,11 @@
         {:else}
             <File class="w-4 h-4 text-blue-500" />
             <span>{node.name}</span>
+        {/if}
+        {#if isLoading}
+            <div class="ml-1">
+                <LoadingIndicator size={20}></LoadingIndicator>
+            </div>
         {/if}
     </div>
 
