@@ -1,14 +1,17 @@
 <script lang="ts">
     import { onMount } from "svelte";
+    import { Modal } from "@skeletonlabs/skeleton-svelte";
     import FileController from "@cleverflow-ai/cleverflow.core.frontend/webcomponents/file-controller.js";
     import { createMcpClient } from "@cleverflow-ai/cleverflow.mcp/dist/McpClient.js";
     import { z } from "zod";
+    import { Settings, TriangleAlert } from "lucide-svelte";
 
     let client: any;
-    const baseUrl = "https://gitea-atlascopco-integration.clevernow.com/api/v1";
-    const apiKey = "04f4b0dada8fa8632dc7541f2f2131c703693e7e";
-    const repoOwner = "clevernow";
-    const repo = "atlascopco-dasm";
+
+    let baseUrl = "";
+    let apiKey = "";
+    let repoOwner = "";
+    let repo = "";
     const root = {
         id: "__root__",
         name: "root",
@@ -18,6 +21,7 @@
     let fileController: FileController | null = $state(null);
     let selectedFileNode: any = $state(null);
     let selectedFileContent: string | null = $state(null);
+    let errorMessage: string | null = $state(null);
 
     const breadcrumb = $derived.by(() => {
         const result = selectedFileNode?.path?.split("/") ?? [];
@@ -26,6 +30,8 @@
         }
         return result;
     });
+
+    let settingModalState = $state(false);
 
     onMount(async () => {
         client = await createMcpClient(
@@ -47,6 +53,7 @@
     const fetchFolderChildren = async (node: any) => {
         selectedFileNode = node;
         selectedFileContent = null;
+        errorMessage = null;
 
         const callToolResult = await client?.callTool(
             {
@@ -64,6 +71,11 @@
                 timeout: 3600 * 1000,
             },
         );
+
+        if (callToolResult.error) {
+            errorMessage = callToolResult.error.message ?? "Unknown error";
+            return;
+        }
         const content =
             callToolResult.content &&
             Array.isArray(callToolResult.content) &&
@@ -88,6 +100,7 @@
     const fetchFileContent = async (node: any) => {
         selectedFileNode = node;
         selectedFileContent = null;
+        errorMessage = null;
 
         const callToolResult = await client?.callTool(
             {
@@ -105,6 +118,12 @@
                 timeout: 3600 * 1000,
             },
         );
+
+        if (callToolResult.error) {
+            errorMessage = callToolResult.error.message ?? "Unknown error";
+            return;
+        }
+
         const content =
             callToolResult.content &&
             Array.isArray(callToolResult.content) &&
@@ -120,52 +139,144 @@
 
     function goToBreadcrumb(index: number) {
         const pathUpTo = breadcrumb.slice(0, index + 1).join("/");
-        // Ví dụ gọi hàm controller để load folder tại path đó
         // fileController?.loadFolderFromPath(pathUpTo);
     }
 </script>
 
 <div class="flex h-screen">
-    <!-- Sidebar trái -->
-    <div class="w-1/3 border-r border-gray-200 p-2 overflow-auto">
+    <div
+        class="w-1/3 border-r border-gray-200 p-2 overflow-auto flex flex-col gap-2"
+    >
+        <button
+            class="ml-2 text-surface-500"
+            onclick={() => (settingModalState = true)}
+        >
+            <div class="flex items-center gap-2">
+                <Settings class="w-5 h-5" /> Settings
+            </div>
+        </button>
         {#if fileController}
             <file-tree controller={fileController}></file-tree>
         {/if}
     </div>
 
-    <!-- Nội dung bên phải -->
     <div class="w-2/3 p-4 overflow-auto flex flex-col">
-        {#if breadcrumb.length > 0}
-            <ol
-                class="flex items-center gap-2 text-sm text-gray-600 mb-4 overflow-x-auto whitespace-nowrap scrollbar-thin"
-            >
-                {#if breadcrumb.length > 4}
-                    <li><span class="opacity-50">…</span></li>
-                    {#each breadcrumb.slice(-3) as segment, i}
-                        <!-- render 3 phần cuối cùng -->
-                        <span class="font-medium">{segment}</span>
-                        {#if i < breadcrumb.length - 1}
-                            <li class="opacity-50" aria-hidden>&rsaquo;</li>
-                        {/if}
-                    {/each}
-                {:else}
-                    {#each breadcrumb as segment, i}
-                        <!-- render đầy đủ -->
-                        <span class="font-medium">{segment}</span>
-                        {#if i < breadcrumb.length - 1}
-                            <li class="opacity-50" aria-hidden>&rsaquo;</li>
-                        {/if}
-                    {/each}
-                {/if}
-            </ol>
-        {/if}
-        {#if selectedFileContent}
+        {#if errorMessage}
             <div
-                class="whitespace-pre-wrap font-mono text-sm bg-gray-100 p-4
-            rounded"
+                class="card preset-outlined-error-500 grid grid-cols-1 items-center gap-4 p-4 lg:grid-cols-[auto_1fr_auto]"
             >
-                {selectedFileContent}
+                <TriangleAlert />
+                <div>
+                    <p class="font-bold">Error</p>
+                    <p class="text-xs opacity-60">{errorMessage}</p>
+                </div>
             </div>
+        {:else}
+            {#if breadcrumb.length > 0}
+                <ol
+                    class="flex items-center gap-2 text-sm text-gray-600 mb-4 overflow-x-auto whitespace-nowrap scrollbar-thin"
+                >
+                    {#if breadcrumb.length > 4}
+                        <li><span class="opacity-50">…</span></li>
+                        {#each breadcrumb.slice(-3) as segment, i}
+                            <span class="font-medium">{segment}</span>
+                            {#if i < breadcrumb.length - 1}
+                                <li class="opacity-50" aria-hidden>&rsaquo;</li>
+                            {/if}
+                        {/each}
+                    {:else}
+                        {#each breadcrumb as segment, i}
+                            <span class="font-medium">{segment}</span>
+                            {#if i < breadcrumb.length - 1}
+                                <li class="opacity-50" aria-hidden>&rsaquo;</li>
+                            {/if}
+                        {/each}
+                    {/if}
+                </ol>
+            {/if}
+            {#if selectedFileContent}
+                <div
+                    class="whitespace-pre-wrap font-mono text-sm bg-gray-100 p-4 rounded"
+                >
+                    {selectedFileContent}
+                </div>
+            {/if}
         {/if}
     </div>
 </div>
+
+<Modal
+    open={settingModalState}
+    onOpenChange={(e) => (settingModalState = e.open)}
+    triggerBase="btn preset-tonal"
+    contentBase="card bg-surface-100-900 p-4 space-y-4 shadow-xl max-w-screen-sm"
+    backdropClasses="backdrop-blur-sm"
+    backdropBase="opacity-50"
+>
+    {#snippet content()}
+        <div
+            class="fixed inset-0 bg-black bg-opacity-40 z-50 flex items-center justify-center"
+        >
+            <div
+                class="bg-white p-6 rounded-xl shadow-xl w-[90%] max-w-md space-y-4"
+            >
+                <h2 class="text-lg font-semibold mb-2">Gitea Settings</h2>
+
+                <div class="space-y-2">
+                    <div>
+                        <!-- svelte-ignore a11y_label_has_associated_control -->
+                        <label class="block text-sm font-medium mb-1"
+                            >Base URL</label
+                        >
+                        <input
+                            type="text"
+                            bind:value={baseUrl}
+                            class="w-full border px-2 py-1 rounded"
+                        />
+                    </div>
+
+                    <div>
+                        <label class="block text-sm font-medium mb-1"
+                            >API Key</label
+                        >
+                        <input
+                            type="text"
+                            bind:value={apiKey}
+                            class="w-full border px-2 py-1 rounded"
+                        />
+                    </div>
+
+                    <div>
+                        <label class="block text-sm font-medium mb-1"
+                            >Repo Owner</label
+                        >
+                        <input
+                            type="text"
+                            bind:value={repoOwner}
+                            class="w-full border px-2 py-1 rounded"
+                        />
+                    </div>
+
+                    <div>
+                        <label class="block text-sm font-medium mb-1"
+                            >Repo</label
+                        >
+                        <input
+                            type="text"
+                            bind:value={repo}
+                            class="w-full border px-2 py-1 rounded"
+                        />
+                    </div>
+                </div>
+
+                <div class="flex justify-end gap-2 mt-4">
+                    <button
+                        type="button"
+                        class="btn preset-filled-primary-500"
+                        onclick={() => (settingModalState = false)}>Done</button
+                    >
+                </div>
+            </div>
+        </div>
+    {/snippet}
+</Modal>
