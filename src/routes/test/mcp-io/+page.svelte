@@ -129,7 +129,7 @@
     }
 
     async function fetchGiteaTextFile(): Promise<void> {
-        if (!repoOwner || !repo || !filePath) {
+        if (!repoOwner || !repo) {
             console.error("Please provide repoOwner, repo, and filePath.");
             return;
         }
@@ -144,13 +144,13 @@
             );
             const result = await client.callTool(
                 {
-                    name: "fetch-gitea-text-file-1",
+                    name: "fetch-gitea",
                     arguments: {
                         baseUrl,
                         apiKey,
                         repoOwner,
                         repo,
-                        filePath,
+                        filePath: filePath ?? "",
                     },
                 },
                 z.any(),
@@ -158,7 +158,8 @@
                     timeout: 3600 * 1000,
                 },
             );
-            console.log(">>> result.isError: ", result.isError);
+            console.log(">>> result: ");
+            console.log(result);
             const text =
                 result.content &&
                 Array.isArray(result.content) &&
@@ -340,9 +341,7 @@
             <div class="flex justify-end">
                 <button
                     onclick={fetchGiteaTextFile}
-                    disabled={isLoading || !repoOwner || !repo || !filePath
-                        ? true
-                        : false}
+                    disabled={isLoading || !repoOwner || !repo ? true : false}
                     type="button"
                     class="btn btn-sm preset-filled-primary-500">Submit</button
                 >

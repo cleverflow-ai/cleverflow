@@ -93,7 +93,7 @@ function registerTools(server: McpServer) {
     );
 
     server.tool(
-        "fetch-gitea-text-file",
+        "fetch-gitea",
         {
             baseUrl: z.string(),
             apiKey: z.string(),
@@ -111,16 +111,27 @@ function registerTools(server: McpServer) {
             });
 
             const gitea = new Gitea(baseUrl, apiKey);
-            const text = await gitea.fetch(repoOwner, repo, filePath);
-            console.log(`>>>> text: ${text}`);
-            return {
-                content: [
-                    {
-                        type: "text",
-                        text: text
-                    }
-                ],
-            };
+            const result = await gitea.fetch(repoOwner, repo, filePath);
+            if (Array.isArray(result)) {
+                return {
+                    content: [
+                        {
+                            type: "data",
+                            data: result
+                        }
+                    ],
+                };
+            } else {
+                return {
+                    content: [
+                        {
+                            type: "text",
+                            text: result
+                        }
+                    ],
+                };
+            }
+
         }
     );
 }

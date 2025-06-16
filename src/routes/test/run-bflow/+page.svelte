@@ -43,9 +43,8 @@
                             state: null,
                             goto: null,
                             tool: {
-                                name: "fetch-gitea-text-file",
-                                description:
-                                    "Tool fetch-gitea-text-file from MCP client",
+                                name: "fetch-gitea",
+                                description: "Tool fetch-gitea from MCP client",
                             },
                             inputs: [],
                             output: {},
