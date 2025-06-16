@@ -1,15 +1,28 @@
 <script lang="ts">
   import { Tabs } from "@skeletonlabs/skeleton-svelte";
-  import { Pencil, Eye, Loader, CircleX, Check, Zap } from "lucide-svelte";
+  import {
+    Pencil,
+    Eye,
+    Loader,
+    CircleX,
+    Check,
+    Zap,
+    Container,
+  } from "lucide-svelte";
   import { onMount } from "svelte";
   import MarkdocRendererController from "@cleverflow-ai/cleverflow.core.frontend/webcomponents/markdoc-renderer-controller.js";
+  import GiteaBrowser from "$lib/components/GiteaBrowser.svelte";
 
   const conductorServerUrl = import.meta.env.VITE_A2A_CONDUCTOR_SERVER;
 
   const currentTheme = "crimson";
-  let tab = $state("editor");
 
-  let markdocRendererController = $state(null);
+  type TabType = "workspace" | "editor" | "viewer";
+
+  let tab: TabType = $state<TabType>("workspace");
+
+  let markdocRendererController: MarkdocRendererController | null =
+    $state(null);
 
   // svelte-ignore non_reactive_update
   let markdocEditorElement: any;
@@ -37,7 +50,7 @@
 
   const switchToView = () => {
     markdoc = markdocEditorElement.getMarkdown();
-    markdocRendererController.setMarkdoc(markdoc);
+    markdocRendererController?.setMarkdoc(markdoc);
     tab = "viewer";
   };
 </script>
@@ -50,15 +63,22 @@
       listGap="gap-0"
       value={tab}
       onValueChange={(e) => {
-        // tab = e.value;
+        tab = e.value as TabType;
         if (e.value === "viewer") {
           switchToView();
-        } else {
-          switchToEditor();
         }
       }}
     >
       {#snippet list()}
+        <Tabs.Control
+          value="workspace"
+          stateActive="border-b-primary-500 border-b-[3px]"
+        >
+          <div class="flex justify-center items-center gap-2">
+            <Container class="w-6 h-6" />
+            <span>Workspace</span>
+          </div>
+        </Tabs.Control>
         <Tabs.Control
           value="editor"
           stateActive="border-b-primary-500 border-b-[3px]"
@@ -79,6 +99,11 @@
         </Tabs.Control>
       {/snippet}
       {#snippet content()}
+        <Tabs.Panel value="workspace" base="my-4 h-full">
+          <div class="w-full h-full">
+            <GiteaBrowser></GiteaBrowser>
+          </div>
+        </Tabs.Panel>
         <Tabs.Panel value="editor" base="my-4 h-full">
           <div class="w-full h-full">
             <markdoc-editor

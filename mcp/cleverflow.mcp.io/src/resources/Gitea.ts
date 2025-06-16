@@ -2,7 +2,7 @@ export default class Outline {
     constructor(private baseUrl: string, private apiKey: string) {
     }
 
-    public async fetch(repoOwner: string, repo: string, filePath: string): Promise<string> {
+    public async fetch(repoOwner: string, repo: string, filePath: string): Promise<string | Array<any> | null> {
         const url = `${this.baseUrl}/repos/${repoOwner}/${repo}/contents/${filePath}?token=${this.apiKey}`;
         console.log(url);
         console.log(this.apiKey);
@@ -18,7 +18,10 @@ export default class Outline {
             throw new Error(`Failed to fetch gitea file content: ${response.statusText}`);
         }
         const result = await response.json();
-        if (result.content) {
+        console.log(result);
+        if (Array.isArray(result)) {
+            return result;
+        } else if (result.content) {
             return Buffer.from(result.content, "base64").toString("utf-8");
         }
         return null;

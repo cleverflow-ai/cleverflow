@@ -52,6 +52,14 @@
 		"./webcomponents/json-form.js": {
 			"import": "./dist-webcomponents/json-form.js",
 			"require": "./dist-webcomponents/json-form.js"
+		},
+		"./webcomponents/file-tree.js": {
+			"import": "./dist-webcomponents/file-tree.js",
+			"require": "./dist-webcomponents/file-tree.js"
+		},
+		"./webcomponents/file-controller.js": {
+			"import": "./dist-webcomponents/file-controller.js",
+			"require": "./dist-webcomponents/file-controller.js"
 		}
 	},
 	"sideEffects": [
