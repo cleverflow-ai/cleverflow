@@ -8,16 +8,20 @@
 
     let client: any;
 
+    let mcpServerUrl = "http://localhost:3000/mcp";
+
     let url = "";
     let token = "";
     let branch = "";
     let owner = "";
     let repo = "";
+    let path = "";
+
     const root = {
         id: "__root__",
         name: "root",
         path: "",
-        type: "folder",
+        type: "dir",
     };
     let fileController: FileController | null = $state(null);
     let selectedFileNode: any = $state(null);
@@ -36,10 +40,11 @@
 
     onMount(async () => {
         client = await createMcpClient(
-            "http://localhost:3000/mcp",
+            mcpServerUrl,
             "@cleverflow-ao/cleverflow.mcp.io",
             "1.0.0",
         );
+
         await import(
             "@cleverflow-ai/cleverflow.core.frontend/webcomponents/file-tree.js"
         );
@@ -50,6 +55,19 @@
         );
         fileController.tree = root;
     });
+
+    const onChangeSetting = async () => {
+        client = await createMcpClient(
+            mcpServerUrl,
+            "@cleverflow-ao/cleverflow.mcp.io",
+            "1.0.0",
+        );
+
+        root.path = path;
+        fileController!.tree = root;
+
+        settingModalState = false;
+    };
 
     const fetchFolderChildren = async (node: any) => {
         selectedFileNode = node;
@@ -87,12 +105,7 @@
                     : null;
             if (content) {
                 if (content.type === "data" && Array.isArray(content.data)) {
-                    return content.data.map((item: any) => ({
-                        id: item.sha,
-                        name: item.name,
-                        type: item.type === "dir" ? "folder" : "file",
-                        path: item.path,
-                    }));
+                    return content.data;
                 } else if (content.type === "text" && content.text) {
                     return content.text;
                 }
@@ -171,7 +184,7 @@
         {/if}
     </div>
 
-    <div class="w-2/3 p-4 overflow-auto flex flex-col">
+    <div class="w-2/3 p-4 h-full flex flex-col justify-start items-start gap-3">
         {#if errorMessage}
             <div
                 class="card preset-outlined-error-500 grid grid-cols-1 items-center gap-4 p-4 lg:grid-cols-[auto_1fr_auto]"
@@ -207,7 +220,7 @@
             {/if}
             {#if selectedFileContent}
                 <div
-                    class="whitespace-pre-wrap font-mono text-sm bg-gray-100 p-4 rounded"
+                    class="flex-1 overflow-auto whitespace-pre-wrap font-mono text-sm bg-gray-100 p-4 rounded"
                 >
                     {selectedFileContent}
                 </div>
@@ -250,7 +263,7 @@
                             >Token</label
                         >
                         <input
-                            type="text"
+                            type="password"
                             bind:value={token}
                             class="w-full border px-2 py-1 rounded"
                         />
@@ -288,13 +301,24 @@
                             class="w-full border px-2 py-1 rounded"
                         />
                     </div>
+                    <div>
+                        <label class="block text-sm font-medium mb-1"
+                            >Path</label
+                        >
+                        <input
+                            type="text"
+                            bind:value={path}
+                            class="w-full border px-2 py-1 rounded"
+                        />
+                    </div>
                 </div>
 
                 <div class="flex justify-end gap-2 mt-4">
                     <button
                         type="button"
                         class="btn preset-filled-primary-500"
-                        onclick={() => (settingModalState = false)}>Done</button
+                        onclick={async () => await onChangeSetting()}
+                        >Done</button
                     >
                 </div>
             </div>

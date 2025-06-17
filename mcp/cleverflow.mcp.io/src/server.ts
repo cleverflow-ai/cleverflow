@@ -2,6 +2,7 @@ import { McpServer, ResourceTemplate } from "@modelcontextprotocol/sdk/server/mc
 import Outline from "./resources/Outline.js";
 import Gitea from "./resources/Gitea.js";
 import z from "zod";
+import Github from "./resources/Github.js";
 
 export function createServer() {
     const server = new McpServer({
@@ -103,6 +104,7 @@ function registerTools(server: McpServer) {
             path: z.string(),
         },
         async ({ url, token, branch, owner, repo, path, }, extra) => {
+
             await extra.sendNotification({
                 method: "notifications/message",
                 params: {
@@ -111,35 +113,53 @@ function registerTools(server: McpServer) {
                 }
             });
 
-            try {
-                const gitea = new Gitea(url, token);
-                const result = await gitea.fetch(branch, owner, repo, path);
-                if (Array.isArray(result)) {
+            let result: any;
+
+            if (url === Github.McpServerUrl) {
+                try {
+                    const github = new Github(token);
+                    result = await github.fetch(branch, owner, repo, path);
+                } catch (exception: any) {
                     return {
-                        content: [
-                            {
-                                type: "data",
-                                data: result
-                            }
-                        ],
-                    };
-                } else {
-                    return {
-                        content: [
-                            {
-                                type: "text",
-                                text: result
-                            }
-                        ],
+                        error: {
+                            message: exception.message,
+                        },
                     };
                 }
-            } catch (exception) {
+            } else {
+                try {
+                    const gitea = new Gitea(url, token);
+                    result = await gitea.fetch(branch, owner, repo, path);
+                } catch (exception) {
+                    return {
+                        error: {
+                            message: exception.message,
+                        },
+                    };
+                }
+            }
+
+            if (Array.isArray(result)) {
                 return {
-                    error: {
-                        message: exception.message,
-                    },
+                    content: [
+                        {
+                            type: "data",
+                            data: result
+                        }
+                    ],
+                };
+            } else {
+                return {
+                    content: [
+                        {
+                            type: "text",
+                            text: result
+                        }
+                    ],
                 };
             }
+
+
         }
     );
 }

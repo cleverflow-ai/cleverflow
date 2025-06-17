@@ -15,7 +15,7 @@ export default class FileController {
     }
 
     async open(node: FileNode) {
-        if (node.type === 'folder') {
+        if (node.type === 'dir') {
             const children = await this.fetchFolderChildren(node);
             this.setFolderChildren(node, children);
         } else {

@@ -30,7 +30,7 @@ export class GiteaService {
             id: item.sha,
             name: item.name,
             path: item.path,
-            type: item.type === "dir" ? "folder" : "file",
+            type: item.type,
         }));
     }
 

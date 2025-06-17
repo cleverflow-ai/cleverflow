@@ -27,7 +27,7 @@
       id: "1",
       name: "root",
       path: "",
-      type: "folder",
+      type: "dir",
     };
   });
 
@@ -59,7 +59,7 @@
         return content.data.map((item: any) => ({
           id: item.sha,
           name: item.name,
-          type: item.type === "dir" ? "folder" : "file",
+          type: item.type,
           path: item.path,
         }));
       } else if (content.type === "text" && content.text) {

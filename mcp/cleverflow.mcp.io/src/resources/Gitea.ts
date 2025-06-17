@@ -1,14 +1,14 @@
-export default class Outline {
-    constructor(private baseUrl: string, private apiKey: string) {
+export default class Gitea {
+    constructor(private url: string, private token: string) {
     }
 
     public async fetch(branch: string, owner: string, repo: string, path: string): Promise<string | Array<any> | null> {
-        let url = `${this.baseUrl}/repos/${owner}/${repo}/contents/${path}?token=${this.apiKey}`;
+        let url = `${this.url}/repos/${owner}/${repo}/contents/${path}?token=${this.token}`;
         if (branch) {
             url += `&ref=${branch}`;
         }
         console.log(url);
-        console.log(this.apiKey);
+        console.log(this.token);
         const response = await fetch(url, {
             method: "GET",
             headers: {

@@ -11,7 +11,7 @@
   } from "lucide-svelte";
   import { onMount } from "svelte";
   import MarkdocRendererController from "@cleverflow-ai/cleverflow.core.frontend/webcomponents/markdoc-renderer-controller.js";
-  import GiteaBrowser from "$lib/components/GiteaBrowser.svelte";
+  import GitBrowser from "$lib/components/GitBrowser.svelte";
 
   const conductorServerUrl = import.meta.env.VITE_A2A_CONDUCTOR_SERVER;
 
@@ -101,7 +101,7 @@
       {#snippet content()}
         <Tabs.Panel value="workspace" base="my-4 h-full">
           <div class="w-full h-full">
-            <GiteaBrowser></GiteaBrowser>
+            <GitBrowser></GitBrowser>
           </div>
         </Tabs.Panel>
         <Tabs.Panel value="editor" base="my-4 h-full">

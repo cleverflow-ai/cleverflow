@@ -35,7 +35,7 @@
         class="flex items-center gap-1 cursor-pointer px-1 py-0.5 rounded tree-node"
         onclick={async () => await onSelect(node)}
     >
-        {#if node.type === "folder"}
+        {#if node.type === "dir"}
             {#if expanded[node.id]}
                 <ChevronDown class="w-4 h-4 text-gray-500" />
             {:else}
@@ -54,7 +54,7 @@
         {/if}
     </div>
 
-    {#if node.type === "folder" && expanded[node.id]}
+    {#if node.type === "dir" && expanded[node.id]}
         <ul class="ml-1 border-l border-gray-300 dark:border-gray-700 pl-2">
             {#each node.children || [] as child}
                 <TreeNodeSelf node={child} {controller} />
