@@ -109,7 +109,7 @@ function registerTools(server: McpServer) {
                 method: "notifications/message",
                 params: {
                     level: "info",
-                    message: "Fetching gitea file content...",
+                    message: "Fetching file content...",
                 }
             });
 
@@ -129,7 +129,7 @@ function registerTools(server: McpServer) {
             } else {
                 try {
                     const gitea = new Gitea(url, token);
-                    result = await gitea.fetch(branch, owner, repo, path);
+                    result = await gitea.fetchFileContent(branch, owner, repo, path);
                 } catch (exception) {
                     return {
                         error: {
@@ -160,6 +160,66 @@ function registerTools(server: McpServer) {
             }
 
 
+        }
+    );
+
+    server.tool(
+        "update_file_contents",
+        {
+            url: z.string(),
+            token: z.string(),
+            branch: z.string(),
+            owner: z.string(),
+            repo: z.string(),
+            path: z.string(),
+            content: z.string(),
+        },
+        async ({ url, token, branch, owner, repo, path, content }, extra) => {
+
+            await extra.sendNotification({
+                method: "notifications/message",
+                params: {
+                    level: "info",
+                    message: "Updating file content...",
+                }
+            });
+
+            let isSuccessful: any;
+
+            if (url === Github.McpServerUrl) {
+                // TODO:
+                // try {
+                //     const github = new Github(token);
+                //     result = await github.fetch(branch, owner, repo, path);
+                // } catch (exception: any) {
+                //     return {
+                //         error: {
+                //             message: exception.message,
+                //         },
+                //     };
+                // }
+            } else {
+                try {
+                    const gitea = new Gitea(url, token);
+                    isSuccessful = await gitea.updateFileContent(branch, owner, repo, path, content);
+                } catch (exception) {
+                    return {
+                        error: {
+                            message: exception.message,
+                        },
+                    };
+                }
+            }
+
+            return {
+                isError: !isSuccessful,
+                content: [
+                    {
+                        type: "text",
+                        text: !isSuccessful ? "Failed to update the file." : "File updated successfully!"
+                    }
+                ],
+            };
         }
     );
 }

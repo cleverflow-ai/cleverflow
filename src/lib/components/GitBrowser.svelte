@@ -244,7 +244,7 @@
             <div
                 class="bg-white p-6 rounded-xl shadow-xl w-[90%] max-w-md space-y-4"
             >
-                <h2 class="text-lg font-semibold mb-2">Gitea Settings</h2>
+                <h2 class="text-lg font-semibold mb-2">Git Settings</h2>
 
                 <div class="space-y-2">
                     <div>
