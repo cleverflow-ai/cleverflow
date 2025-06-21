@@ -8,11 +8,6 @@ import PersistenceService from '../services/PersistenceService.js';
 
 export async function* runBFlow(session: Session, context: TaskContext): AsyncGenerator<TaskYieldUpdate, schema.Task | void, unknown> {
 
-    console.log('>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> ');
-    console.log(JSON.stringify(context));
-
-    console.log(`>>>> session: ${session.id}`);
-
     const { bflow, userInput, outs } = extractData(context);
 
     if (!bflow) {
@@ -33,13 +28,6 @@ export async function* runBFlow(session: Session, context: TaskContext): AsyncGe
         };
         return;
     }
-
-    console.log('>>>>> Running BFlow:');
-    console.log(bflow.root);
-    console.log('>>>>> userInput');
-    console.log(userInput);
-    console.log('>>>> outs');
-    console.log(outs);
 
     const queue: TaskYieldUpdate[] = [];
 
@@ -62,7 +50,7 @@ export async function* runBFlow(session: Session, context: TaskContext): AsyncGe
     (async () => {
         try {
             const node = bflow.root;
-            const result = await runNode(session, bflow, userInput, outs, node,
+            const result = await runNode(session, context, bflow, userInput, outs, node,
                 (taskYieldUpdate: TaskYieldUpdate) => {
                     queue.push(taskYieldUpdate);
                 }
@@ -137,7 +125,7 @@ function sleep(ms) {
 }
 
 
-const runNode = async (session: Session, bflow: BFlow, userInput: Map<string, any>, outs: Map<string, any>, node: BFlowNode, yieldUpdate: (taskYieldUpdate: TaskYieldUpdate) => void): Promise<BFlowNodeState> => {
+const runNode = async (session: Session, context: TaskContext, bflow: BFlow, userInput: Map<string, any>, outs: Map<string, any>, node: BFlowNode, yieldUpdate: (taskYieldUpdate: TaskYieldUpdate) => void): Promise<BFlowNodeState> => {
 
     console.log(`Running node: ${node.id} (${node.type})`);
     if (node.state === BFlowNodeState.SUCCESS) {
@@ -147,7 +135,7 @@ const runNode = async (session: Session, bflow: BFlow, userInput: Map<string, an
     if (node.type === BFlowNodeType.ENTRY) {
 
         for (const child of node.goto!) {
-            const state = await runNode(session, bflow, userInput, outs, child, yieldUpdate);
+            const state = await runNode(session, context, bflow, userInput, outs, child, yieldUpdate);
             if (state === BFlowNodeState.FAILURE || state === BFlowNodeState.RUNNING) {
                 node.state = state;
                 yieldUpdate({
@@ -174,7 +162,7 @@ const runNode = async (session: Session, bflow: BFlow, userInput: Map<string, an
 
     } else if (node.type === BFlowNodeType.FALLBACK) {
         for (const child of node.goto!) {
-            const status = await runNode(session, bflow, userInput, outs, child, yieldUpdate);
+            const status = await runNode(session, context, bflow, userInput, outs, child, yieldUpdate);
             if (status === BFlowNodeState.SUCCESS) {
                 node.state = BFlowNodeState.SUCCESS;
                 yieldUpdate({
@@ -221,7 +209,7 @@ const runNode = async (session: Session, bflow: BFlow, userInput: Map<string, an
     } else if (node.type === BFlowNodeType.SEQUENCE) {
         node.state = BFlowNodeState.RUNNING;
         for (const child of node.goto!) {
-            const state = await runNode(session, bflow, userInput, outs, child, yieldUpdate);
+            const state = await runNode(session, context, bflow, userInput, outs, child, yieldUpdate);
             console.log(`>>> state: ${state}`);
             if (state === BFlowNodeState.FAILURE || state === BFlowNodeState.RUNNING) {
                 node.state = state;
@@ -313,14 +301,9 @@ const runNode = async (session: Session, bflow: BFlow, userInput: Map<string, an
                 } catch (exception) {
                 }
 
-                console.log(`>>>>> userInputForCurrentNode`);
-                console.log(userInputForCurrentNode);
-
                 const canCallTool = isValidInput(requiredParameters || [], userInputForCurrentNode)
                 if (!canCallTool) {
-                    console.error(`Invalid input for tool ${mcpTool.name}. Required parameters: ${requiredParameters}`);
-                    console.log('>>> node');
-                    console.log(JSON.stringify(node, null, 2));
+
                     yieldUpdate({
                         state: 'input-required',
                         message: {
@@ -354,10 +337,6 @@ const runNode = async (session: Session, bflow: BFlow, userInput: Map<string, an
                             timeout: 3600 * 1000,
                         },
                     );
-                    console.log('>>>> callToolResult');
-                    console.log('>>> input');
-                    console.log(inputForCallTool);
-                    console.log(callToolResult);
 
                     // callTool error
                     if (callToolResult.isError) {
@@ -394,6 +373,11 @@ const runNode = async (session: Session, bflow: BFlow, userInput: Map<string, an
 
                     if (node.id) {
                         outs[node.id] = callToolResult;
+
+                        const nodeOutput = {};
+                        nodeOutput[node.id] = callToolResult;
+                        await PersistenceService.saveRunBFlowNodeOutput(context, node.id, nodeOutput);
+
                         yieldUpdate({
                             state: 'working',
                             message: {

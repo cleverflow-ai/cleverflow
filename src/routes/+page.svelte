@@ -193,13 +193,13 @@
                   onclick={() => getFileContent()}
                   disabled={session.hasRequiredConfig() ? false : true}
                   type="button"
-                  class="btn preset-filled-primary-500">Load</button
+                  class="btn preset-filled-surface-500">Load</button
                 >
                 {#if session.hasRequiredConfig() && isFileLoaded}
                   <button
                     onclick={async () => await saveFileContents()}
                     type="button"
-                    class="btn preset-filled-primary-500">Save</button
+                    class="btn preset-filled-surface-500">Save</button
                   >
                 {/if}
               {:else}
