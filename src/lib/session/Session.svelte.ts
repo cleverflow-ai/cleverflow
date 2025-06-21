@@ -5,13 +5,15 @@ export default class Session {
     id: string = crypto.randomUUID();
     checksum: string | null = null;
 
-    mcpServerUrl: string = $state("http://localhost:3000/mcp");
-    url: string = $state("https://gitea-atlascopco-integration.clevernow.com/api/v1");
-    token: string = $state("04f4b0dada8fa8632dc7541f2f2131c703693e7e");
-    branch: string = $state("main");
-    owner: string = $state("clevernow");
-    repo: string = $state("atlascopco-dasm");
-    path: string = $state("bflow/demo/simple-flow.mdoc");
+    mcpServerUrl: string = $state("");
+    url: string = $state("");
+    token: string = $state("");
+    branch: string = $state("");
+    owner: string = $state("");
+    repo: string = $state("");
+    path: string = $state("");
+
+    hashedFileContent: string | null = null;
 
     private buildHashString(): string {
         return `${this.mcpServerUrl}-${this.url}-${this.token}-${this.branch}-${this.owner}-${this.repo}-${this.path}`;
@@ -46,6 +48,10 @@ export default class Session {
         }
     }
 
+    setHashedFileContent(value: string) {
+        this.hashedFileContent = value;
+    }
+
     toJson() {
         return {
             id: this.id,
@@ -57,6 +63,7 @@ export default class Session {
             owner: this.owner,
             repo: this.repo,
             path: this.path,
+            hashedFileContent: this.hashedFileContent,
         }
     }
 }

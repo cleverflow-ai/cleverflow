@@ -40,8 +40,6 @@
   let markdocEditorElement: any;
 
   let markdoc = $state(``);
-  let isMarkdocFromGit = $state(false);
-  let originalContentChecksum: any = null;
 
   let conductorService: ConductorService | null = null;
 
@@ -64,6 +62,7 @@
         onCompleted: (result: any) => void,
         onFailed: (error: Error) => void,
       ) => {
+        session.setHashedFileContent(md5(text));
         await conductorService?.generateBFlow(
           session,
           text,
@@ -78,10 +77,8 @@
         onCompleted: (data: any) => void,
         onFailed: (error: Error) => void,
       ) => {
-        const text = markdocEditorElement.getMarkdown();
         await conductorService?.runBFlow(
           session,
-          text,
           bflow,
           onProgress,
           onCompleted,
@@ -110,10 +107,11 @@
 
     try {
       session.ensureSession();
+
       markdoc = await FileStorageService.getFileContents(session);
       markdocEditorElement.setMarkdown(markdoc);
-      isMarkdocFromGit = true;
-      originalContentChecksum = await md5(markdoc);
+
+      session.setHashedFileContent(md5(markdoc));
     } catch (exception: any) {
       gitErrorMessage = exception.message ?? "Get File Contents Error: Unknown";
     }

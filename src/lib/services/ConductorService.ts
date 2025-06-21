@@ -23,7 +23,7 @@ export default class ConductorService {
 
         const workspaceId = session.repo;
         const dataId = md5(session.path);
-        const instanceId = md5(text);
+        const instanceId = session.hashedFileContent;
         const sessionId = session.id;
 
         return new Promise((resolve) => {
@@ -67,7 +67,6 @@ export default class ConductorService {
 
     async runBFlow(
         session: Session,
-        textToBFlow: string,
         bflow: any,
         onProgress: (data: any) => void,
         onCompleted: (data: any) => void,
@@ -77,7 +76,7 @@ export default class ConductorService {
         try {
             const workspaceId = session.repo;
             const dataId = md5(session.path);
-            const instanceId = md5(textToBFlow);
+            const instanceId = session.hashedFileContent;
             const sessionId = session.id;
 
             const taskParams: TaskSendParams = {

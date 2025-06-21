@@ -5,7 +5,6 @@ import * as schema from '@cleverflow-ai/cleverflow.agents/schema';
 import _ from 'lodash';
 import Session from '../sessions/Session.js';
 import McpIO from '../mcp/McpIO.js';
-import md5 from 'md5';
 import path from "path";
 
 export async function* generateBFlow(session: Session, context: TaskContext): AsyncGenerator<TaskYieldUpdate, schema.Task | void, unknown> {
@@ -112,9 +111,6 @@ export async function* generateBFlow(session: Session, context: TaskContext): As
             }]
         }
     };
-
-
-
 }
 
 export async function* generateBFlowTest(session: Session, context: TaskContext): AsyncGenerator<TaskYieldUpdate, schema.Task | void, unknown> {
@@ -153,9 +149,10 @@ async function saveGenerateBFlow(context: TaskContext, bflow: any, bflowviz: any
             clientSession.branch &&
             clientSession.owner &&
             clientSession.repo &&
-            clientSession.path
+            clientSession.path &&
+            clientSession.hashedFileContent
         ) {
-            const instanceId = md5(new Date().toISOString());
+            const instanceId = clientSession.hashedFileContent;
             const folderPath = path.dirname(clientSession.path);
 
             await McpIO.saveFileContents(
