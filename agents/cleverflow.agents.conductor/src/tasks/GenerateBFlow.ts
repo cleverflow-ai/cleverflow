@@ -4,8 +4,7 @@ import { TaskContext, TaskYieldUpdate } from '@cleverflow-ai/cleverflow.agents/s
 import * as schema from '@cleverflow-ai/cleverflow.agents/schema';
 import _ from 'lodash';
 import Session from '../sessions/Session.js';
-import McpIO from '../mcp/McpIO.js';
-import path from "path";
+import PersistenceService from '../services/PersistenceService.js';
 
 export async function* generateBFlow(session: Session, context: TaskContext): AsyncGenerator<TaskYieldUpdate, schema.Task | void, unknown> {
 
@@ -96,7 +95,7 @@ export async function* generateBFlow(session: Session, context: TaskContext): As
         }
     };
 
-    await saveGenerateBFlow(context, bflow, bflowviz);
+    await PersistenceService.saveGenerateBFlow(context, bflow, bflowviz);
 
     yield {
         state: 'completed',
@@ -115,10 +114,10 @@ export async function* generateBFlow(session: Session, context: TaskContext): As
 
 export async function* generateBFlowTest(session: Session, context: TaskContext): AsyncGenerator<TaskYieldUpdate, schema.Task | void, unknown> {
 
-    const bflow = { "id": null, "name": "MCP IO", "description": " ", "root": { "type": "SEQUENCE", "id": "cleverflow-mcp-a2a", "name": "MCP Flow", "description": null, "config": null, "state": null, "goto": [{ "type": "ACTION", "id": "action_1", "name": "Fetch File from Gitea", "description": "Fetching README.md file in repo atlascopco-dasm which onwed by clevernow from url https://gitea-atlascopco-integration.clevernow.com/api/v1 with key 04f4b0dada8fa8632dc7541f2f2131c703693e7e", "config": null, "state": null, "goto": [], "tool": { "name": "get_file_contents", "description": "Tool fetch-gitea-text-file from MCP client", "inputSchema": { "required": ["baseUrl", "apiKey", "repoOwner", "repo", "filePath"] } }, "toolInput": "{\"baseUrl\": \"https://gitea-atlascopco-integration.clevernow.com/api/v2\", \"apiKey\": \"04f4b0dada8fa8632dc7541f2f2131c703693e7e_\", \"repoOwner\": \"clevernow\", \"repo\": \"atlascopco-dasm\", \"filePath\": \"README.md\"}", "inputs": null, "output": null }, { "type": "ACTION", "id": "action_2", "name": "Fetch Outline File", "description": "Fetching a outline file by id sealing-technologies-rrOT5m2iSz from https://docs-atlascopco.clevernow.com/api with key ol_api_qHHZcDQ8EKJfx9tKwbi7E2zeT30Rnx5bq1uMfO", "config": null, "state": null, "goto": [], "tool": { "name": "fetch-outline-text-file", "description": "Tool fetch-outline-text-file from MCP client", "inputSchema": { "required": ["fileId", "baseUrl", "apiKey"] } }, "toolInput": "{\"baseUrl\": \"https://docs-atlascopco.clevernow.com/api\", \"apiKey\": \"ol_api_qHHZcDQ8EKJfx9tKwbi7E2zeT30Rnx5bq1uMfO\", \"fileId\": \"sealing-technologies-rrOT5m2iSz\"}", "inputs": null, "output": null }, { "type": "ACTION", "id": "action_3", "name": "Convert Steps to GLB", "description": "Convert a steps file to glb, some information may be required", "config": null, "state": null, "goto": [], "tool": { "name": "ping", "description": "Tool ping from MCP client", "inputSchema": { "required": [] } }, "toolInput": null, "inputs": null, "output": null }], "tool": null, "toolInput": null, "inputs": null, "output": null } };
-    const bflowviz = { "nodes": [{ "type": "SEQUENCE", "id": "cleverflow-mcp-a2a", "parentNodeId": null, "name": "MCP Flow", "description": null, "config": null, "tool": null }, { "type": "ACTION", "id": "action_1", "parentNodeId": "cleverflow-mcp-a2a", "name": "Fetch File from Gitea", "description": "Fetching README.md file in repo atlascopco-dasm which onwed by clevernow from https://gitea-atlascopco-integration.clevernow.com/api/v1 with key 04f4b0dada8fa8632dc7541f2f2131c703693e7e", "config": null, "tool": { "name": "get_file_contents", "description": "Tool fetch-gitea-text-file from MCP client", "inputSchema": { "required": ["baseUrl", "apiKey", "repoOwner", "repo", "filePath"] } } }, { "type": "ACTION", "id": "action_2", "parentNodeId": "cleverflow-mcp-a2a", "name": "Fetch Outline File", "description": "Fetching a outline file by id sealing-technologies-rrOT5m2iSz from https://docs-atlascopco.clevernow.com/api with key ol_api_qHHZcDQ8EKJfx9tKwbi7E2zeT30Rnx5bq1uMfO", "config": null, "tool": { "name": "fetch-outline-text-file", "description": "Tool fetch-outline-text-file from MCP client", "inputSchema": { "required": ["fileId", "baseUrl", "apiKey"] } } }, { "type": "ACTION", "id": "action_3", "parentNodeId": "cleverflow-mcp-a2a", "name": "Convert Steps to GLB", "description": "Convert a steps file to glb, some information may be required", "config": null, "tool": { "name": "ping", "description": "Tool ping from MCP client", "inputSchema": { "required": [] } } }], "edges": [{ "id": "0a1b2c3d4e5", "source": "cleverflow-mcp-a2a", "target": "action_1" }, { "id": "1a2b3c4d5e6", "source": "cleverflow-mcp-a2a", "target": "action_2" }, { "id": "2a3b4c5d6e7", "source": "cleverflow-mcp-a2a", "target": "action_3" }] };
+    const bflow = { "id": null, "name": "MCP IO", "description": " ", "root": { "type": "SEQUENCE", "id": "cleverflow-mcp-a2a", "name": "MCP Flow", "description": null, "config": null, "state": null, "goto": [{ "type": "ACTION", "id": "action_1", "name": "Fetch File from Gitea", "description": "Fetching README.md file in repo atlascopco-dasm which onwed by clevernow from url https://gitea-atlascopco-integration.clevernow.com/api/v1 with key 04f4b0dada8fa8632dc7541f2f2131c703693e7e", "config": null, "state": null, "goto": [], "tool": { "name": "get_file_contents", "description": "Tool fetch-gitea-text-file from MCP client", "inputSchema": { "required": ["baseUrl", "apiKey", "repoOwner", "repo", "filePath"] } }, "toolInput": "{\"baseUrl\": \"https://gitea-atlascopco-integration.clevernow.com/api/v2\", \"apiKey\": \"04f4b0dada8fa8632dc7541f2f2131c703693e7e_\", \"repoOwner\": \"clevernow\", \"repo\": \"atlascopco-dasm\", \"filePath\": \"README.md\"}", "inputs": null, "output": null }, { "type": "ACTION", "id": "action_2", "name": "Fetch Outline File", "description": "Fetching a outline file by id sealing-technologies-rrOT5m2iSz from https://docs-atlascopco.clevernow.com/api with key ol_api_qHHZcDQ8EKJfx9tKwbi7E2zeT30Rnx5bq1uMfO", "config": null, "state": null, "goto": [], "tool": { "name": "fetch-outline-text-file", "description": "Tool fetch-outline-text-file from MCP client", "inputSchema": { "required": ["fileId", "baseUrl", "apiKey"] } }, "toolInput": "{\"baseUrl\": \"https://docs-atlascopco.clevernow.com/api\", \"apiKey\": \"ol_api_qHHZcDQ8EKJfx9tKwbi7E2zeT30Rnx5bq1uMfO\", \"fileId\": \"sealing-technologies-rrOT5m2iSz\"}", "inputs": null, "output": null }, { "type": "ACTION", "id": "action_3", "name": "Convert Steps to GLB", "description": "Convert a steps file to glb, some information may be required", "config": null, "state": null, "goto": [], "tool": null, "toolInput": null, "inputs": null, "output": null }], "tool": null, "toolInput": null, "inputs": null, "output": null } };
+    const bflowviz = { "nodes": [{ "type": "SEQUENCE", "id": "cleverflow-mcp-a2a", "parentNodeId": null, "name": "MCP Flow", "description": null, "config": null, "tool": null }, { "type": "ACTION", "id": "action_1", "parentNodeId": "cleverflow-mcp-a2a", "name": "Fetch File from Gitea", "description": "Fetching README.md file in repo atlascopco-dasm which onwed by clevernow from https://gitea-atlascopco-integration.clevernow.com/api/v1 with key 04f4b0dada8fa8632dc7541f2f2131c703693e7e", "config": null, "tool": { "name": "get_file_contents", "description": "Tool fetch-gitea-text-file from MCP client", "inputSchema": { "required": ["baseUrl", "apiKey", "repoOwner", "repo", "filePath"] } } }, { "type": "ACTION", "id": "action_2", "parentNodeId": "cleverflow-mcp-a2a", "name": "Fetch Outline File", "description": "Fetching a outline file by id sealing-technologies-rrOT5m2iSz from https://docs-atlascopco.clevernow.com/api with key ol_api_qHHZcDQ8EKJfx9tKwbi7E2zeT30Rnx5bq1uMfO", "config": null, "tool": { "name": "fetch-outline-text-file", "description": "Tool fetch-outline-text-file from MCP client", "inputSchema": { "required": ["fileId", "baseUrl", "apiKey"] } } }, { "type": "ACTION", "id": "action_3", "parentNodeId": "cleverflow-mcp-a2a", "name": "Convert Steps to GLB", "description": "Convert a steps file to glb, some information may be required", "config": null, "tool": null }], "edges": [{ "id": "0a1b2c3d4e5", "source": "cleverflow-mcp-a2a", "target": "action_1" }, { "id": "1a2b3c4d5e6", "source": "cleverflow-mcp-a2a", "target": "action_2" }, { "id": "2a3b4c5d6e7", "source": "cleverflow-mcp-a2a", "target": "action_3" }] };
 
-    await saveGenerateBFlow(context, bflow, bflowviz);
+    await PersistenceService.saveGenerateBFlow(context, bflow, bflowviz);
 
     yield {
         state: 'completed',
@@ -133,49 +132,4 @@ export async function* generateBFlowTest(session: Session, context: TaskContext)
             }]
         }
     };
-}
-
-
-async function saveGenerateBFlow(context: TaskContext, bflow: any, bflowviz: any): Promise<void> {
-    try {
-        const clientSession: any = context.userMessage.metadata?.session;
-        console.log('>>>> clientSession');
-        console.log(clientSession);
-
-        if (
-            clientSession &&
-            clientSession.url &&
-            clientSession.token &&
-            clientSession.branch &&
-            clientSession.owner &&
-            clientSession.repo &&
-            clientSession.path &&
-            clientSession.hashedFileContent
-        ) {
-            const instanceId = clientSession.hashedFileContent;
-            const folderPath = path.dirname(clientSession.path);
-
-            await McpIO.saveFileContents(
-                clientSession.url,
-                clientSession.token,
-                clientSession.branch,
-                clientSession.owner,
-                clientSession.repo,
-                `${folderPath}/${instanceId}.bflow.json`,
-                JSON.stringify(bflow),
-            );
-
-            await McpIO.saveFileContents(
-                clientSession.url,
-                clientSession.token,
-                clientSession.branch,
-                clientSession.owner,
-                clientSession.repo,
-                `${folderPath}/${instanceId}.bflowviz.json`,
-                JSON.stringify(bflowviz),
-            );
-        }
-    } catch (exception) {
-        console.error(exception);
-    }
 }

@@ -4,6 +4,7 @@ import _ from 'lodash';
 import { BFlow, BFlowNode, BFlowNodeState, BFlowNodeType } from '../baml_client/types.js';
 import { z } from "zod";
 import Session from '../sessions/Session.js';
+import PersistenceService from '../services/PersistenceService.js';
 
 export async function* runBFlow(session: Session, context: TaskContext): AsyncGenerator<TaskYieldUpdate, schema.Task | void, unknown> {
 
@@ -66,6 +67,9 @@ export async function* runBFlow(session: Session, context: TaskContext): AsyncGe
                     queue.push(taskYieldUpdate);
                 }
             );
+
+            console.log(`>>> result: ${result}`);
+
             if (result === BFlowNodeState.SUCCESS) {
                 queue.push({
                     state: 'completed',
@@ -114,6 +118,11 @@ export async function* runBFlow(session: Session, context: TaskContext): AsyncGe
             continue;
         }
         const taskYieldUpdate = queue.shift();
+
+        if (taskYieldUpdate.state === 'completed') {
+            await PersistenceService.saveRunBFlow(context, outs);
+        }
+
         yield taskYieldUpdate;
         if (['input-required', 'completed', 'failed'].includes(taskYieldUpdate.state)) {
             isDone = true;
@@ -127,7 +136,7 @@ function sleep(ms) {
     return new Promise(resolve => setTimeout(resolve, ms));
 }
 
-// bflow, userInput, outs, node
+
 const runNode = async (session: Session, bflow: BFlow, userInput: Map<string, any>, outs: Map<string, any>, node: BFlowNode, yieldUpdate: (taskYieldUpdate: TaskYieldUpdate) => void): Promise<BFlowNodeState> => {
 
     console.log(`Running node: ${node.id} (${node.type})`);
@@ -474,16 +483,11 @@ const extractData = (context: TaskContext) => {
         const latestBflowEntry = [...context.history].reverse().find(entry =>
             entry.role === 'user' && entry.parts.some(part => part.type === 'data' && part.data && part.data.bflow)
         );
-        console.log('>>>>>> latestBflowEntry');
-        console.log(latestBflowEntry);
 
         if (latestBflowEntry) {
             bflowPart = latestBflowEntry.parts.find((part) => {
                 return part.type === 'data' && part.data && part.data.bflow;
             });
-
-            console.log('>>>>> bflowPart');
-            console.log(bflowPart);
         }
     }
 

@@ -16,7 +16,7 @@ export default class Session {
     hashedFileContent: string | null = null;
 
     private buildHashString(): string {
-        return `${this.mcpServerUrl}-${this.url}-${this.token}-${this.branch}-${this.owner}-${this.repo}-${this.path}`;
+        return `${this.mcpServerUrl}-${this.url}-${this.token}-${this.branch}-${this.owner}-${this.repo}-${this.path}-${this.hashedFileContent}`;
     }
 
     private computeChecksum(): string {
