@@ -77,6 +77,7 @@ export default class BFlowController {
     }
 
     setState(state: BFLowState) {
+        console.log('>>> setState: ', state);
         this.state = state;
         this.stateKey += 1;
     }
@@ -111,7 +112,7 @@ export default class BFlowController {
                     this.text,
                     (state: string) => {
                         if (state in BFLowState) {
-                            const bflowState = BFLowState[text as keyof typeof BFLowState];
+                            const bflowState = BFLowState[state as keyof typeof BFLowState];
                             this.setState(bflowState);
                         }
                     },
@@ -129,6 +130,7 @@ export default class BFlowController {
                         }
                     },
                     (error: Error) => {
+                        console.log('>>>>> on Failed');
                         console.error("Failed to convert text to BFlow:", error);
                         this.setState(BFLowState.CONVERT_MARKDOC_ELEMENT_TO_BFLOW_FAILED);
                         addToast("Failed to convert text to BFlow", ToastType.ERROR);

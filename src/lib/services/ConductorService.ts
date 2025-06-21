@@ -36,9 +36,9 @@ export default class ConductorService {
                         type: 'text',
                         text: text ?? ''
                     }],
-                },
-                metadata: {
-                    session
+                    metadata: {
+                        session: session.toJson(),
+                    },
                 },
             };
             this.conductorClient?.sendTask(taskParams, (state: TaskState, event: Task) => {
@@ -91,6 +91,9 @@ export default class ConductorService {
                             bflow: bflow,
                         },
                     }],
+                    metadata: {
+                        session: session.toJson(),
+                    },
                 },
             };
             this.conductorClient?.sendTask(taskParams, (state: TaskState, event: Task) => {

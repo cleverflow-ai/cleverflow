@@ -118,6 +118,8 @@
       gitErrorMessage = exception.message ?? "Get File Contents Error: Unknown";
     }
     isLoadingFileContent = false;
+
+    console.log(session);
   };
 
   const saveFileContents = async () => {
@@ -126,40 +128,6 @@
     const result = await FileStorageService.saveFileContents(session, markdoc);
     console.log(`>>>> result: ${result}`);
   };
-
-  // const onBFlowLoaded = async (bflow: any) => {
-  //   if (!gitService.path) {
-  //     return;
-  //   }
-  //   const instanceId = md5(markdoc);
-  //   const parts = session.path?.split("/");
-  //   if (parts.length > 1) {
-  //     parts.pop();
-  //   }
-
-  //   const path = parts.join("/") || "/";
-  //   await GitService.saveFileContents(
-  //     JSON.stringify(bflow),
-  //     `${path}/${instanceId}.bflow.json`,
-  //   );
-  // };
-
-  // const onBFlowVizLoaded = async (bflowviz: any) => {
-  //   if (!gitService.path) {
-  //     return;
-  //   }
-  //   const instanceId = md5(markdoc);
-  //   const parts = gitService.path?.split("/");
-  //   if (parts.length > 1) {
-  //     parts.pop();
-  //   }
-
-  //   const path = parts.join("/") || "/";
-  //   await gitService.saveFileContents(
-  //     JSON.stringify(bflowviz),
-  //     `${path}/${instanceId}.bflowviz.json`,
-  //   );
-  // };
 </script>
 
 <main class="w-full h-screen">

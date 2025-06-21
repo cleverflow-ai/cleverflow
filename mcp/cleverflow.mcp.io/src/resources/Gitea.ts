@@ -4,13 +4,18 @@ export default class Gitea {
 
     public async fetchFileContent(branch: string, owner: string, repo: string, path: string): Promise<string | Array<any> | null> {
 
-        const result = await this.fetchFile(branch, owner, repo, path);
+        try {
+            const result = await this.fetchFile(branch, owner, repo, path);
 
-        if (Array.isArray(result)) {
-            return result;
-        } else if (result.content) {
-            return Buffer.from(result.content, "base64").toString("utf-8");
+            if (Array.isArray(result)) {
+                return result;
+            } else if (result.content) {
+                return Buffer.from(result.content, "base64").toString("utf-8");
+            }
+        } catch (exception) {
+            console.log(exception);
         }
+
         return null;
     }
 
@@ -70,7 +75,8 @@ export default class Gitea {
         });
 
         if (!response.ok) {
-            throw new Error(`Failed to fetch gitea file content: ${response.statusText}`);
+            console.log(response);
+            return null;
         }
         return await response.json();
     }
