@@ -164,7 +164,7 @@ function registerTools(server: McpServer) {
     );
 
     server.tool(
-        "update_file_contents",
+        "save_file_contents",
         {
             url: z.string(),
             token: z.string(),
@@ -201,7 +201,7 @@ function registerTools(server: McpServer) {
             } else {
                 try {
                     const gitea = new Gitea(url, token);
-                    isSuccessful = await gitea.updateFileContent(branch, owner, repo, path, content);
+                    isSuccessful = await gitea.saveFileContent(branch, owner, repo, path, content);
                 } catch (exception) {
                     return {
                         error: {

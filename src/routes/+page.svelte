@@ -13,11 +13,12 @@
   import { onMount } from "svelte";
   import MarkdocRendererController from "@cleverflow-ai/cleverflow.core.frontend/webcomponents/markdoc-renderer-controller.js";
   // import GitBrowser from "$lib/components/GitBrowser.svelte";
-  import GitSettings from "$lib/components/GitSettings.svelte";
-  import GitService from "$lib/services/GitService.svelte.js";
+  import Settings from "$lib/components/Settings.svelte";
+  import FileStorageService from "$lib/services/FileStorageService.js";
+  import ConductorService from "$lib/services/ConductorService";
   import LoadingIndicator from "$lib/components/LoadingIndicator.svelte";
-
-  const conductorServerUrl = import.meta.env.VITE_A2A_CONDUCTOR_SERVER;
+  import md5 from "md5";
+  import Session from "$lib/session/Session.svelte";
 
   const currentTheme = "crimson";
 
@@ -25,8 +26,10 @@
 
   let tab: TabType = $state<TabType>("workspace");
 
-  let gitService: GitService = new GitService();
-  let isGitServiceUnavailable = $state(false);
+  const session = new Session();
+
+  let isFileLoaded = $state(false);
+  let hasRequiredConfig = $state(true);
   let gitErrorMessage = $state("");
   let isLoadingFileContent = $state(false);
 
@@ -38,7 +41,9 @@
 
   let markdoc = $state(``);
   let isMarkdocFromGit = $state(false);
-  let originalContentSHA1: any = null;
+  let originalContentChecksum: any = null;
+
+  let conductorService: ConductorService | null = null;
 
   onMount(async () => {
     await import(
@@ -48,8 +53,41 @@
       "@cleverflow-ai/cleverflow.core.frontend/webcomponents/markdoc-renderer.js"
     );
 
+    conductorService = new ConductorService(
+      import.meta.env.VITE_A2A_CONDUCTOR_SERVER,
+    );
+
     markdocRendererController = new MarkdocRendererController(
-      conductorServerUrl,
+      async (
+        text: string,
+        onProgress: (state: string) => void,
+        onCompleted: (result: any) => void,
+        onFailed: (error: Error) => void,
+      ) => {
+        await conductorService?.generateBFlow(
+          session,
+          text,
+          onProgress,
+          onCompleted,
+          onFailed,
+        );
+      },
+      async (
+        bflow: any,
+        onProgress: (data: any) => void,
+        onCompleted: (data: any) => void,
+        onFailed: (error: Error) => void,
+      ) => {
+        const text = markdocEditorElement.getMarkdown();
+        await conductorService?.runBFlow(
+          session,
+          text,
+          bflow,
+          onProgress,
+          onCompleted,
+          onFailed,
+        );
+      },
     );
 
     markdocRendererController.setMarkdoc(markdoc);
@@ -63,18 +101,19 @@
 
   const getFileContent = async () => {
     isLoadingFileContent = true;
-    isGitServiceUnavailable = false;
-    if (!gitService.isReady()) {
-      isGitServiceUnavailable = true;
+    hasRequiredConfig = true;
+    if (!session.hasRequiredConfig()) {
+      hasRequiredConfig = false;
       isLoadingFileContent = false;
       return;
     }
 
     try {
-      markdoc = await gitService.getFileContents();
+      session.ensureSession();
+      markdoc = await FileStorageService.getFileContents(session);
       markdocEditorElement.setMarkdown(markdoc);
       isMarkdocFromGit = true;
-      originalContentSHA1 = await sha1(markdoc);
+      originalContentChecksum = await md5(markdoc);
     } catch (exception: any) {
       gitErrorMessage = exception.message ?? "Get File Contents Error: Unknown";
     }
@@ -84,23 +123,43 @@
   const saveFileContents = async () => {
     markdoc = markdocEditorElement.getMarkdown();
     console.log(markdoc);
-    const result = await gitService.saveFileContents(markdoc);
+    const result = await FileStorageService.saveFileContents(session, markdoc);
     console.log(`>>>> result: ${result}`);
   };
 
-  const hasFileChanged = async () => {
-    const fileContentSHA1 = await sha1(markdoc);
-    return fileContentSHA1 !== originalContentSHA1;
-  };
+  // const onBFlowLoaded = async (bflow: any) => {
+  //   if (!gitService.path) {
+  //     return;
+  //   }
+  //   const instanceId = md5(markdoc);
+  //   const parts = session.path?.split("/");
+  //   if (parts.length > 1) {
+  //     parts.pop();
+  //   }
 
-  const sha1 = async (content: string) => {
-    const encoder = new TextEncoder();
-    const data = encoder.encode(content);
-    const hashBuffer = await crypto.subtle.digest("SHA-1", data);
-    return [...new Uint8Array(hashBuffer)]
-      .map((b) => b.toString(16).padStart(2, "0"))
-      .join("");
-  };
+  //   const path = parts.join("/") || "/";
+  //   await GitService.saveFileContents(
+  //     JSON.stringify(bflow),
+  //     `${path}/${instanceId}.bflow.json`,
+  //   );
+  // };
+
+  // const onBFlowVizLoaded = async (bflowviz: any) => {
+  //   if (!gitService.path) {
+  //     return;
+  //   }
+  //   const instanceId = md5(markdoc);
+  //   const parts = gitService.path?.split("/");
+  //   if (parts.length > 1) {
+  //     parts.pop();
+  //   }
+
+  //   const path = parts.join("/") || "/";
+  //   await gitService.saveFileContents(
+  //     JSON.stringify(bflowviz),
+  //     `${path}/${instanceId}.bflowviz.json`,
+  //   );
+  // };
 </script>
 
 <main class="w-full h-screen">
@@ -150,7 +209,7 @@
         <Tabs.Panel value="workspace" base="my-4 h-full">
           <div class="w-full h-full">
             <!-- <GitBrowser></GitBrowser> -->
-            <GitSettings {gitService}></GitSettings>
+            <Settings {session}></Settings>
           </div>
         </Tabs.Panel>
         <Tabs.Panel value="editor" base="my-4 h-full">
@@ -160,45 +219,46 @@
               <div class="text-sm font-medium">File Path</div>
               <input
                 type="text"
-                bind:value={gitService.path}
+                bind:value={session.path}
                 class="flex-1 border px-2 py-1"
               />
               {#if !isLoadingFileContent}
                 <button
                   onclick={() => getFileContent()}
-                  disabled={gitService.path ? false : true}
+                  disabled={session.hasRequiredConfig() ? false : true}
                   type="button"
                   class="btn preset-filled-primary-500">Load</button
                 >
-                <button
-                  onclick={async () => await saveFileContents()}
-                  disabled={gitService.path ? false : true}
-                  type="button"
-                  class="btn preset-filled-primary-500">Save</button
-                >
+                {#if session.hasRequiredConfig() && isFileLoaded}
+                  <button
+                    onclick={async () => await saveFileContents()}
+                    type="button"
+                    class="btn preset-filled-primary-500">Save</button
+                  >
+                {/if}
               {:else}
                 <div>
                   <LoadingIndicator size={30}></LoadingIndicator>
                 </div>
               {/if}
             </div>
-            {#if isGitServiceUnavailable || gitErrorMessage}
+            {#if !hasRequiredConfig || gitErrorMessage}
               <div
                 class="items-center gap-3 flex justify-center items-center text-warning-500"
               >
                 <TriangleAlert class="w-7 h-7" />
                 <div>
-                  {#if isGitServiceUnavailable}
-                    <p>Git service is not available.</p>
+                  {#if !hasRequiredConfig}
+                    <p>Missing required configuration.</p>
                   {:else}
                     <p>{gitErrorMessage}</p>
                   {/if}
                 </div>
-                {#if isGitServiceUnavailable}
+                {#if !hasRequiredConfig}
                   <button
                     onclick={() => (tab = "workspace")}
                     type="button"
-                    class="btn preset-tonal-surface">Go to setting</button
+                    class="btn preset-tonal-surface">Config</button
                   >
                 {/if}
               </div>

@@ -45,6 +45,9 @@ export async function* generateJsonForm(session: Session, context: TaskContext):
 
     const inputSchema = dataPart.data.inputSchema;
 
+    console.log('>>> inputSchema');
+    console.log(inputSchema);
+
     const jsonForm = await b.ConvertToJsonForm(
         JSON.stringify(inputSchema),
         {

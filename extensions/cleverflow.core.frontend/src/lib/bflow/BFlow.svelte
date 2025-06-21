@@ -62,7 +62,7 @@
 		try {
 			const isConnected = await controller.connect();
 			if (isConnected) {
-				await controller.generateBFlow(text);
+				await controller.ensureBFlow(text);
 			}
 		} catch (exception: any) {
 			console.error(exception);
@@ -70,7 +70,7 @@
 	};
 
 	const reload = async () => {
-		await controller.generateBFlow(text);
+		await controller.ensureBFlow(text);
 	};
 </script>
 
@@ -95,7 +95,7 @@
 			Running
 		</button>
 		<!-- <button
-			onclick={async () => await controller.runBFlow()}
+			onclick={async () => await controller.executeBFlow()}
 			class="btn preset-filled-success-500"
 		>
 			<Flame class="text-white-700 w-5 h-5" />
@@ -103,7 +103,7 @@
 		</button> -->
 	{:else if controller.state === BFLowState.RUN_BFLOW_SUCCESS}
 		<button
-			onclick={async () => await controller.runBFlow()}
+			onclick={async () => await controller.executeBFlow()}
 			class="btn preset-filled-success-500"
 		>
 			<Flame class="text-white-700 w-5 h-5" />
@@ -111,7 +111,7 @@
 		</button>
 	{:else if controller.state === BFLowState.RUN_BFLOW_FAILED}
 		<button
-			onclick={async () => await controller.runBFlow()}
+			onclick={async () => await controller.executeBFlow()}
 			class="btn preset-filled-error-500"
 		>
 			<Flame class="text-white-700 w-5 h-5" />
@@ -119,7 +119,7 @@
 		</button>
 	{:else}
 		<button
-			onclick={async () => await controller.runBFlow()}
+			onclick={async () => await controller.executeBFlow()}
 			class="btn preset-filled-primary-500"
 		>
 			<Flame class="text-white-700 w-5 h-5" />

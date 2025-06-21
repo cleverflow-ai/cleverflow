@@ -5,17 +5,46 @@ import * as MarkdocNodeUtil from '../../common/utils/MarkdocNodeUtil.js';
 
 export default class MarkdocRendererController {
 
-    conductorServerUrl: string;
+    // SMELL
+    private generateBFlow: (
+        text: string,
+        onProgress: (state: string) => void,
+        onCompleted: (result: any) => void,
+        onFailed: (error: Error) => void,
+    ) => Promise<void>;
+
+    // SMELL
+    private runBFlow: (
+        bflow: any,
+        onProgress: (data: any) => void,
+        onCompleted: (data: any) => void,
+        onFailed: (error: Error) => void,
+    ) => Promise<void>;
 
     markdoc: string | undefined = $state("");
     frontMatter: string = '';
     ast: any = $state(null);
     astContent: any = $state(null);
+
     bflowControllers: Map<string, BFlowController> = new Map();
 
-    constructor(conductorServerUrl: string) {
-        this.conductorServerUrl = conductorServerUrl;
-    }
+    constructor(
+        generateBFlow: (
+            text: string,
+            onProgress: (state: string) => void,
+            onCompleted: (result: any) => void,
+            onFailed: (error: Error) => void,
+        ) => Promise<void>,
+        runBFlow: (
+            bflow: any,
+            onProgress: (data: any) => void,
+            onCompleted: (data: any) => void,
+            onFailed: (error: Error) => void,
+        ) => Promise<void>
+    ) {
+        this.generateBFlow = generateBFlow;
+        this.runBFlow = runBFlow;
+    };
 
     setMarkdoc(markdoc: string) {
         this.markdoc = markdoc;
@@ -56,8 +85,10 @@ export default class MarkdocRendererController {
         if (!this.bflowControllers.has(bflowId)) {
 
             const bflowController = new BFlowController(
-                this.conductorServerUrl,
+                this.generateBFlow,
+                this.runBFlow,
             );
+
             this.bflowControllers.set(bflowId, bflowController);
         }
 

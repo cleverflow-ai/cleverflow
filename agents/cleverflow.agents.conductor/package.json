@@ -18,7 +18,7 @@
     "@cleverflow-ai/cleverflow.agents": "file:../cleverflow.agents",
     "@cleverflow-ai/cleverflow.core": "file:../../extensions/cleverflow.core",
     "@cleverflow-ai/cleverflow.mcp": "file:../../mcp/cleverflow.mcp",
-    "@boundaryml/baml": "^0.90.0",
+    "@boundaryml/baml": "^0.90.1",
     "dotenv-expand": "^12.0.2",
     "dotenv-flow": "^4.1.0",
     "gray-matter": "^4.0.3",

@@ -11,9 +11,14 @@ export async function* handleTask(context: TaskContext): AsyncGenerator<TaskYiel
 
     const taskId = context.task.id;
     console.log(taskId);
-    const [dataId, sessionId, task] = taskId.split('|');
 
-    console.log(`Handling task: ${task}, session: ${sessionId}`);
+    const [workspaceId, dataId, instanceId, sessionId, task] = taskId.split('|');
+    console.log('workspaceId: ', workspaceId);
+    console.log('dataId: ', dataId);
+    console.log('instanceId: ', instanceId);
+    console.log('sessionId: ', sessionId);
+    console.log('task: ', task);
+
     let session: Session;
     switch (task) {
         case TASKS.GENERATE_BFLOW:
@@ -27,8 +32,8 @@ export async function* handleTask(context: TaskContext): AsyncGenerator<TaskYiel
                 return;
             }
 
-            return yield* generateBFlow(session, context);
-        // return yield* generateBFlowTest(session, context);
+            // return yield* generateBFlow(session, context);
+            return yield* generateBFlowTest(session, context);
         case TASKS.RUN_BFLOW:
             session = sessionsManager.getSession(sessionId);
             if (!session) {

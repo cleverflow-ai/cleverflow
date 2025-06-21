@@ -14,32 +14,47 @@ export default class Gitea {
         return null;
     }
 
-    public async updateFileContent(branch: string, owner: string, repo: string, path: string, content: string): Promise<boolean> {
+    public async saveFileContent(branch: string, owner: string, repo: string, path: string, content: string): Promise<boolean> {
 
         const currentFile = await this.fetchFile(branch, owner, repo, path);
         if (currentFile == null) {
-            throw new Error('File was not found');
+            let url = `${this.url}/repos/${owner}/${repo}/contents/${path}?token=${this.token}`;
+            if (branch) {
+                url += `&ref=${branch}`;
+            }
+            const base64Content = Buffer.from(content, "utf-8").toString("base64");
+
+            const response = await fetch(url, {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                },
+                body: JSON.stringify({
+                    content: base64Content,
+                    message: `Not given`,
+                }),
+            });
+            return response.ok;
+        } else {
+            let url = `${this.url}/repos/${owner}/${repo}/contents/${path}?token=${this.token}`;
+            if (branch) {
+                url += `&ref=${branch}`;
+            }
+            const base64Content = Buffer.from(content, "utf-8").toString("base64");
+
+            const response = await fetch(url, {
+                method: "PUT",
+                headers: {
+                    "Content-Type": "application/json",
+                },
+                body: JSON.stringify({
+                    content: base64Content,
+                    message: `Not given`,
+                    sha: currentFile.sha,
+                }),
+            });
+            return response.ok;
         }
-
-        let url = `${this.url}/repos/${owner}/${repo}/contents/${path}?token=${this.token}`;
-        if (branch) {
-            url += `&ref=${branch}`;
-        }
-        const base64Content = Buffer.from(content, "utf-8").toString("base64");
-
-        const response = await fetch(url, {
-            method: "PUT",
-            headers: {
-                "Content-Type": "application/json",
-            },
-            body: JSON.stringify({
-                content: base64Content,
-                message: `Not given`,
-                sha: currentFile.sha, // nếu đang update file qua GitHub API
-            }),
-        });
-
-        return response.ok;
     }
 
     private async fetchFile(branch: string, owner: string, repo: string, path: string): Promise<any> {

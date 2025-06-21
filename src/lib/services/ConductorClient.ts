@@ -8,7 +8,7 @@ import type {
 } from "@cleverflow-ai/cleverflow.agents/schema";
 import _ from 'lodash';
 
-export class InteractiveClient {
+export class ConductorClient {
     private client: A2AClient;
 
     public callbacks = new Map<string, (state: TaskState, task: Task) => void>();
@@ -62,10 +62,9 @@ export class InteractiveClient {
         if (!inputSchema) {
             return;
         }
-
-        const [dataId, sessionId] = inputRequiredEvent.id.split('|');
+        const [workspaceId, dataId, instanceId, sessionId, task] = inputRequiredEvent.id.split('|');
         const taskParams: TaskSendParams = {
-            id: `${dataId}|${sessionId}|generate-json-form`,
+            id: `${workspaceId}|${dataId}|${instanceId}|${sessionId}|generate-json-form`,
             message: {
                 role: "user",
                 parts: [
