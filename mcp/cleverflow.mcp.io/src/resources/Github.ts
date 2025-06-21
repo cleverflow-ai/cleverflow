@@ -49,6 +49,9 @@ export default class Github {
             },
         );
 
+        console.log('>>>>>> callToolResult');
+        console.log(JSON.stringify(callToolResult));
+
         const content =
             callToolResult.content &&
                 Array.isArray(callToolResult.content) &&
@@ -87,6 +90,47 @@ export default class Github {
             }
         }
         return null;
+    }
+
+    // TODO: how to get a file SHA for updating
+    public async createOrUpdateFile(branch: string, owner: string, repo: string, path: string, fileContent: string, message: string | null): Promise<any> {
+
+        const isFile = this.isPathFile(path);
+        if (!isFile) {
+            return;
+        }
+
+        await this.createClient();
+
+        const callToolResult = await this.client.callTool(
+            {
+                name: "create_or_update_file",
+                arguments: {
+                    branch,
+                    owner,
+                    repo,
+                    path,
+                    content: fileContent,
+                    message: message ?? 'Not given',
+                },
+            },
+            z.any(),
+            {
+                timeout: 3600 * 1000,
+            },
+        );
+
+        const content =
+            callToolResult.content &&
+                Array.isArray(callToolResult.content) &&
+                callToolResult.content.length > 0
+                ? callToolResult.content
+                : null;
+
+        if (!content) {
+            return false;
+        }
+        return true;
     }
 
     private async createMcpClient(serverUrl: string, name: string, version: string, token: string): Promise<Client> {

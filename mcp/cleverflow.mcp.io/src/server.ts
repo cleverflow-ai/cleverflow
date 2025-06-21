@@ -187,17 +187,16 @@ function registerTools(server: McpServer) {
             let isSuccessful: any;
 
             if (url === Github.McpServerUrl) {
-                // TODO:
-                // try {
-                //     const github = new Github(token);
-                //     result = await github.fetch(branch, owner, repo, path);
-                // } catch (exception: any) {
-                //     return {
-                //         error: {
-                //             message: exception.message,
-                //         },
-                //     };
-                // }
+                try {
+                    const github = new Github(token);
+                    await github.createOrUpdateFile(branch, owner, repo, path, content, null);
+                } catch (exception: any) {
+                    return {
+                        error: {
+                            message: exception.message,
+                        },
+                    };
+                }
             } else {
                 try {
                     const gitea = new Gitea(url, token);
