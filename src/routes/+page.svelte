@@ -19,6 +19,7 @@
   import LoadingIndicator from "$lib/components/LoadingIndicator.svelte";
   import md5 from "md5";
   import Session from "$lib/session/Session.svelte";
+  import { toaster } from "$lib/components/Toast.js";
 
   const currentTheme = "crimson";
 
@@ -112,19 +113,33 @@
       markdocEditorElement.setMarkdown(markdoc);
 
       session.setHashedFileContent(md5(markdoc));
+      isFileLoaded = true;
     } catch (exception: any) {
       gitErrorMessage = exception.message ?? "Get File Contents Error: Unknown";
     }
     isLoadingFileContent = false;
 
-    console.log(session);
+    toaster.success({
+      title: "File loaded successfully.",
+    });
   };
 
   const saveFileContents = async () => {
+    isLoadingFileContent = true;
     markdoc = markdocEditorElement.getMarkdown();
     console.log(markdoc);
     const result = await FileStorageService.saveFileContents(session, markdoc);
-    console.log(`>>>> result: ${result}`);
+    if (result) {
+      toaster.success({
+        title: "File saved successfully.",
+      });
+    } else {
+      toaster.warning({
+        title: "Failed to save file.",
+      });
+    }
+
+    isLoadingFileContent = false;
   };
 </script>
 

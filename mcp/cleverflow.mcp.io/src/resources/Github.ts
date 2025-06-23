@@ -1,7 +1,7 @@
 import { Client } from "@modelcontextprotocol/sdk/client/index.js";
 import { z } from "zod";
 import { StreamableHTTPClientTransport } from "@modelcontextprotocol/sdk/client/streamableHttp.js";
-import path from 'path';
+import * as p from 'path';
 import _ from 'lodash';
 
 export default class Github {
@@ -76,13 +76,6 @@ export default class Github {
             if (textContent && textContent.text) {
                 try {
                     return JSON.parse(textContent.text);
-                    // const list = JSON.parse(textContent.text);
-                    // return list.map((item: any) => ({
-                    //     id: item.sha,
-                    //     name: item.name,
-                    //     type: item.type,
-                    //     path: item.path,
-                    // }));
                 } catch (exception) {
                     console.log(exception);
                     return exception.message ?? 'Exception: cannot parsing an invalid array text';
@@ -92,13 +85,25 @@ export default class Github {
         return null;
     }
 
-    // TODO: how to get a file SHA for updating
     public async createOrUpdateFile(branch: string, owner: string, repo: string, path: string, fileContent: string, message: string | null): Promise<any> {
 
         const isFile = this.isPathFile(path);
         if (!isFile) {
-            return;
+            return null;
         }
+
+        let folderPath = p.dirname(path);
+        if (folderPath === '') {
+            folderPath = '/';
+        }
+        const folderContent = await this.fetch(branch, owner, repo, folderPath);
+        const foundFile = _.find(folderContent, (item: any) => {
+            return item.type === 'file' &&
+                (
+                    item.path === path ||
+                    `/${item.path}` === path
+                );
+        });
 
         await this.createClient();
 
@@ -112,6 +117,7 @@ export default class Github {
                     path,
                     content: fileContent,
                     message: message ?? 'Not given',
+                    sha: foundFile?.sha
                 },
             },
             z.any(),
@@ -167,10 +173,10 @@ export default class Github {
         return client;
     }
 
-    private isPathFile(p: string): boolean {
+    private isPathFile(path: string): boolean {
         // Loại bỏ dấu slash cuối nếu có
-        const cleanPath = p.replace(/\/+$/, '');
-        const ext = path.extname(cleanPath);
+        const cleanPath = path.replace(/\/+$/, '');
+        const ext = p.extname(cleanPath);
         return !!ext;
     }
 }
