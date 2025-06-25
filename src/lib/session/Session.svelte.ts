@@ -14,12 +14,20 @@ export default class Session {
     // path: string = $state("");
 
     mcpServerUrl: string = $state("http://localhost:3000/mcp");
-    url: string = $state("https://gitea-atlascopco-integration.clevernow.com/api/v1");
-    token: string = $state("04f4b0dada8fa8632dc7541f2f2131c703693e7e");
+
+    // url: string = $state("https://gitea-atlascopco-integration.clevernow.com/api/v1");
+    // token: string = $state("04f4b0dada8fa8632dc7541f2f2131c703693e7e");
+    // branch: string = $state("main");
+    // owner: string = $state("clevernow");
+    // repo: string = $state("atlascopco-dasm");
+    // path: string = $state("bflow/demo/simple-flow.mdoc");
+
+    url: string = $state("https://api.githubcopilot.com/mcp/");
+    token: string = $state("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");
     branch: string = $state("main");
     owner: string = $state("clevernow");
-    repo: string = $state("atlascopco-dasm");
-    path: string = $state("bflow/demo/simple-flow.mdoc");
+    repo: string = $state("examples");
+    path: string = $state("test/simple.mdoc");
 
     hashedFileContent: string | null = null;
 

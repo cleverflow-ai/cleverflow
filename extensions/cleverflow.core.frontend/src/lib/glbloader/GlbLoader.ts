@@ -1,0 +1,1 @@
+export { default as GlbLoader } from './GlbLoader.svelte';
