@@ -1,14 +1,11 @@
 <svelte:options customElement="markdoc-renderer" />
 
 <script lang="ts">
-    import { onMount } from "svelte";
     import css from "../../../app.css?inline";
     import BFlow from "../../bflow/BFlow.svelte";
-    import type MarkdocRendererController from "./MarkdocRendererController.svelte.js";
     import Self from "./Self.svelte";
     import md5 from "md5";
 
-    // let { controller }: { controller: MarkdocRendererController } = $props();
     let { controller, theme = "crimson" } = $props();
     const classes = {
         // Headings
@@ -56,10 +53,16 @@
         // Horizontal Rule
         hr: "border-t-2 border-gray-300 my-4",
     };
+
+    let markdocChecksum = $state("");
+
+    controller.refresh = () => {
+        markdocChecksum = md5(controller.markdoc);
+    };
 </script>
 
 <svelte:element this={"style"}>{@html css}</svelte:element>
-{#key md5(controller.markdoc)}
+{#key markdocChecksum}
     <main data-theme={theme}>
         {#if controller && controller.astContent && controller.astContent.children}
             {#each controller.astContent.children as child}

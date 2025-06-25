@@ -1,0 +1,1 @@
+export { default as WebComponentLoader } from './WebComponentLoader.svelte';

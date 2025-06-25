@@ -6,13 +6,9 @@ import * as MarkocNodeUtil from '../common/utils/MarkdocNodeUtil.js';
 import * as JsonUtil from '../common/utils/JsonUtil.js';
 import { BFlowNodeState } from "./BFlowNodeState.js";
 
-
 export default class BFlowController {
 
-
-
     public state: BFLowState = $state(BFLowState.NONE);
-    public stateKey = $state(0);
 
     public bflow: any;
     public rawBFlow: any;
@@ -36,6 +32,8 @@ export default class BFlowController {
         onCompleted: (data: any) => void,
         onFailed: (error: Error) => void,
     ) => Promise<void>;
+
+    public refresh: (() => void) | null = null;
 
     constructor(
         generateBFlow: (
@@ -77,9 +75,10 @@ export default class BFlowController {
     }
 
     setState(state: BFLowState) {
-        console.log('>>> setState: ', state);
         this.state = state;
-        this.stateKey += 1;
+        if (this.refresh) {
+            this.refresh();
+        }
     }
 
     isDocumentChanged(text: string) {

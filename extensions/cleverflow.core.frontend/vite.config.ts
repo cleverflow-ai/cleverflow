@@ -15,7 +15,9 @@ export default defineConfig({
                 'b-flow-controller': 'src/lib/bflow/BFlowController.svelte.ts',
                 'json-form': 'src/lib/dynamicform/JsonForm.ts',
                 'file-tree': 'src/lib/filemanager/FileTree.ts',
-                'file-controller': 'src/lib/filemanager/FileController.svelte.ts'
+                'file-controller': 'src/lib/filemanager/FileController.svelte.ts',
+                'web-component-loader': 'src/lib/webcomponentloader/WebComponentLoader.ts',
+                'glb-loader': 'src/lib/glbloader/GlbLoader.ts'
             },
             fileName: (format, entryName) => `${entryName}.js`,
             formats: ['es'],
@@ -23,7 +25,7 @@ export default defineConfig({
         rollupOptions: {
             external: ['@cleverflow-ai/cleverflow.core'],
             output: {
-                inlineDynamicImports: false,
+                inlineDynamicImports: true,
             },
         },
         outDir: 'dist-webcomponents',

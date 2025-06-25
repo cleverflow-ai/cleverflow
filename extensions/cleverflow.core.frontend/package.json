@@ -3,7 +3,7 @@
 	"version": "0.0.1",
 	"scripts": {
 		"dev": "vite dev",
-		"build": "vite build",
+		"build": "ts-node scripts/build-webcomponents.ts",
 		"preview": "vite preview",
 		"prepare": "svelte-kit sync || echo ''",
 		"prepack": "svelte-kit sync && svelte-package && publint",
@@ -60,6 +60,14 @@
 		"./webcomponents/file-controller.js": {
 			"import": "./dist-webcomponents/file-controller.js",
 			"require": "./dist-webcomponents/file-controller.js"
+		},
+		"./webcomponents/web-component-loader.js": {
+			"import": "./dist-webcomponents/web-component-loader.js",
+			"require": "./dist-webcomponents/web-component-loader.js"
+		},
+		"./webcomponents/glb-loader.js": {
+			"import": "./dist-webcomponents/glb-loader.js",
+			"require": "./dist-webcomponents/glb-loader.js"
 		}
 	},
 	"sideEffects": [

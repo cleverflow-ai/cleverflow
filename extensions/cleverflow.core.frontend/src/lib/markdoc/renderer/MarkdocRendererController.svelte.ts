@@ -1,7 +1,7 @@
 import BFlowController from "../../bflow/BFlowController.svelte.js";
 import Markdoc from "@markdoc/markdoc";
 import * as MarkdocNodeUtil from '../../common/utils/MarkdocNodeUtil.js';
-
+import md5 from "md5";
 
 export default class MarkdocRendererController {
 
@@ -21,7 +21,10 @@ export default class MarkdocRendererController {
         onFailed: (error: Error) => void,
     ) => Promise<void>;
 
+    public refresh: (() => void) | null = null;
+
     markdoc: string | undefined = $state("");
+
     frontMatter: string = '';
     ast: any = $state(null);
     astContent: any = $state(null);
@@ -48,11 +51,16 @@ export default class MarkdocRendererController {
 
     setMarkdoc(markdoc: string) {
         this.markdoc = markdoc;
+
         this.frontMatter = this.extractFrontmatterText();
         this.ast = Markdoc.parse(this.convertToMarkdocStringForTransform(markdoc));
         this.astContent = Markdoc.transform(this.ast, {
             tags: this.getTransformConfigTags(),
         });
+
+        if (this.refresh) {
+            this.refresh();
+        }
     }
 
     extractFrontmatterText() {

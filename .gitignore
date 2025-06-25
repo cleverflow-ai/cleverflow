@@ -36,3 +36,4 @@ paraglide
 **/project.inlang/cache/
 
 *.npmrc
+test/

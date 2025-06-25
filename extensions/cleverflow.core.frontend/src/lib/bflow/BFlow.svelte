@@ -11,12 +11,20 @@
 	import { BFLowState } from "./BFlowState.js";
 	import Toast from "../common/components/toast/Toast.svelte";
 	import JsonForm from "../dynamicform/JsonForm.svelte";
+	import md5 from "md5";
 
 	let props = $props();
 	let { text = "", id = null, theme = "crimson" } = props;
 	let { controller }: { controller: BFlowController } = props;
+	let refreshKey = $state("");
 
 	onMount(async () => {
+		if (controller) {
+			controller.refresh = () => {
+				refreshKey = md5(new Date().toISOString());
+			};
+		}
+
 		if (text && controller.state === BFLowState.CONNECT_SUCCESS) {
 			// Connected and text is provided, start the BFlow process
 			await start();
@@ -127,23 +135,22 @@
 		</button>
 	{/if}
 {/snippet}
-
-<main data-theme={theme}>
-	<div class="flex items-end justify-between gap-2">
-		{#if id}
-			<span class="badge preset-filled-surface-500">{id}</span>
-		{/if}
-		{#if controller.bflowviz}
-			<div class="flex justify-end items-center gap-2">
-				{#if controller.isDocumentChanged(text)}
-					{@render reloadBFlowButton()}
-				{/if}
-				{@render runBFlowButton()}
-			</div>
-		{/if}
-	</div>
-	<div class="w-full border border-gray-300 p-4 h-[500px]">
-		{#key controller.stateKey}
+{#key refreshKey}
+	<main data-theme={theme}>
+		<div class="flex items-end justify-between gap-2">
+			{#if id}
+				<span class="badge preset-filled-surface-500">{id}</span>
+			{/if}
+			{#if controller.bflowviz}
+				<div class="flex justify-end items-center gap-2">
+					{#if controller.isDocumentChanged(text)}
+						{@render reloadBFlowButton()}
+					{/if}
+					{@render runBFlowButton()}
+				</div>
+			{/if}
+		</div>
+		<div class="w-full border border-gray-300 p-4 h-[500px]">
 			{#if !text}
 				<div
 					class="h-full w-full flex flex-col items-center justify-center gap-2"
@@ -209,8 +216,8 @@
 					</button>
 				</div>
 			{/if}
-		{/key}
-	</div>
-	<Toast />
-	<JsonForm />
-</main>
+		</div>
+		<Toast />
+		<JsonForm />
+	</main>
+{/key}
