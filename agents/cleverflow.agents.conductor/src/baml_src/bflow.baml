@@ -18,7 +18,7 @@ enum BFlowNodeState {
     RUNNING
     SUCCESS
     FAILURE
-    WAITING_FOR_CLIENT
+    WAITING_FOR_DATA
 }
 
 class BFlowNodeTool {

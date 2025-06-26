@@ -60,6 +60,6 @@
     });
 </script>
 
-<div class="w-full card p-4 bg-base-100 shadow-md">
+<div class="w-full card rounded-none p-4 bg-base-100 shadow-md">
     {@html rendered}
 </div>

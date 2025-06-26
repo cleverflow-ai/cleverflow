@@ -16,6 +16,8 @@
 	import _ from "lodash";
 	import { BFlowNodeState } from "../BFlowNodeState.js";
 	import MarkdocRenderer from "../../common/components/MarkdocRenderer.svelte";
+	import LoadingIndicator from "../../common/components/LoadingIndicator.svelte";
+	import { TriangleAlert } from "lucide-svelte";
 
 	const channel = postal.channel("b-flow-view");
 
@@ -48,7 +50,10 @@
 			edge.animated = false;
 		});
 		_.forEach(bflowviz.nodes, (runningNode) => {
-			if (runningNode?.data?.state === BFlowNodeState.RUNNING) {
+			if (
+				runningNode?.data?.state === BFlowNodeState.RUNNING ||
+				runningNode?.data?.state === BFlowNodeState.WAITING_FOR_DATA
+			) {
 				const edge = _.find(bflowviz.edges, (edge: any) => {
 					return (
 						edge.source === runningNode.parentNodeId &&
@@ -138,29 +143,62 @@
 				<Controls />
 				<Background patternColor="#aaa" gap={16} />
 			</SvelteFlow>
-			{#if actionNodeResults && actionNodeResults.length > 0}
-				<div
-					class="py-10 flex flex-col gap-4 justify-start items-start"
-				>
+			<div class="py-10 flex flex-col gap-6 justify-start items-start">
+				<div class="flex flex-col justify-start items-start gap-1">
 					{#each [...bflowviz.nodes].reverse() as node}
 						{@const nodeResult = _.find(
 							actionNodeResults,
 							(result) => result.id === node.id,
 						)}
-						{#if nodeResult}
-							{#if nodeResult.type === "file" && nodeResult.uri && ["glb"].includes(nodeResult.ext)}
-								<!-- <GlbViewer base64Data={result.gblData}
-								></GlbViewer> -->
-								<MarkdocRenderer doc={nodeResult.text}
-								></MarkdocRenderer>
-							{:else if nodeResult.type === "text"}
-								<MarkdocRenderer doc={nodeResult.text}
-								></MarkdocRenderer>
-							{/if}
+
+						{@const isActionNode = node.type === "ACTION"}
+						{@const state = node.data?.state}
+						{@const isIdleNode = !state}
+
+						{#if isActionNode && !isIdleNode && node.name}
+							<div class="font-bold">
+								{node.name}
+							</div>
+						{/if}
+
+						{#if isActionNode && !isIdleNode && node.description}
+							<div class="text-sm">
+								{node.description}
+							</div>
+						{/if}
+						{#if isActionNode && state === BFlowNodeState.FAILURE}
+							<div
+								class="w-full card p-4 bg-base-100 shadow-md rounded-none gap-4 p-4 flex justify-start items-center gap-1"
+							>
+								<TriangleAlert />
+								<div>
+									<p class="font-bold">Failed</p>
+								</div>
+							</div>
+						{:else if isActionNode && (state === BFlowNodeState.RUNNING || state === BFlowNodeState.WAITING_FOR_DATA)}
+							<div
+								class="w-full card p-4 bg-base-100 shadow-md rounded-none gap-4 p-4 flex justify-start items-center gap-1"
+							>
+								<LoadingIndicator></LoadingIndicator>
+							</div>
+						{:else if nodeResult && nodeResult.type === "file" && nodeResult.uri && ["glb"].includes(nodeResult.ext)}
+							<MarkdocRenderer doc={nodeResult.text}
+							></MarkdocRenderer>
+						{:else if nodeResult && nodeResult.type === "text"}
+							<MarkdocRenderer doc={nodeResult.text}
+							></MarkdocRenderer>
+						{:else if isActionNode && state === BFlowNodeState.SUCCESS}
+							<div
+								class="w-full card p-4 bg-base-100 shadow-md rounded-none gap-4 p-4 flex justify-start items-center gap-1"
+							>
+								<div>
+									<p class="font-bold">Success</p>
+								</div>
+							</div>
 						{/if}
 					{/each}
 				</div>
-			{/if}
+			</div>
 		</div>
 	</main>
 	<Drawer bind:this={drawerElement} position="right">

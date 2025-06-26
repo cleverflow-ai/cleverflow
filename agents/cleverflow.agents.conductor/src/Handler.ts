@@ -34,8 +34,8 @@ export async function* handleTask(context: TaskContext): AsyncGenerator<TaskYiel
                 return;
             }
 
-            // return yield* generateBFlow(session, context);
-            return yield* generateBFlowTest(session, context);
+            return yield* generateBFlow(session, context);
+        // return yield* generateBFlowTest(session, context);
         case TASKS.RUN_BFLOW:
             session = sessionsManager.getSession(sessionId);
             if (!session) {
@@ -48,6 +48,7 @@ export async function* handleTask(context: TaskContext): AsyncGenerator<TaskYiel
             return yield* runBFlow(session, context);
         case TASKS.GENERATE_JSON_FORM:
             return yield* generateJsonForm(session, context);
+        // case TASKS.GET_WEB_COMPONENT:
         default:
             throw new Error(`Unknown task: ${task}`);
     }
