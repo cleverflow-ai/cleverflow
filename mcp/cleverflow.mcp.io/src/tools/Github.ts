@@ -26,6 +26,10 @@ export default class Github {
 
     public async fetch(branch: string, owner: string, repo: string, path: string): Promise<any> {
 
+        if (path.startsWith('/')) {
+            path = path.slice(1);
+        }
+
         const isFile = this.isPathFile(path);
         if (!isFile && !path.endsWith('/')) {
             path = `${path}/`;
@@ -86,6 +90,10 @@ export default class Github {
     }
 
     public async createOrUpdateFile(branch: string, owner: string, repo: string, path: string, fileContent: string, message: string | null): Promise<any> {
+
+        if (path.startsWith('/')) {
+            path = path.slice(1);
+        }
 
         const isFile = this.isPathFile(path);
         if (!isFile) {
