@@ -34,8 +34,8 @@ export async function* handleTask(context: TaskContext): AsyncGenerator<TaskYiel
                 return;
             }
 
-            return yield* generateBFlow(session, context);
-        // return yield* generateBFlowTest(session, context);
+            // return yield* generateBFlow(session, context);
+            return yield* generateBFlowTest(session, context);
         case TASKS.RUN_BFLOW:
             session = sessionsManager.getSession(sessionId);
             if (!session) {
