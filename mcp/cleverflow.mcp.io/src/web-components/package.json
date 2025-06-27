@@ -50,7 +50,6 @@
 		"@xyflow/svelte": "^0.1.31",
 		"lucide-svelte": "^0.475.0",
 		"publint": "^0.3.5",
-		"shiki": "^3.1.0",
 		"svelte": "^5.0.0",
 		"svelte-check": "^4.0.0",
 		"tailwindcss": "^4.0.0",
@@ -58,17 +57,15 @@
 		"vite": "^6.0.0"
 	},
 	"dependencies": {
-		"@cartamd/plugin-component": "^1.1.0",
 		"@inlang/paraglide-sveltekit": "^0.15.5",
 		"@markdoc/markdoc": "^0.5.1",
 		"@types/js-beautify": "^1.14.3",
 		"@types/md5": "^2.3.5",
 		"autoprefixer": "^10.4.20",
-		"carta-md": "^4.7.0",
-		"isomorphic-dompurify": "^2.22.0",
 		"js-yaml": "^4.1.0",
 		"lodash": "^4.17.21",
 		"md5": "^2.3.0",
-		"postcss": "^8.5.3"
+		"postcss": "^8.5.3",
+		"svelte-pdf": "^1.0.28"
 	}
 }
