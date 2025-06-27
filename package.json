@@ -10,9 +10,9 @@
 		"clients/*"
 	],
 	"scripts": {
-		"setup": "npm install && npm exec --workspace=extensions/ -- npm install",
+		"setup": "npm install && npm exec --workspaces -- npm install",
 		"dev": "vite dev",
-  		"build": "npm exec --workspace=extensions/ -- npm run build && vite build",
+  		"build": "npm exec --workspaces -- npm run build && vite build",
 		"preview": "vite preview",
 		"prepare": "svelte-kit sync || echo ''",
 		"check": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json",
