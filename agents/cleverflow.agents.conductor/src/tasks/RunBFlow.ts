@@ -56,8 +56,6 @@ export async function* runBFlow(session: Session, context: TaskContext): AsyncGe
                 }
             );
 
-            console.log(`>>> result: ${result}`);
-
             if (result === BFlowNodeState.SUCCESS) {
                 queue.push({
                     state: 'completed',
@@ -120,7 +118,7 @@ export async function* runBFlow(session: Session, context: TaskContext): AsyncGe
     console.log('BFlow execution completed, yielding final result.');
 }
 
-function sleep(ms) {
+function sleep(ms: number) {
     return new Promise(resolve => setTimeout(resolve, ms));
 }
 
@@ -128,16 +126,18 @@ function sleep(ms) {
 const runNode = async (session: Session, context: TaskContext, bflow: BFlow, userInput: Map<string, any>, outs: Map<string, any>, node: BFlowNode, yieldUpdate: (taskYieldUpdate: TaskYieldUpdate) => void): Promise<BFlowNodeState> => {
 
     console.log(`Running node: ${node.id} (${node.type})`);
-    if (node.state === BFlowNodeState.SUCCESS) {
+    if (
+        node.state === BFlowNodeState.SUCCESS ||
+        node.state === BFlowNodeState.FAILURE) {
         return node.state;
     }
 
     if (node.type === BFlowNodeType.ENTRY) {
-
+        node.state = BFlowNodeState.RUNNING;
         for (const child of node.goto!) {
             const state = await runNode(session, context, bflow, userInput, outs, child, yieldUpdate);
-            if (state === BFlowNodeState.FAILURE || state === BFlowNodeState.RUNNING) {
-                node.state = state;
+            if (state === BFlowNodeState.RUNNING || state === BFlowNodeState.WAITING_FOR_DATA) {
+                child.state = state;
                 yieldUpdate({
                     state: 'working',
                     message: {
@@ -155,16 +155,47 @@ const runNode = async (session: Session, context: TaskContext, bflow: BFlow, use
                         }]
                     }
                 });
-                return node.state;
+                if (state === BFlowNodeState.WAITING_FOR_DATA) {
+                    // STOP RUN BFLOW
+                    return BFlowNodeState.WAITING_FOR_DATA;
+                }
+            } else if (state === BFlowNodeState.FAILURE) {
+                child.state = BFlowNodeState.FAILURE;
+                node.state = BFlowNodeState.FAILURE;
+                yieldUpdate({
+                    state: 'failed',
+                    message: {
+                        role: 'agent',
+                        parts: [{
+                            type: 'text',
+                            text: 'update'
+                        }, {
+                            type: 'data',
+                            data: {
+                                bflow: bflow,
+                                outs: outs,
+                                createdAt: new Date(),
+                            }
+                        }]
+                    }
+                });
+                // STOP RUN BFLOW
+                return BFlowNodeState.FAILURE;
             }
         }
+
         node.state = BFlowNodeState.SUCCESS;
 
+        // RUN BFLOW FINISH SUCCESSFULY
+        return node.state;
+
     } else if (node.type === BFlowNodeType.FALLBACK) {
+        node.state = BFlowNodeState.RUNNING;
         for (const child of node.goto!) {
-            const status = await runNode(session, context, bflow, userInput, outs, child, yieldUpdate);
-            if (status === BFlowNodeState.SUCCESS) {
-                node.state = BFlowNodeState.SUCCESS;
+            const state = await runNode(session, context, bflow, userInput, outs, child, yieldUpdate);
+            if (state === BFlowNodeState.SUCCESS || state === BFlowNodeState.WAITING_FOR_DATA) {
+                child.state = state;
+                node.state = state;
                 yieldUpdate({
                     state: 'working',
                     message: {
@@ -188,7 +219,7 @@ const runNode = async (session: Session, context: TaskContext, bflow: BFlow, use
 
         node.state = BFlowNodeState.FAILURE;
         yieldUpdate({
-            state: 'working',
+            state: 'failed',
             message: {
                 role: 'agent',
                 parts: [{
@@ -210,11 +241,30 @@ const runNode = async (session: Session, context: TaskContext, bflow: BFlow, use
         node.state = BFlowNodeState.RUNNING;
         for (const child of node.goto!) {
             const state = await runNode(session, context, bflow, userInput, outs, child, yieldUpdate);
-            console.log(`>>> state: ${state}`);
-            if (state === BFlowNodeState.FAILURE || state === BFlowNodeState.RUNNING) {
-                node.state = state;
+            if (state === BFlowNodeState.SUCCESS) {
+                child.state = state;
                 yieldUpdate({
                     state: 'working',
+                    message: {
+                        role: 'agent',
+                        parts: [{
+                            type: 'text',
+                            text: 'update'
+                        }, {
+                            type: 'data',
+                            data: {
+                                bflow: bflow,
+                                outs: outs,
+                                createdAt: new Date(),
+                            }
+                        }]
+                    }
+                });
+            } else if (state === BFlowNodeState.FAILURE || state === BFlowNodeState.WAITING_FOR_DATA) {
+                child.state = state;
+                node.state = state;
+                yieldUpdate({
+                    state: 'failed',
                     message: {
                         role: 'agent',
                         parts: [{
@@ -234,7 +284,6 @@ const runNode = async (session: Session, context: TaskContext, bflow: BFlow, use
             }
         }
 
-        console.log('>>>> set sequence node as success one');
         node.state = BFlowNodeState.SUCCESS;
         yieldUpdate({
             state: 'working',
@@ -303,7 +352,7 @@ const runNode = async (session: Session, context: TaskContext, bflow: BFlow, use
 
                 const canCallTool = isValidInput(requiredParameters || [], userInputForCurrentNode)
                 if (!canCallTool) {
-
+                    node.state = BFlowNodeState.WAITING_FOR_DATA;
                     yieldUpdate({
                         state: 'input-required',
                         message: {
@@ -340,6 +389,7 @@ const runNode = async (session: Session, context: TaskContext, bflow: BFlow, use
 
                     // callTool error
                     if (callToolResult.isError) {
+                        node.state = BFlowNodeState.WAITING_FOR_DATA;
                         const errorMessage =
                             callToolResult.content &&
                                 Array.isArray(callToolResult.content) &&
@@ -398,6 +448,7 @@ const runNode = async (session: Session, context: TaskContext, bflow: BFlow, use
                     }
 
                 } catch (callToolException) {
+                    node.state = BFlowNodeState.WAITING_FOR_DATA;
                     yieldUpdate({
                         state: 'input-required',
                         message: {
@@ -418,15 +469,34 @@ const runNode = async (session: Session, context: TaskContext, bflow: BFlow, use
                             }]
                         }
                     });
+                    return node.state;
                 }
+            } else {
+                node.state = BFlowNodeState.FAILURE;
+                yieldUpdate({
+                    state: 'failed',
+                    message: {
+                        role: 'agent',
+                        parts: [{
+                            type: 'text',
+                            text: 'update'
+                        }, {
+                            type: 'data',
+                            data: {
+                                bflow: bflow,
+                                outs: outs,
+                                createdAt: new Date(),
+                            }
+                        }]
+                    }
+                });
+                return node.state;
             }
-            // TODO: No mcp client | no tool
-            return node.state;
+
         } else {
-            // TODO: No mcp client | no tool
-            node.state = BFlowNodeState.SUCCESS;
+            node.state = BFlowNodeState.FAILURE;
             yieldUpdate({
-                state: 'working',
+                state: 'failed',
                 message: {
                     role: 'agent',
                     parts: [{

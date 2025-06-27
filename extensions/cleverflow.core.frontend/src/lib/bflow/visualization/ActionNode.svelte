@@ -4,6 +4,7 @@
 	import { onMount } from "svelte";
 	import { BFlowNodeState } from "../BFlowNodeState.js";
 	import postal from "postal";
+	import { CircleAlert } from "lucide-svelte";
 
 	const channel = postal.channel("b-flow-view");
 
@@ -17,6 +18,7 @@
 				borderColor = "border-success-500";
 				break;
 			case BFlowNodeState.RUNNING:
+			case BFlowNodeState.WAITING_FOR_DATA:
 				borderColor = "border-warning-500";
 				break;
 			case BFlowNodeState.FAILURE:
@@ -43,16 +45,30 @@
 	onclick={showRunResult}
 >
 	<div
-		class="w-full flex-1 border-2 {borderColor} flex items-center justify-center p-4
-		{data.state === BFlowNodeState.RUNNING ? 'border-dotted' : ''}"
+		class="
+			w-full flex-1 border-2 {borderColor} flex flex-col items-center justify-center p-4
+			{data.state === BFlowNodeState.RUNNING ||
+		data.state === BFlowNodeState.WAITING_FOR_DATA
+			? 'border-dotted'
+			: ''}
+		"
 	>
 		{#if data.name}
 			<div
-				class={data.state === BFlowNodeState.RUNNING
+				class={data.state === BFlowNodeState.RUNNING ||
+				data.state === BFlowNodeState.WAITING_FOR_DATA
 					? "animate-bounce"
 					: ""}
 			>
 				{data.name}
+			</div>
+		{/if}
+		{#if data.state === BFlowNodeState.WAITING_FOR_DATA}
+			<div class="flex justify-start items-center gap-1">
+				<CircleAlert class="text-warning-500 w-3 h-3" />
+				<span class="text-[10px] text-warning-500"
+					>Waiting for Input</span
+				>
 			</div>
 		{/if}
 	</div>

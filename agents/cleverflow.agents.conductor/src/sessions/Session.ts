@@ -2,13 +2,27 @@ import { Client } from "@modelcontextprotocol/sdk/client/index.js";
 import { createMcpClient } from "@cleverflow-ai/cleverflow.mcp/dist/McpClient.js";
 import { BFlowNodeTool } from "../baml_client";
 
+type McpTool = {
+    name: string,
+    description: string,
+    inputSchema: any,
+}
+
+type McpResource = {
+    uri: string,
+    name: string,
+    description: string,
+}
+
+
 type McpClientForSession = {
     serverUrl: string;
     name: string;
     version: string;
     description: string;
     client: Client;
-    tools: any[];
+    tools: McpTool[];
+    resources: McpResource[],
 };
 
 
@@ -25,13 +39,37 @@ export default class Session {
         try {
             const client = await createMcpClient(serverUrl, name, version);
             if (client) {
-                const result = await client.listTools();
-                this.mcpClients.push({ serverUrl, name, description, version, client, tools: result.tools });
+                const results = await Promise.all([
+                    client.listTools(),
+                    client.listResources(),
+                ]);
+                const listToolsResult = results[0];
+                const listResourcesResult = results[1];
+
+                console.log(JSON.stringify(listToolsResult));
+                console.log(JSON.stringify(listResourcesResult))
+
+                this.mcpClients.push({
+                    serverUrl,
+                    name,
+                    description,
+                    version,
+                    client,
+                    tools: listToolsResult.tools,
+                    resources: listResourcesResult.resources
+                });
+
                 console.log(`MCP client '${name}' created successfully at ${serverUrl}`);
-                if (!result.tools || result.tools.length === 0) {
+                if (!listToolsResult.tools || listToolsResult.tools.length === 0) {
                     console.warn(`No tools found for MCP client '${name}' at ${serverUrl}`);
                 } else {
-                    console.log(`Available tools: ${result.tools.map((tool) => tool.name).join(", ")}`);
+                    console.log(`Available tools: ${listToolsResult.tools.map((tool) => tool.name).join(", ")}`);
+                }
+
+                if (!listResourcesResult.resources || listResourcesResult.resources.length === 0) {
+                    console.warn(`No reources found for MCP client '${name}' at ${serverUrl}`);
+                } else {
+                    console.log(`Available resources: ${listResourcesResult.resources.map((resource) => resource.name).join(", ")}`);
                 }
 
                 return true;

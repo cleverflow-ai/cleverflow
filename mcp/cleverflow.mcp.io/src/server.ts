@@ -1,8 +1,10 @@
 import { McpServer, ResourceTemplate } from "@modelcontextprotocol/sdk/server/mcp.js";
-import Outline from "./resources/Outline.js";
-import Gitea from "./resources/Gitea.js";
+import Outline from "./tools/Outline.js";
+import Gitea from "./tools/Gitea.js";
 import z from "zod";
-import Github from "./resources/Github.js";
+import Github from "./tools/Github.js";
+import path from "path";
+import fs from "fs";
 
 export function createServer() {
     const server = new McpServer({
@@ -24,47 +26,44 @@ export function createServer() {
 }
 
 function registerResources(server: McpServer) {
+
     server.resource(
-        "echo",
-        "echo://helloWorld",
-        async (uri, { }) => (
-            {
-                contents: [
+        "web-components",
+        new ResourceTemplate("web-components://{name}", {
+            list: async () => ({
+                resources: [
                     {
-                        uri: uri.href,
-                        text: 'Hello world!'
+                        name: "glb-viewer",
+                        uri: "web-components://glb-viewer",
+                        description: "Web component that renders GLB 3D models from a URL or base64 data.",
+                    },
+                    {
+                        name: "pdf-viewer",
+                        uri: "web-components://pdf-viewer",
+                        description: "Web component for viewing PDF file contents.",
                     }
-                ],
-            }
-        )
+                ]
+            })
+        }),
+        async (uri, { name }) => {
+            const filePath = path.join("web-components", name as string);
+            const buffer = fs.readFileSync(filePath);
+            const base64Data = buffer.toString('base64');
+            return {
+                content: [{
+                    uri: uri.href,
+                    data: base64Data,
+                }]
+            };
+        }
     );
-    console.log("Echo resource registered");
-
-    // server.resource(
-    //     "outline",
-    //     new ResourceTemplate("outline://{fileId}", { list: undefined }),
-    //     async (uri, { fileId }, extra) => {
-    //         // const outline = new Outline(baseUrl as string, apiKey as string);
-    //         // const text = await outline.fetch(fileId as string);
-    //         console.log(uri);
-
-    //         return {
-    //             contents: [
-    //                 {
-    //                     uri: uri.href,
-    //                     text: "Test"
-    //                 }
-    //             ],
-    //         };
-    //     }
-    // );
-    // console.log("Outline resource registered");
 }
 
 function registerTools(server: McpServer) {
 
     server.tool(
         "fetch-outline-text-file",
+        "Fetches the content of a file from Outline using its file ID.",
         {
             baseUrl: z.string(),
             apiKey: z.string(),
@@ -95,6 +94,7 @@ function registerTools(server: McpServer) {
 
     server.tool(
         "get_file_contents",
+        "Fetches the content of a file from either Github or Gitea, given repository details and authentication.",
         {
             url: z.string(),
             token: z.string(),
@@ -165,6 +165,7 @@ function registerTools(server: McpServer) {
 
     server.tool(
         "save_file_contents",
+        "Saves or updates the content of a file in either Github or Gitea, given repository details and authentication.",
         {
             url: z.string(),
             token: z.string(),

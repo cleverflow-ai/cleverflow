@@ -5,6 +5,9 @@ export default class Gitea {
     public async fetchFileContent(branch: string, owner: string, repo: string, path: string): Promise<string | Array<any> | null> {
 
         try {
+            if (path.startsWith('/')) {
+                path = path.slice(1);
+            }
             const result = await this.fetchFile(branch, owner, repo, path);
 
             if (Array.isArray(result)) {
@@ -20,7 +23,9 @@ export default class Gitea {
     }
 
     public async saveFileContent(branch: string, owner: string, repo: string, path: string, content: string): Promise<boolean> {
-
+        if (path.startsWith('/')) {
+            path = path.slice(1);
+        }
         const currentFile = await this.fetchFile(branch, owner, repo, path);
         if (currentFile == null) {
             let url = `${this.url}/repos/${owner}/${repo}/contents/${path}?token=${this.token}`;
@@ -63,6 +68,7 @@ export default class Gitea {
     }
 
     private async fetchFile(branch: string, owner: string, repo: string, path: string): Promise<any> {
+
         let url = `${this.url}/repos/${owner}/${repo}/contents/${path}?token=${this.token}`;
         if (branch) {
             url += `&ref=${branch}`;
