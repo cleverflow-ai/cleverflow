@@ -96,36 +96,27 @@
 	</button>
 {/snippet}
 
-{#snippet runBFlowButton()}
+{#snippet runBFlowState()}
 	{#if controller.state === BFLowState.RUN_BFLOW || controller.state === BFLowState.RUN_BFLOW_IN_PROGRESS}
 		<button class="btn preset-filled-warning-500">
 			<Flame class="animate-spin w-5 h-5" />
 			Running
 		</button>
-		<!-- <button
-			onclick={async () => await controller.executeBFlow()}
-			class="btn preset-filled-success-500"
-		>
-			<Flame class="text-white-700 w-5 h-5" />
-			(TEST) Run
-		</button> -->
 	{:else if controller.state === BFLowState.RUN_BFLOW_SUCCESS}
-		<button
-			onclick={async () => await controller.executeBFlow()}
-			class="btn preset-filled-success-500"
-		>
+		<button class="btn preset-filled-success-500">
 			<Flame class="text-white-700 w-5 h-5" />
-			Run
+			Successfully
 		</button>
 	{:else if controller.state === BFLowState.RUN_BFLOW_FAILED}
-		<button
-			onclick={async () => await controller.executeBFlow()}
-			class="btn preset-filled-error-500"
-		>
+		<button class="btn preset-filled-error-500">
 			<Flame class="text-white-700 w-5 h-5" />
-			Run
+			Failed
 		</button>
-	{:else}
+	{/if}
+{/snippet}
+
+{#snippet runBFlowButton()}
+	{#if controller.state !== BFLowState.RUN_BFLOW && controller.state !== BFLowState.RUN_BFLOW_IN_PROGRESS}
 		<button
 			onclick={async () => await controller.executeBFlow()}
 			class="btn preset-filled-primary-500"
@@ -135,6 +126,7 @@
 		</button>
 	{/if}
 {/snippet}
+
 {#key refreshKey}
 	<main data-theme={theme}>
 		<div class="flex items-end justify-between gap-2">
@@ -143,14 +135,11 @@
 			{/if}
 			{#if controller.bflowviz}
 				<div class="flex justify-end items-center gap-2">
-					{#if controller.isDocumentChanged(text)}
-						{@render reloadBFlowButton()}
-					{/if}
-					{@render runBFlowButton()}
+					{@render runBFlowState()}
 				</div>
 			{/if}
 		</div>
-		<div class="w-full border border-gray-300 p-4 h-[500px]">
+		<div class="w-full p-4 h-[500px]">
 			{#if !text}
 				<div
 					class="h-full w-full flex flex-col items-center justify-center gap-2"
@@ -165,6 +154,15 @@
 							bflowRunResult={controller.bflowRunResult}
 							bflowviz={controller.bflowviz}
 						/>
+					</div>
+					<div
+						class="absolute bottom-5 left-0 right-0 flex justify-center"
+					>
+						{#if controller.isDocumentChanged(text)}
+							{@render reloadBFlowButton()}
+						{:else}
+							{@render runBFlowButton()}
+						{/if}
 					</div>
 				</div>
 			{:else if controller.state == BFLowState.NONE || controller.state == BFLowState.CONNECT_FAILED}

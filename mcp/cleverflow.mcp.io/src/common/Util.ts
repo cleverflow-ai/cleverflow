@@ -39,7 +39,7 @@ export function detectMimeTypeFromPath(path: string) {
 }
 
 export function loadWebComponentByMime(mime: string) {
-    let buffer;
+    let buffer: NonSharedBuffer;
     switch (mime) {
         case 'application/pdf':
             buffer = fs.readFileSync(p.resolve(__dirname, '../web-components/dist-webcomponents/pdf-viewer.js'));

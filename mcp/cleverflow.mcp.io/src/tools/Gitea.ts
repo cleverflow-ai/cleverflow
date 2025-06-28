@@ -19,7 +19,6 @@ export default class Gitea {
                 return null;
             }
 
-            console.log(result);
             if (Array.isArray(result)) {
                 return result;
             } else if (result.content) {
@@ -30,8 +29,6 @@ export default class Gitea {
                 if (!mime) {
                     mime = detectMimeTypeFromPath(path);
                 }
-                console.log('>>> type: ', type);
-
                 return new Base64Content(result.content, mime);
             }
         } catch (exception) {

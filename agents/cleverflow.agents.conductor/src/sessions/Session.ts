@@ -41,13 +41,15 @@ export default class Session {
             if (client) {
                 const results = await Promise.all([
                     client.listTools(),
-                    client.listResources(),
+                    // client.listResources(),
                 ]);
                 const listToolsResult = results[0];
-                const listResourcesResult = results[1];
+                // const listResourcesResult = results[1];
+
+                console.log(`>>>> add client`);
 
                 console.log(JSON.stringify(listToolsResult));
-                console.log(JSON.stringify(listResourcesResult))
+                // console.log(JSON.stringify(listResourcesResult))
 
                 this.mcpClients.push({
                     serverUrl,
@@ -56,7 +58,8 @@ export default class Session {
                     version,
                     client,
                     tools: listToolsResult.tools,
-                    resources: listResourcesResult.resources
+                    // resources: listResourcesResult.resources
+                    resources: []
                 });
 
                 console.log(`MCP client '${name}' created successfully at ${serverUrl}`);
@@ -66,11 +69,11 @@ export default class Session {
                     console.log(`Available tools: ${listToolsResult.tools.map((tool) => tool.name).join(", ")}`);
                 }
 
-                if (!listResourcesResult.resources || listResourcesResult.resources.length === 0) {
-                    console.warn(`No reources found for MCP client '${name}' at ${serverUrl}`);
-                } else {
-                    console.log(`Available resources: ${listResourcesResult.resources.map((resource) => resource.name).join(", ")}`);
-                }
+                // if (!listResourcesResult.resources || listResourcesResult.resources.length === 0) {
+                //     console.warn(`No reources found for MCP client '${name}' at ${serverUrl}`);
+                // } else {
+                //     console.log(`Available resources: ${listResourcesResult.resources.map((resource) => resource.name).join(", ")}`);
+                // }
 
                 return true;
             }

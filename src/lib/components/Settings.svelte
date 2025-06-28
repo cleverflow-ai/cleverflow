@@ -9,17 +9,6 @@
         <div class="space-y-2">
             <div>
                 <!-- svelte-ignore a11y_label_has_associated_control -->
-                <label class="block text-sm font-medium mb-1"
-                    >MCP.IO Server</label
-                >
-                <input
-                    type="text"
-                    bind:value={session.mcpServerUrl}
-                    class="w-full border px-2 py-1"
-                />
-            </div>
-            <div>
-                <!-- svelte-ignore a11y_label_has_associated_control -->
                 <label class="block text-sm font-medium mb-1">URL</label>
                 <input
                     type="text"

@@ -79,13 +79,18 @@ function registerTools(server: McpServer) {
             });
 
             const outline = new Outline(baseUrl, apiKey);
-            const text = await outline.fetch(fileId);
 
+            const base64File = await outline.fetch(fileId);
+
+            const dynamicComponent = loadWebComponentByMime(base64File.mime);
             return {
                 content: [
                     {
-                        type: "text",
-                        text: text
+                        type: "data",
+                        data: {
+                            base64FileContent: base64File.base64Content,
+                            dynamicComponent: dynamicComponent,
+                        }
                     }
                 ],
             };
@@ -152,6 +157,7 @@ function registerTools(server: McpServer) {
             }
 
             if (Array.isArray(result)) {
+                // TODO
                 return {
                     content: [
                         {

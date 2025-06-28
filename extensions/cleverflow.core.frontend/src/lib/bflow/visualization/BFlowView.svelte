@@ -18,6 +18,7 @@
 	import MarkdocRenderer from "../../common/components/MarkdocRenderer.svelte";
 	import LoadingIndicator from "../../common/components/LoadingIndicator.svelte";
 	import { TriangleAlert } from "lucide-svelte";
+	import { WebComponentLoader } from "../../webcomponentloader/WebComponentLoader.js";
 
 	const channel = postal.channel("b-flow-view");
 
@@ -80,27 +81,12 @@
 					Array.isArray(data.content) &&
 					data.content.length > 0
 				) {
-					const firstContent = data.content[0];
-					if (firstContent.type === "text") {
-						actionNodeResults.push({
-							id: key,
-							type: firstContent.type,
-							text: firstContent.text,
-						});
-					} else if (firstContent.type === "file") {
-						const path = firstContent.uri.replace(/\\/g, "/"); // Normalize Windows-style slashes
-						const filename = path.split("/").pop(); // Get '89971.000001.glb'
-						const ext = filename.includes(".")
-							? filename.split(".").pop().toLowerCase()
-							: "";
-						actionNodeResults.push({
-							id: key,
-							type: firstContent.type,
-							text: firstContent.text,
-							uri: firstContent.uri,
-							ext: ext,
-						});
-					}
+					const content = data.content[0];
+					actionNodeResults.push({
+						id: key,
+						bindingData: content.data,
+						dynamicComponent: content.data?.dynamicComponent,
+					});
 				}
 			}
 		}
@@ -143,61 +129,70 @@
 				<Controls />
 				<Background patternColor="#aaa" gap={16} />
 			</SvelteFlow>
-			<div class="py-10 flex flex-col gap-6 justify-start items-start">
-				<div class="flex flex-col justify-start items-start gap-1">
-					{#each [...bflowviz.nodes].reverse() as node}
-						{@const nodeResult = _.find(
-							actionNodeResults,
-							(result) => result.id === node.id,
-						)}
+			<div
+				class="w-full py-10 flex flex-col justify-start items-start gap-4"
+			>
+				{#each [...bflowviz.nodes].reverse() as node}
+					{@const nodeResult = _.find(
+						actionNodeResults,
+						(result) => result.id === node.id,
+					)}
 
-						{@const isActionNode = node.type === "ACTION"}
-						{@const state = node.data?.state}
-						{@const isIdleNode = !state}
+					{@const isActionNode = node.type === "ACTION"}
+					{@const state = node.data?.state}
+					{@const isIdleNode = !state}
 
-						{#if isActionNode && !isIdleNode && node.name}
-							<div class="font-bold">
-								{node.name}
-							</div>
-						{/if}
-
-						{#if isActionNode && !isIdleNode && node.description}
-							<div class="text-sm">
-								{node.description}
-							</div>
-						{/if}
-						{#if isActionNode && state === BFlowNodeState.FAILURE}
-							<div
-								class="w-full card p-4 bg-base-100 shadow-md rounded-none gap-4 p-4 flex justify-start items-center gap-1"
-							>
-								<TriangleAlert />
-								<div>
-									<p class="font-bold">Failed</p>
+					{#if isActionNode && !isIdleNode}
+						<div
+							class="w-full card rounded-none bg-base-100 shadow-md p-4"
+						>
+							{#if node.name}
+								<div class="font-bold">
+									{node.name}
 								</div>
-							</div>
-						{:else if isActionNode && (state === BFlowNodeState.RUNNING || state === BFlowNodeState.WAITING_FOR_DATA)}
-							<div
-								class="w-full card p-4 bg-base-100 shadow-md rounded-none gap-4 p-4 flex justify-start items-center gap-1"
-							>
-								<LoadingIndicator></LoadingIndicator>
-							</div>
-						{:else if nodeResult && nodeResult.type === "file" && nodeResult.uri && ["glb"].includes(nodeResult.ext)}
-							<MarkdocRenderer doc={nodeResult.text}
-							></MarkdocRenderer>
-						{:else if nodeResult && nodeResult.type === "text"}
-							<MarkdocRenderer doc={nodeResult.text}
-							></MarkdocRenderer>
-						{:else if isActionNode && state === BFlowNodeState.SUCCESS}
-							<div
-								class="w-full card p-4 bg-base-100 shadow-md rounded-none gap-4 p-4 flex justify-start items-center gap-1"
-							>
-								<div>
-									<p class="font-bold">Success</p>
+							{/if}
+							{#if node.description}
+								<div class="text-sm">
+									{node.description}
 								</div>
-							</div>
-						{/if}
-					{/each}
-				</div>
+							{/if}
+
+							{#if nodeResult}
+								<WebComponentLoader
+									tag={nodeResult.dynamicComponent?.tag}
+									scriptBase64={nodeResult.dynamicComponent
+										?.scriptBase64}
+									propBindings={nodeResult.dynamicComponent
+										?.propBindings}
+									bindingData={nodeResult.bindingData}
+								></WebComponentLoader>
+							{:else if state === BFlowNodeState.RUNNING || state === BFlowNodeState.WAITING_FOR_DATA}
+								<div
+									class="w-full rounded-none gap-4 p-4 flex justify-start items-center gap-1"
+								>
+									<LoadingIndicator></LoadingIndicator>
+								</div>
+							{:else if state === BFlowNodeState.SUCCESS}
+								<div
+									class="w-full text-success-500 gap-4 p-4 flex justify-start items-center gap-1"
+								>
+									<div>
+										<p class="font-bold">Success</p>
+									</div>
+								</div>
+							{:else if state === BFlowNodeState.FAILURE}
+								<div
+									class="w-full text-error-500 gap-4 p-4 flex justify-start items-center gap-1"
+								>
+									<TriangleAlert />
+									<div>
+										<p class="font-bold">Failed</p>
+									</div>
+								</div>
+							{/if}
+						</div>
+					{/if}
+				{/each}
 			</div>
 		</div>
 	</main>
