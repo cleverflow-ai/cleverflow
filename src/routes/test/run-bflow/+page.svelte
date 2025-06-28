@@ -1,6 +1,6 @@
 <script lang="ts">
     import { Modal } from "@skeletonlabs/skeleton-svelte";
-    import { InteractiveClient } from "@cleverflow-ai/cleverflow.agents.interactiveclient";
+    import { ConductorClient } from "$lib/services/ConductorClient.js";
     import type {
         Task,
         TaskSendParams,
@@ -10,7 +10,7 @@
     import { onMount } from "svelte";
     import postal from "postal";
 
-    let conductorClient: InteractiveClient;
+    let conductorClient: ConductorClient;
 
     let resultText = $state("");
 
@@ -109,7 +109,7 @@
     const runBFlow = async () => {
         const conductorServer = import.meta.env.VITE_A2A_CONDUCTOR_SERVER;
         console.log(`>>> conductorServer: ${conductorServer}`);
-        conductorClient = new InteractiveClient(conductorServer);
+        conductorClient = new ConductorClient(conductorServer);
         console.log(bflow.root.id);
         const taskParams: TaskSendParams = {
             id: `empty-dataId|single-session|run-bflow`,
