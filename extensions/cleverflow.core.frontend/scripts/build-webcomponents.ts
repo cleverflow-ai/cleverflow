@@ -11,15 +11,15 @@ const __dirname = path.dirname(__filename);
 
 const components = [
     // { name: 'markdoc-editor', entry: 'src/lib/markdoc/editor/MarkdocEditor.ts' },
-    { name: 'markdoc-renderer', entry: 'src/lib/markdoc/renderer/MarkdocRenderer.ts' },
-    { name: 'markdoc-renderer-controller', entry: 'src/lib/markdoc/renderer/MarkdocRendererController.svelte.ts' },
+    // { name: 'markdoc-renderer', entry: 'src/lib/markdoc/renderer/MarkdocRenderer.ts' },
+    // { name: 'markdoc-renderer-controller', entry: 'src/lib/markdoc/renderer/MarkdocRendererController.svelte.ts' },
     // { name: 'markdoc-reader', entry: 'src/lib/markdoc/renderer/MarkdocReader.ts' },
     // { name: 'b-flow', entry: 'src/lib/bflow/BFlow.ts' },
     // { name: 'b-flow-controller', entry: 'src/lib/bflow/BFlowController.svelte.ts' },
     // { name: 'json-form', entry: 'src/lib/dynamicform/JsonForm.ts' },
     // { name: 'file-tree', entry: 'src/lib/filemanager/FileTree.ts' },
     // { name: 'file-controller', entry: 'src/lib/filemanager/FileController.svelte.ts' },
-    // { name: 'web-component-loader', entry: 'src/lib/webcomponentloader/WebComponentLoader.ts' },
+    { name: 'web-component-loader', entry: 'src/lib/webcomponentloader/WebComponentLoader.ts' },
     // { name: 'glb-loader', entry: 'src/lib/glbloader/GlbLoader.ts' },
 ];
 

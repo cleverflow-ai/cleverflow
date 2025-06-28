@@ -5,18 +5,23 @@
 	import css from "../../app.css?inline";
 	import { TriangleAlert } from "lucide-svelte";
 
-	let { name, url, base64Module, theme = "crimson", ...others } = $props();
+	let {
+		theme = "crimson",
+		tag,
+		scriptUrl,
+		scriptBase64,
+		propBindings,
+		bindingData,
+	} = $props();
 
 	let isInitialized = $state(false);
 
-	let attributes = $state("");
 	let errorMessage: string | null = $state(null);
+	let attributes = $state("");
 
 	onMount(async () => {
-		attributes = Object.entries(others ?? {})
-			.map(([key, val]) => `${key}="${val}"`)
-			.join(" ");
 		await loadWebComponentScript();
+		buildHtmlAttributes();
 		isInitialized = true;
 	});
 
@@ -24,27 +29,30 @@
 
 	const loadWebComponentScript = async () => {
 		try {
-			if (!name) {
+			if (!tag) {
 				errorMessage = "Web component tag name was not provided";
 				return;
 			}
-			if (!url && !base64Module) {
-				errorMessage = `Neither 'url' nor 'base64Module' was provided for the web component: ${name}`;
+			if (!scriptUrl && !scriptBase64) {
+				errorMessage = `Neither 'scriptUrl' nor 'scriptBase64' was provided for the web component: ${tag}`;
 				return;
 			}
 
-			if (customElements.get(name)) return;
+			if (customElements.get(tag)) return;
 
-			if (url && !document.querySelector(`script[src="${url}"]`)) {
+			if (
+				scriptUrl &&
+				!document.querySelector(`script[src="${scriptUrl}"]`)
+			) {
 				const script = document.createElement("script");
-				script.src = url;
+				script.src = scriptUrl;
 				script.type = "module";
 				script.async = true;
 				document.head.appendChild(script);
 			}
 
-			if (base64Module) {
-				const jsCode = atob(base64Module);
+			if (scriptBase64) {
+				const jsCode = atob(scriptBase64);
 				const blob = new Blob([jsCode], {
 					type: "application/javascript",
 				});
@@ -57,10 +65,19 @@
 				document.head.appendChild(script);
 			}
 
-			await customElements.whenDefined(name);
+			await customElements.whenDefined(tag);
 		} catch (exception: any) {
 			errorMessage =
 				exception?.message || String(exception) || "Unknown exception";
+		}
+	};
+
+	const buildHtmlAttributes = () => {
+		for (let i = 0; i < propBindings.length; i++) {
+			const { componentProp, dataPath } = propBindings[i];
+			if (bindingData && bindingData[dataPath]) {
+				attributes += ` ${componentProp}='${bindingData[dataPath]}'' `;
+			}
 		}
 	};
 </script>
@@ -77,7 +94,7 @@
 				<p class="text-xs opacity-60">{errorMessage}</p>
 			</div>
 		{:else}
-			{@html `<${name} ${attributes}></${name}>`}
+			{@html `<${tag}  ${attributes} </${tag}>`}
 		{/if}
 	{/if}
 </main>
