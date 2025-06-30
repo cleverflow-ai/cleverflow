@@ -83,7 +83,7 @@ def convert_pdf_files_into_text_chunks(
 @app.command()
 def main(
     transport: Annotated[str, typer.Option(help="Transport protocol to use (http, sse, or stdio)")] = "http",
-    host: Annotated[str, typer.Option(help="Host address for the MCP server")] = "127.0.0.1",
+    host: Annotated[str, typer.Option(help="Host address for the MCP server")] = "0.0.0.0",
     port: Annotated[int, typer.Option(help="Port for the MCP server")] = 8000,
     path: Annotated[str, typer.Option(help="Path for the MCP server")] = "/mcp"
 ) -> None:
