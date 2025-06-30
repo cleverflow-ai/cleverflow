@@ -5,7 +5,7 @@ export default class Session {
     id: string = crypto.randomUUID();
     checksum: string | null = null;
 
-    mcpServerUrl: string = $state("");
+    mcpServerUrl: string = $state("http://localhost:3000/mcp/");
     url: string = $state("");
     token: string = $state("");
     branch: string = $state("");

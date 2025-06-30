@@ -58,9 +58,9 @@
 		onOpenChange={(e) => {
 			isVisible = e.open;
 		}}
-		triggerBase="btn preset-tonal"
-		contentBase="h-screen w-screen"
-		backdropClasses="backdrop-blur-sm bg-surface-500/50"
+		triggerBase="btn preset-tonal rounded-none"
+		contentBase="h-screen w-screen rounded-none"
+		backdropClasses="backdrop-blur-sm bg-surface-500/50 rounded-none"
 	>
 		{#snippet content()}
 			<div

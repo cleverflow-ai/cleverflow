@@ -1,8 +1,10 @@
+import { Base64Content } from "./Base64Content.js";
+
 export default class Outline {
     constructor(private baseUrl: string, private apiKey: string) {
     }
 
-    public async fetch(fileId: string): Promise<string> {
+    public async fetch(fileId: string): Promise<Base64Content> {
         const response = await fetch(`${this.baseUrl}/documents.info`, {
             method: "POST",
             headers: {
@@ -15,9 +17,9 @@ export default class Outline {
         if (!response.ok) {
             throw new Error(`Failed to fetch outline file content: ${response.statusText}`);
         }
-        console.log(">>>> Outline fetch result:");
         const result = await response.json();
-        console.log("Outline fetch result:", result);
-        return result?.data?.text ?? "";
+        const text = result?.data?.text ?? "";
+
+        return new Base64Content(Buffer.from(text, 'utf-8').toString('base64'), 'text/plain');
     }
 }

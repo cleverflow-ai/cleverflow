@@ -3,8 +3,8 @@ import Outline from "./tools/Outline.js";
 import Gitea from "./tools/Gitea.js";
 import z from "zod";
 import Github from "./tools/Github.js";
-import path from "path";
-import fs from "fs";
+import { Base64Content } from "./tools/Base64Content.js";
+import { loadWebComponentByMime } from "./common/Util.js";
 
 export function createServer() {
     const server = new McpServer({
@@ -27,36 +27,36 @@ export function createServer() {
 
 function registerResources(server: McpServer) {
 
-    server.resource(
-        "web-components",
-        new ResourceTemplate("web-components://{name}", {
-            list: async () => ({
-                resources: [
-                    {
-                        name: "glb-viewer",
-                        uri: "web-components://glb-viewer",
-                        description: "Web component that renders GLB 3D models from a URL or base64 data.",
-                    },
-                    {
-                        name: "pdf-viewer",
-                        uri: "web-components://pdf-viewer",
-                        description: "Web component for viewing PDF file contents.",
-                    }
-                ]
-            })
-        }),
-        async (uri, { name }) => {
-            const filePath = path.join("web-components", name as string);
-            const buffer = fs.readFileSync(filePath);
-            const base64Data = buffer.toString('base64');
-            return {
-                content: [{
-                    uri: uri.href,
-                    data: base64Data,
-                }]
-            };
-        }
-    );
+    // server.resource(
+    //     "web-components",
+    //     new ResourceTemplate("web-components://{name}", {
+    //         list: async () => ({
+    //             resources: [
+    //                 {
+    //                     name: "glb-viewer",
+    //                     uri: "web-components://glb-viewer",
+    //                     description: "Web component that renders GLB 3D models from a URL or base64 data.",
+    //                 },
+    //                 {
+    //                     name: "pdf-viewer",
+    //                     uri: "web-components://pdf-viewer",
+    //                     description: "Web component for viewing PDF file contents.",
+    //                 }
+    //             ]
+    //         })
+    //     }),
+    //     async (uri, { name }) => {
+    //         const filePath = path.join("web-components", name as string);
+    //         const buffer = fs.readFileSync(filePath);
+    //         const base64Data = buffer.toString('base64');
+    //         return {
+    //             content: [{
+    //                 uri: uri.href,
+    //                 data: base64Data,
+    //             }]
+    //         };
+    //     }
+    // );
 }
 
 function registerTools(server: McpServer) {
@@ -79,13 +79,18 @@ function registerTools(server: McpServer) {
             });
 
             const outline = new Outline(baseUrl, apiKey);
-            const text = await outline.fetch(fileId);
 
+            const base64File = await outline.fetch(fileId);
+
+            const dynamicComponent = loadWebComponentByMime(base64File.mime);
             return {
                 content: [
                     {
-                        type: "text",
-                        text: text
+                        type: "data",
+                        data: {
+                            base64FileContent: base64File.base64Content,
+                            dynamicComponent: dynamicComponent,
+                        }
                     }
                 ],
             };
@@ -113,13 +118,14 @@ function registerTools(server: McpServer) {
                 }
             });
 
-            let result: any;
+            let result: any = null;
 
             if (url === Github.McpServerUrl) {
                 try {
                     const github = new Github(token);
                     result = await github.fetch(branch, owner, repo, path);
                 } catch (exception: any) {
+                    console.log(exception);
                     return {
                         error: {
                             message: exception.message,
@@ -139,7 +145,19 @@ function registerTools(server: McpServer) {
                 }
             }
 
+            if (!result) {
+                return {
+                    content: [
+                        {
+                            type: "data",
+                            data: result
+                        }
+                    ],
+                };
+            }
+
             if (Array.isArray(result)) {
+                // TODO
                 return {
                     content: [
                         {
@@ -149,17 +167,20 @@ function registerTools(server: McpServer) {
                     ],
                 };
             } else {
+                const base64File: Base64Content = result;
+                const dynamicComponent = loadWebComponentByMime(base64File.mime);
                 return {
                     content: [
                         {
-                            type: "text",
-                            text: result
+                            type: "data",
+                            data: {
+                                base64FileContent: base64File.base64Content,
+                                dynamicComponent: dynamicComponent,
+                            }
                         }
                     ],
                 };
             }
-
-
         }
     );
 

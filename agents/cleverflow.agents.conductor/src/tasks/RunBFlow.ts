@@ -479,7 +479,7 @@ const runNode = async (session: Session, context: TaskContext, bflow: BFlow, use
                         role: 'agent',
                         parts: [{
                             type: 'text',
-                            text: 'update'
+                            text: 'Mcp client was not found'
                         }, {
                             type: 'data',
                             data: {
@@ -501,7 +501,7 @@ const runNode = async (session: Session, context: TaskContext, bflow: BFlow, use
                     role: 'agent',
                     parts: [{
                         type: 'text',
-                        text: 'update'
+                        text: 'No MCP Tool'
                     }, {
                         type: 'data',
                         data: {

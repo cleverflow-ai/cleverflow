@@ -15,44 +15,43 @@
     // GITEA
     let repoOwner = $state("clevernow");
     let repo = $state("atlascopco-dasm");
-    let filePath = $state("README.md");
+    let filePath = $state(
+        "orders/40009326/Documentation/1000/DE/Einzelteile/Einzelteile.pdf",
+    );
 
     // RP
     let rpUsername = $state("");
     let rpPassword = $state("");
     let rpModelName = $state("");
 
-    let currentForm = $state("glb-form");
-    // let currentForm = $state("gitea-form");
-    // let currentForm = $state("gitea-form");
+    // let currentForm = $state("glb-form");
+    let currentForm = $state("gitea-form");
 
     let isLoading = $state(false);
 
     let results: any[] = $state([]);
 
+    let dynamicComponent: any = $state(null);
+    let bindingData: any = $state(null);
+
     onMount(async () => {
         setDefaultForm();
-        // const client = await createMcpClient(
-        //     "http://localhost:3000/mcp",
-        //     "@cleverflow-ao/cleverflow.mcp.io",
-        //     "1.0.0",
-        // );
-        // const tools = await client.listTools();
-        // console.log("Tools:");
-        // console.log(JSON.stringify(tools, null, 2));
+        await import(
+            "@cleverflow-ai/cleverflow.core.frontend/webcomponents/web-component-loader.js"
+        );
     });
 
     function setDefaultForm(): void {
-        baseUrl = "";
-        apiKey = "";
+        baseUrl = "https://gitea-atlascopco-integration.clevernow.com/api/v1";
+        apiKey = "04f4b0dada8fa8632dc7541f2f2131c703693e7e";
 
         // OUTLINE
         fileId = "";
         // GITEA
-        repoOwner = "";
-        repo = "";
-        filePath = "";
-
+        repoOwner = "clevernow";
+        repo = "atlascopco-dasm";
+        filePath =
+            "orders/40009326/Documentation/1000/DE/Einzelteile/Einzelteile.pdf";
         // RP
         rpUsername = "";
         rpPassword = "";
@@ -146,11 +145,12 @@
                 {
                     name: "get_file_contents",
                     arguments: {
-                        baseUrl,
-                        apiKey,
-                        repoOwner,
+                        url: baseUrl,
+                        token: apiKey,
+                        branch: "main",
+                        owner: repoOwner,
                         repo,
-                        filePath: filePath ?? "",
+                        path: filePath ?? "",
                     },
                 },
                 z.any(),
@@ -160,24 +160,17 @@
             );
             console.log(">>> result: ");
             console.log(result);
-            const text =
+            const content =
                 result.content &&
                 Array.isArray(result.content) &&
                 result.content.length > 0
-                    ? result.content[0].text
+                    ? result.content[0]
                     : null;
-            if (text) {
-                results = [
-                    {
-                        baseUrl,
-                        apiKey,
-                        repoOwner,
-                        repo,
-                        filePath,
-                        text,
-                    },
-                    ...results,
-                ]; // Ensure results is an array
+            console.log(content);
+            if (content) {
+                bindingData = content.data;
+                dynamicComponent = content.data?.dynamicComponent;
+                console.log(dynamicComponent);
             }
         } catch (exception) {
             console.log(exception);
@@ -399,3 +392,13 @@
         {/if}
     </div>
 </div>
+
+{#if dynamicComponent}
+    <web-component-loader
+        tag={dynamicComponent.tag}
+        scriptBase64={dynamicComponent.scriptBase64}
+        propBindings={dynamicComponent.propBindings}
+        {bindingData}
+    >
+    </web-component-loader>
+{/if}

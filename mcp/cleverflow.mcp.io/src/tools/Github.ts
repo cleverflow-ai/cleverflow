@@ -14,7 +14,7 @@ export default class Github {
 
     private async createClient() {
         if (!this.client) {
-            console.log('>>> create mcp client: token ', this.token);
+            console.log('>>>  create Github mcp client: token ', this.token);
             this.client = await this.createMcpClient(
                 Github.McpServerUrl,
                 '@copilot/github',

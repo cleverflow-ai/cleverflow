@@ -45,7 +45,9 @@ export default class FileStorageService {
                     : null;
 
 
-            return content?.text;
+            const binary = atob(content.data?.base64FileContent);
+            const bytes = Uint8Array.from(binary, c => c.charCodeAt(0));
+            return new TextDecoder('utf-8').decode(bytes);
 
         } finally {
             mcpClient?.close();

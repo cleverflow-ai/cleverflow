@@ -10,7 +10,8 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 const components = [
-    { name: 'glb-loader', entry: 'src/lib/glbloader/GlbLoader.ts' },
+    { name: 'text-viewer', entry: 'src/lib/text-viewer/TextViewer.ts' },
+    { name: 'pdf-viewer', entry: 'src/lib/pdf-viewer/PdfViewer.ts' },
 ];
 
 async function buildAll() {
