@@ -1,0 +1,19 @@
+version: "3.9"
+
+services:
+  conversionmcp:
+    build: .
+    ports:
+      - "8031:8000"
+    networks:
+      - conversionmcp_network
+    # deploy:
+    #   resources:
+    #     reservations:
+    #       devices:
+    #         - capabilities: [gpu]
+    # runtime: nvidia
+
+networks:
+  conversionmcp_network:
+    driver: bridge
