@@ -12,39 +12,39 @@ app = typer.Typer()
 
 # Create an MCP server
 mcp = FastMCP(
-    "Conversion MCP", 
+    "CLEVER°FLOW | Conversion MCP", 
     # maximum_message_size=100 * 1024 * 1024
 )
 
 @mcp.tool()
-def convert_pdf_files_into_text_chunks(
-    pdf_payloads: list[Annotated[bytes, {"media_type": "application/octet-stream"}]],
+def convert_doc_files_into_text_chunks(
+    payloads: list[Annotated[bytes, {"media_type": "application/octet-stream"}]],
     chunk_size: Annotated[int, {"default": 512, "description": "Size of each chunk in bytes"}] = 512
 ) -> list[dict[str, Any]]:
-    """Convert PDF files / streams into Text Chunks.
+    """
+    Convert Documentation Files (PDF, Images, DOCX, PPTX, and HTML) into Text Chunks.
 
     Args:
-        pdf_payloads: PDF document as binary data from the attachment
+        payloads: Documentation Files (PDF, Images, DOCX, PPTX, and HTML) as binary data.
+        chunk_size: Desired size of output text chunks in bytes. By default, it is set to 512 bytes.
 
     Returns:
-        A dictionary with processed results
+        A dictionary with processed results.
     """
     results = []
 
     chunker = HybridChunker(max_tokens=chunk_size)
 
-    for file_index, pdf_payload in enumerate(pdf_payloads):
-        decoded = base64.b64decode(pdf_payload)
-        
-        # Example processing - you can replace this with your actual processing logic
+    for payload_index, payload in enumerate(payloads):
+        decoded = base64.b64decode(payload)
         file_size = len(decoded)
 
         # First few bytes as hex for identification
         header_bytes = decoded[:10].hex()
 
-        # For example, if it's an image, you might use PIL to process it
+        # TODO: if it's an image, we might use PIL to process it
         buf = BytesIO(decoded)
-        source = DocumentStream(name="doc_{index}.pdf".format(index=file_index), stream=buf)
+        source = DocumentStream(name="doc_{index}".format(index=payload_index), stream=buf)
         
         result = converter.convert(source)
         doc = result.document
@@ -81,13 +81,13 @@ def convert_pdf_files_into_text_chunks(
 #     return f"Hello, {name}!"
 
 @app.command()
-def main(
+def serve(
     transport: Annotated[str, typer.Option(help="Transport protocol to use (http, sse, or stdio)")] = "http",
     host: Annotated[str, typer.Option(help="Host address for the MCP server")] = "0.0.0.0",
-    port: Annotated[int, typer.Option(help="Port for the MCP server")] = 8000,
+    port: Annotated[int, typer.Option(help="Port for the MCP server")] = 8031,
     path: Annotated[str, typer.Option(help="Path for the MCP server")] = "/mcp"
 ) -> None:
     mcp.run(transport=transport, host=host, port=port, path=path)
 
 if __name__ == "__main__":
-    main()
+    app()

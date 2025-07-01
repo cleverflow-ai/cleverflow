@@ -24,12 +24,19 @@ pipeline_options.do_table_structure = True
 pipeline_options.table_structure_options.do_cell_matching = True
 
 converter = DocumentConverter(
+        allowed_formats=[
+                    InputFormat.PDF,
+                    InputFormat.IMAGE,
+                    InputFormat.DOCX,
+                    InputFormat.HTML,
+                    InputFormat.PPTX,
+        ],
         format_options={
-        InputFormat.PDF: PdfFormatOption(
-            pipeline_options=pipeline_options,
-        )
-    }
-)
+            InputFormat.PDF: PdfFormatOption(
+                pipeline_options=pipeline_options,
+            )
+        }
+    )
 
 print("Docling Converter started")
 print("Using accelerator:", accelerator_options.device)

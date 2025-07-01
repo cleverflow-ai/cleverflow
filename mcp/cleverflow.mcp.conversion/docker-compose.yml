@@ -4,7 +4,7 @@ services:
   conversionmcp:
     build: .
     ports:
-      - "8031:8000"
+      - "8031:8031"
     networks:
       - conversionmcp_network
     deploy:
