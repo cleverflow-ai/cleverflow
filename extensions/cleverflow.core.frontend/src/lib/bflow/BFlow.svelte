@@ -88,7 +88,7 @@
 {#snippet reloadBFlowButton()}
 	<button
 		type="button"
-		class="btn preset-tonal-primary"
+		class="btn preset-filled-primary-500"
 		onclick={async () => await reload()}
 	>
 		<Zap class="w-5 h-5" />

@@ -1,5 +1,5 @@
 {
-	"name": "@cleverflow-ai/cleverflow.core.frontend",
+	"name": "@cleverflow-ai/cleverflow.mcp.io.webcomponents",
 	"version": "0.0.1",
 	"scripts": {
 		"dev": "vite dev",
@@ -24,10 +24,6 @@
 		".": {
 			"types": "./dist/index.d.ts",
 			"svelte": "./dist/index.js"
-		},
-		"./webcomponents/glb-loader.js": {
-			"import": "./dist-webcomponents/glb-loader.js",
-			"require": "./dist-webcomponents/glb-loader.js"
 		}
 	},
 	"sideEffects": [

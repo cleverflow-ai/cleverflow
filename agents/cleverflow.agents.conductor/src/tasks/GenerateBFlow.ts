@@ -50,7 +50,7 @@ export async function* generateBFlow(session: Session, context: TaskContext): As
         text,
         session.getMcpClientTools(),
         {
-            clientRegistry: new Clients({ primary: Clients.OllamaTool }).registry
+            clientRegistry: new Clients({ primary: Clients.OllamaCode }).registry
         });
 
     yield {
@@ -72,7 +72,7 @@ export async function* generateBFlow(session: Session, context: TaskContext): As
     const bflowviz = await b.ParseBFlowToBFlowViz(
         JSON.stringify(bflow),
         {
-            clientRegistry: new Clients({ primary: Clients.OllamaTool }).registry
+            clientRegistry: new Clients({ primary: Clients.OllamaCode }).registry
         });
 
     console.log(`>>>> bflow`);

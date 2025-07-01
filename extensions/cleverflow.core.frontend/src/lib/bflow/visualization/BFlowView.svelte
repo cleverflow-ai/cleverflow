@@ -152,20 +152,22 @@
 								</div>
 							{/if}
 							{#if node.description}
-								<div class="text-sm">
+								<div class="text-sm text-surface-300">
 									{node.description}
 								</div>
 							{/if}
 
 							{#if nodeResult}
-								<WebComponentLoader
-									tag={nodeResult.dynamicComponent?.tag}
-									scriptBase64={nodeResult.dynamicComponent
-										?.scriptBase64}
-									propBindings={nodeResult.dynamicComponent
-										?.propBindings}
-									bindingData={nodeResult.bindingData}
-								></WebComponentLoader>
+								<div class="mt-4">
+									<WebComponentLoader
+										tag={nodeResult.dynamicComponent?.tag}
+										scriptBase64={nodeResult
+											.dynamicComponent?.scriptBase64}
+										propBindings={nodeResult
+											.dynamicComponent?.propBindings}
+										bindingData={nodeResult.bindingData}
+									></WebComponentLoader>
+								</div>
 							{:else if state === BFlowNodeState.RUNNING || state === BFlowNodeState.WAITING_FOR_DATA}
 								<div
 									class="w-full rounded-none gap-4 p-4 flex justify-start items-center gap-1"
