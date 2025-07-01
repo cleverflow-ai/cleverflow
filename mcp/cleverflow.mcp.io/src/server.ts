@@ -4,7 +4,7 @@ import Gitea from "./tools/Gitea.js";
 import z from "zod";
 import Github from "./tools/Github.js";
 import { Base64Content } from "./tools/Base64Content.js";
-import { loadWebComponentByMime } from "./common/Util.js";
+import { loadWebComponentByMimeType } from "./common/Util.js";
 
 export function createServer() {
     const server = new McpServer({
@@ -82,7 +82,7 @@ function registerTools(server: McpServer) {
 
             const base64File = await outline.fetch(fileId);
 
-            const dynamicComponent = loadWebComponentByMime(base64File.mime);
+            const dynamicComponent = loadWebComponentByMimeType(base64File.mimeType);
             return {
                 content: [
                     {
@@ -168,7 +168,7 @@ function registerTools(server: McpServer) {
                 };
             } else {
                 const base64File: Base64Content = result;
-                const dynamicComponent = loadWebComponentByMime(base64File.mime);
+                const dynamicComponent = loadWebComponentByMimeType(base64File.mimeType);
                 return {
                     content: [
                         {

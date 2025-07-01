@@ -4,6 +4,7 @@
 	import { onMount, onDestroy } from "svelte";
 	import css from "../../app.css?inline";
 	import { TriangleAlert } from "lucide-svelte";
+	import LoadingIndicator from "../common/components/LoadingIndicator.svelte";
 
 	let {
 		theme = "crimson",
@@ -96,5 +97,9 @@
 		{:else}
 			{@html `<${tag}  ${attributes} </${tag}>`}
 		{/if}
+	{:else}
+		<div class="w-full flex justify-center items-center">
+			<LoadingIndicator></LoadingIndicator>
+		</div>
 	{/if}
 </main>

@@ -25,11 +25,11 @@ export default class Gitea {
                 const buffer = Buffer.from(result.content, 'base64');
 
                 const type = await fileTypeFromBuffer(buffer);
-                let mime = type?.mime;
-                if (!mime) {
-                    mime = detectMimeTypeFromPath(path);
+                let mimeType = type?.mime;
+                if (!mimeType) {
+                    mimeType = detectMimeTypeFromPath(path);
                 }
-                return new Base64Content(result.content, mime);
+                return new Base64Content(result.content, mimeType);
             }
         } catch (exception) {
             console.log(exception);

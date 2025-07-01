@@ -6,7 +6,6 @@ import { fileURLToPath } from 'url';
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-
 export function detectMimeTypeFromPath(path: string) {
     const extension = path.split('.').pop().toLowerCase();
 
@@ -38,9 +37,9 @@ export function detectMimeTypeFromPath(path: string) {
     }
 }
 
-export function loadWebComponentByMime(mime: string) {
+export function loadWebComponentByMimeType(mimeType: string) {
     let buffer: NonSharedBuffer;
-    switch (mime) {
+    switch (mimeType) {
         case 'application/pdf':
             buffer = fs.readFileSync(p.resolve(__dirname, '../web-components/dist-webcomponents/pdf-viewer.js'));
             return {
