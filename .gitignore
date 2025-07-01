@@ -37,3 +37,6 @@ paraglide
 
 *.npmrc
 test/
+
+.venv
+__pycache__
