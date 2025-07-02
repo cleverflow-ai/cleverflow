@@ -9,7 +9,9 @@ export type McpClientOptions = Partial<{
 }>
 
 export async function createMcpClient(
-    serverUrl: string, name: string, version: string, 
+    serverUrl: string,
+    name: string,
+    version: string,
     options: McpClientOptions = {
         mcpSessionId: uuidv4(),
         token: null
@@ -41,7 +43,7 @@ export async function createMcpClient(
     };
     if (options.token) {
         headers['Authorization'] = `Bearer ${options.token}`;
-    }   
+    }
     const transport = new StreamableHTTPClientTransport(baseUrl, {
         requestInit: {
             headers: headers

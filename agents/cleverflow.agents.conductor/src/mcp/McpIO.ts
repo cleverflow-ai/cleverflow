@@ -7,12 +7,12 @@ export default class McpIO {
     static async createClient(): Promise<Client> {
         return await createMcpClient(
             process.env.MCP_IO_SERVER,
-            process.env.MCP_IO_SERVER,
-            process.env.MCP_IO_SERVER,
+            process.env.MCP_IO_NAME,
+            process.env.MCP_IO_VERSION,
         );
     }
 
-    static async getFileContents(url: string, token: string, branch: string, owner: string, repo: string, path: string): Promise<string> {
+    static async getFileContents(url: string, token: string, branch: string, owner: string, repo: string, path: string): Promise<any> {
 
         const mcpClient = await McpIO.createClient();
 
@@ -47,11 +47,11 @@ export default class McpIO {
                     ? callToolResult.content[0]
                     : null;
 
+            return content;
 
-            return content?.text;
-
-        } finally {
-            mcpClient?.close();
+        } catch (exception: any) {
+            console.error(exception);
+            return null;
         }
     }
 

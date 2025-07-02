@@ -12,14 +12,13 @@
   } from "lucide-svelte";
   import { onMount } from "svelte";
   import MarkdocRendererController from "@cleverflow-ai/cleverflow.core.frontend/webcomponents/markdoc-renderer-controller.js";
-  // import GitBrowser from "$lib/components/GitBrowser.svelte";
   import Settings from "$lib/components/Settings.svelte";
-  import FileStorageService from "$lib/services/FileStorageService.js";
   import ConductorService from "$lib/services/ConductorService";
   import LoadingIndicator from "$lib/components/LoadingIndicator.svelte";
   import md5 from "md5";
   import Session from "$lib/session/Session.svelte";
   import { toaster } from "$lib/components/Toast.js";
+  import { FlowGraphConsoleLogBlock } from "@babylonjs/core";
 
   const currentTheme = "crimson";
 
@@ -106,29 +105,50 @@
       return;
     }
 
+    if (!conductorService) {
+      return;
+    }
+
     try {
       session.ensureSession();
 
-      markdoc = await FileStorageService.getFileContents(session);
-      markdocEditorElement.setMarkdown(markdoc);
-
-      session.setHashedFileContent(md5(markdoc));
-      isFileLoaded = true;
+      const event = await conductorService.getFileContents(session);
+      console.log(JSON.stringify(event));
+      let dataPart = event?.status?.message?.parts?.find((part) => {
+        return part.type === "data" && part.data;
+      });
+      console.log(`>>> dataPart`);
+      console.log(dataPart);
+      if (dataPart && dataPart.data?.base64FileContent) {
+        markdoc = atob(dataPart.data.base64FileContent);
+        markdocEditorElement.setMarkdown(markdoc);
+        session.setHashedFileContent(md5(markdoc));
+        isFileLoaded = true;
+        toaster.success({
+          title: "File loaded successfully.",
+        });
+      } else {
+        toaster.error({
+          title: "File loaded failed.",
+        });
+      }
     } catch (exception: any) {
       gitErrorMessage = exception.message ?? "Get File Contents Error: Unknown";
+      toaster.error({
+        title: "File loaded failed.",
+      });
     }
     isLoadingFileContent = false;
-
-    toaster.success({
-      title: "File loaded successfully.",
-    });
   };
 
   const saveFileContents = async () => {
+    if (!conductorService) {
+      return;
+    }
     isLoadingFileContent = true;
     markdoc = markdocEditorElement.getMarkdown();
     console.log(markdoc);
-    const result = await FileStorageService.saveFileContents(session, markdoc);
+    const result = await conductorService.saveFileContents(session, markdoc);
     if (result) {
       toaster.success({
         title: "File saved successfully.",

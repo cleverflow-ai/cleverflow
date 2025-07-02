@@ -1,4 +1,4 @@
-import type { Task, TaskSendParams, TaskState } from "@cleverflow-ai/cleverflow.agents/schema";
+import type { Task, TaskSendParams, TaskState, TextPart } from "@cleverflow-ai/cleverflow.agents/schema";
 import type Session from "$lib/session/Session.svelte";
 import md5 from "md5";
 import { ConductorClient } from "./ConductorClient.js";
@@ -11,6 +11,88 @@ export default class ConductorService {
     constructor(conductorServerUrl: string) {
         this.conductorServerUrl = conductorServerUrl;
         this.conductorClient = new ConductorClient(this.conductorServerUrl);
+    }
+
+    async getFileContents(session: Session): Promise<Task | null> {
+
+        try {
+            const workspaceId = session.repo;
+            const dataId = md5(session.path);
+            const instanceId = session.hashedFileContent;
+            const sessionId = session.id;
+
+            return new Promise((resolve) => {
+                const taskParams: TaskSendParams = {
+                    id: `${workspaceId}|${dataId}|${instanceId}|${sessionId}|get-file-contents`,
+                    sessionId: sessionId,
+                    message: {
+                        role: "user",
+                        parts: [],
+                        metadata: {
+                            session: session.toJson(),
+                        },
+                    },
+                };
+                this.conductorClient?.sendTask(taskParams, (state: TaskState, event: Task) => {
+
+                    if (state === 'completed') {
+                        resolve(event);
+                    } else if (state === 'failed') {
+                        resolve(null);
+                    } else if (state === 'working') {
+                        console.log(event);
+                    } else {
+                        resolve(null);
+                    }
+                });
+            })
+
+        } catch (exception: any) {
+            console.error(exception);
+            return null;
+        }
+    }
+
+    async saveFileContents(session: Session, fileContent: string,): Promise<boolean> {
+
+        try {
+            const workspaceId = session.repo;
+            const dataId = md5(session.path);
+            const instanceId = session.hashedFileContent;
+            const sessionId = session.id;
+
+            return new Promise((resolve) => {
+                const taskParams: TaskSendParams = {
+                    id: `${workspaceId}|${dataId}|${instanceId}|${sessionId}|save-file-content`,
+                    sessionId: sessionId,
+                    message: {
+                        role: "user",
+                        parts: [{
+                            type: 'text',
+                            text: fileContent
+                        }],
+                        metadata: {
+                            session: session.toJson(),
+                        },
+                    },
+                };
+                this.conductorClient?.sendTask(taskParams, (state: TaskState, event: Task) => {
+                    if (state === 'completed') {
+                        resolve(true);
+                    } else if (state === 'failed') {
+                        resolve(false);
+                    } else if (state === 'working') {
+                        console.log(event);
+                    } else {
+                        resolve(false);
+                    }
+                });
+            })
+
+        } catch (exception: any) {
+            console.error(exception);
+            return false;
+        }
     }
 
     async generateBFlow(
