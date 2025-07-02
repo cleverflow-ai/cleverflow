@@ -3,12 +3,25 @@ import { StreamableHTTPClientTransport } from "@modelcontextprotocol/sdk/client/
 import { v4 as uuidv4 } from 'uuid';
 import z from "zod";
 
-export async function createMcpClient(serverUrl: string, name: string, version: string, token: string): Promise<Client> {
+export type McpClientOptions = Partial<{
+    mcpSessionId: string;
+    token: string;
+}>
+
+export async function createMcpClient(
+    serverUrl: string, name: string, version: string, 
+    options: McpClientOptions = {
+        mcpSessionId: uuidv4(),
+        token: null
+    })
+    : Promise<Client> {
+    // Create a new MCP client instance
     const client = new Client({
         name: name,
         version: version,
     });
 
+    // Enable Notifications 
     const notificationSchema = z.object({
         method: z.literal("notifications/message"),
         params: z.object({
@@ -16,25 +29,27 @@ export async function createMcpClient(serverUrl: string, name: string, version: 
             message: z.string()
         }).optional()
     });
-
     client.setNotificationHandler(notificationSchema, (notification) => {
         console.log("Received notification:", notification);
     });
 
+    // Setup the transport i.e. Streamable HTTP for the MCP client
     const baseUrl = new URL(serverUrl);
+    const headers = {
+        'mcp-session-id': options.mcpSessionId,
+        'sessionId': uuidv4()
+    };
+    if (options.token) {
+        headers['Authorization'] = `Bearer ${options.token}`;
+    }   
     const transport = new StreamableHTTPClientTransport(baseUrl, {
         requestInit: {
-            headers: {
-                'mcp-session-id': uuidv4(),
-                'sessionId': uuidv4(),
-                Authorization: `Bearer ${token}`,
-            }
+            headers: headers
         }
     });
-
     await client.connect(transport);
 
-    console.log("✅ MCP Client connected (HTTP Streamable)");
+    console.log("✅ MCP Client connected (Streamable HTTP)");
 
     return client;
 }
