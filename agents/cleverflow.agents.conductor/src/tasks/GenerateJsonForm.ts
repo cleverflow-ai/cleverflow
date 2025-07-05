@@ -51,7 +51,7 @@ export async function* generateJsonForm(session: Session, context: TaskContext):
     const jsonForm = await b.ConvertToJsonForm(
         JSON.stringify(inputSchema),
         {
-            clientRegistry: new Clients({ primary: Clients.OllamaTool }).registry
+            clientRegistry: new Clients({ primary: Clients.OllamaCode }).registry
         });
 
     yield {

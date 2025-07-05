@@ -5,18 +5,18 @@ export default class Session {
     id: string = crypto.randomUUID();
     checksum: string | null = null;
 
-    mcpServerUrl: string = $state("http://localhost:3000/mcp/");
     url: string = $state("");
     token: string = $state("");
     branch: string = $state("");
     owner: string = $state("");
     repo: string = $state("");
     path: string = $state("");
+    commonSettings: string = $state("");
 
     hashedFileContent: string | null = null;
 
     private buildHashString(): string {
-        return `${this.mcpServerUrl}-${this.url}-${this.token}-${this.branch}-${this.owner}-${this.repo}-${this.path}-${this.hashedFileContent}`;
+        return `${this.url}-${this.token}-${this.branch}-${this.owner}-${this.repo}-${this.path}-${this.hashedFileContent}-${this.commonSettings}`;
     }
 
     private computeChecksum(): string {
@@ -24,7 +24,10 @@ export default class Session {
     }
 
     hasRequiredConfig(): boolean {
-        return !!(this.mcpServerUrl && this.url && this.token && this.branch && this.owner && this.repo && this.path);
+        if ((this.url && this.token && this.branch && this.owner && this.repo && this.path) || this.commonSettings) {
+            return true;
+        }
+        return false;
     }
 
     hasConfigChanged(): boolean {
@@ -56,7 +59,6 @@ export default class Session {
         return {
             id: this.id,
             checksum: this.checksum,
-            mcpServerUrl: this.mcpServerUrl,
             url: this.url,
             token: this.token,
             branch: this.branch,
@@ -64,6 +66,7 @@ export default class Session {
             repo: this.repo,
             path: this.path,
             hashedFileContent: this.hashedFileContent,
+            commonSettings: this.commonSettings,
         }
     }
 }

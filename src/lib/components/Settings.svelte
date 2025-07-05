@@ -55,6 +55,17 @@
                     class="w-full border px-2 py-1"
                 />
             </div>
+
+            <div>
+                <label class="block text-sm font-medium mb-1"
+                    >Common Settings</label
+                >
+                <textarea
+                    bind:value={session.commonSettings}
+                    class="w-full border px-2 py-1"
+                    rows="5"
+                ></textarea>
+            </div>
         </div>
     </div>
 </div>

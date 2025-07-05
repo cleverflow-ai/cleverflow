@@ -13,7 +13,7 @@ class JsonForm {
 function ConvertToJsonForm(input: string) -> JsonForm {
     client Ollama_Tool
     prompt #"
-        Convert the following JSON Schema into a JSON Form Schema compatible with @sjsf/form@2.0.0-next.15.
+        Convert the following JSON Schema into a JSON Form Schema compatible with @sjsf/form.
 
         Requirements:
         - Add a "title" field to the root, generate a friendly name.
