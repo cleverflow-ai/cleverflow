@@ -25,7 +25,6 @@ export async function* handleTask(context: TaskContext): AsyncGenerator<TaskYiel
     console.log('task: ', task);
 
     let session: Session;
-    let clientSession: any;
 
     switch (task) {
         case TASKS.GENERATE_BFLOW:

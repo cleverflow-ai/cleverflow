@@ -6,6 +6,9 @@ import { z } from "zod";
 import Session from '../sessions/Session.js';
 import PersistenceService from '../services/PersistenceService.js';
 
+import { b } from '../baml_client/async_client.js';
+import Clients from '../baml/Clients.js';
+
 export async function* runBFlow(session: Session, context: TaskContext): AsyncGenerator<TaskYieldUpdate, schema.Task | void, unknown> {
 
     const { bflow, userInput, outs } = extractData(context);
@@ -349,7 +352,7 @@ const runNode = async (session: Session, context: TaskContext, bflow: BFlow, use
                     userInputForCurrentNode = { ...extractedInputFromNodeContent, ...userInputForCurrentNode };
                 } catch (exception) {
                 }
-
+                s
                 const canCallTool = isValidInput(requiredParameters || [], userInputForCurrentNode)
                 if (!canCallTool) {
                     node.state = BFlowNodeState.WAITING_FOR_DATA;
