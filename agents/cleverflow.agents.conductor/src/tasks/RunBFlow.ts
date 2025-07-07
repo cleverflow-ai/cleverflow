@@ -353,16 +353,19 @@ const runNode = async (session: Session, context: TaskContext, bflow: BFlow, use
                     const extractedInputFromNodeContent = JSON.parse(node.toolInput ?? '{}');
                     userInputForCurrentNode = { ...extractedInputFromNodeContent, ...userInputForCurrentNode };
 
-                    const mpcPayload = await b.GenerateMcpToolPayload(
-                        JSON.stringify(mcpTool),
-                        JSON.stringify(userInputForCurrentNode),
-                        JSON.stringify(clientSession?.commonSettings ?? {}),
-                        {
-                            clientRegistry: new Clients({ primary: Clients.OllamaTool }).registry
-                        }
-                    );
+                    const canCallTool = isValidInput(requiredParameters || [], userInputForCurrentNode);
+                    if (!canCallTool) {
+                        const mpcPayload = await b.GenerateMcpToolPayload(
+                            JSON.stringify(mcpTool),
+                            JSON.stringify(userInputForCurrentNode),
+                            JSON.stringify(clientSession?.commonSettings ?? {}),
+                            {
+                                clientRegistry: new Clients({ primary: Clients.OllamaDefault }).registry
+                            }
+                        );
 
-                    userInputForCurrentNode = mpcPayload ? JSON.parse(mpcPayload) : userInputForCurrentNode;
+                        userInputForCurrentNode = mpcPayload ? JSON.parse(mpcPayload) : userInputForCurrentNode;
+                    }
 
                     userInput[node.id] = userInputForCurrentNode;
                 } catch (exception) {
