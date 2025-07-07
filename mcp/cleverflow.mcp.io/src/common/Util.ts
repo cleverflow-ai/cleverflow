@@ -48,7 +48,7 @@ export function loadWebComponentByMimeType(mimeType: string) {
                 propBindings: [
                     {
                         componentProp: 'base64Content',
-                        dataPath: 'base64FileContent',
+                        dataPath: 'blob',
                     }
                 ]
             };
@@ -60,7 +60,7 @@ export function loadWebComponentByMimeType(mimeType: string) {
                 propBindings: [
                     {
                         componentProp: 'base64Content',
-                        dataPath: 'base64FileContent',
+                        dataPath: 'blob',
                     }
                 ]
             };

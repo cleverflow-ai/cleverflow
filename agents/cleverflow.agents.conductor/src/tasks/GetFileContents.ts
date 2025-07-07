@@ -58,7 +58,7 @@ export async function* getFileContents(session: Session, context: TaskContext): 
 
             yield {
                 state: 'completed',
-                message: { role: 'agent', parts: [{ type: 'data', data: result.data }] }
+                message: { role: 'agent', parts: [{ type: 'data', data: result.resource }] }
             };
         } else {
             yield {

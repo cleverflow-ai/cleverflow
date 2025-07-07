@@ -5,6 +5,7 @@
     import { createMcpClient } from "@cleverflow-ai/cleverflow.mcp/dist/McpClient.js";
     import { z } from "zod";
     import { Settings, TriangleAlert } from "lucide-svelte";
+    import { CompatibilityCallToolResultSchema } from "@modelcontextprotocol/sdk/types.js";
 
     let client: any;
 
@@ -87,7 +88,7 @@
                         path: node?.path ?? "",
                     },
                 },
-                z.any(),
+                CompatibilityCallToolResultSchema,
                 {
                     timeout: 3600 * 1000,
                 },
@@ -134,7 +135,7 @@
                         path: node?.path ?? "",
                     },
                 },
-                z.any(),
+                CompatibilityCallToolResultSchema,
                 {
                     timeout: 3600 * 1000,
                 },

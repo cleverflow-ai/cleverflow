@@ -1,7 +1,7 @@
 import { createMcpClient } from "@cleverflow-ai/cleverflow.mcp/dist/McpClient.js";
 import { z } from "zod";
 import { Client } from "@modelcontextprotocol/sdk/client/index.js";
-import { CallToolResultSchema, ListToolsResultSchema } from "@modelcontextprotocol/sdk/types.js";
+import { CompatibilityCallToolResultSchema } from "@modelcontextprotocol/sdk/types.js";
 
 export default class McpIO {
 
@@ -31,7 +31,7 @@ export default class McpIO {
                         path,
                     },
                 },
-                CallToolResultSchema,
+                CompatibilityCallToolResultSchema,
                 {
                     timeout: 3600 * 1000,
                 },
@@ -76,7 +76,7 @@ export default class McpIO {
                         content: fileContent,
                     },
                 },
-                CallToolResultSchema,
+                CompatibilityCallToolResultSchema,
                 {
                     timeout: 3600 * 1000,
                 },

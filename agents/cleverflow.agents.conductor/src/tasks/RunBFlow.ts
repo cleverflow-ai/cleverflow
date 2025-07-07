@@ -1,11 +1,11 @@
-import { CallToolResultSchema, ListToolsResultSchema } from "@modelcontextprotocol/sdk/types.js";
+import { CallToolResultSchema, CompatibilityCallToolResultSchema, ListToolsResultSchema } from "@modelcontextprotocol/sdk/types.js";
 import { TaskContext, TaskYieldUpdate } from '@cleverflow-ai/cleverflow.agents/server';
 import { Task, TaskStatus, DataPart } from "@cleverflow-ai/cleverflow.agents/schema";
 import _ from 'lodash';
 import { BFlow, BFlowNode, BFlowNodeState, BFlowNodeType } from '../baml_client/types.js';
 import Session from '../sessions/Session.js';
 import PersistenceService from '../services/PersistenceService.js';
-
+import { z } from "zod";
 import { b } from '../baml_client/async_client.js';
 import Clients from '../baml/Clients.js';
 import { extractClientSession } from './Util.js';
@@ -313,8 +313,6 @@ const runNode = async (session: Session, context: TaskContext, bflow: BFlow, use
             let inputs: any[] = [];
 
             if (node.inputs) {
-                console.log('>>>> node');
-                console.log(JSON.stringify(node));
                 // Each Input corresponds a Node Id
                 for (const nodeId of node.inputs) {
                     // Get saved Output of required Node
@@ -402,7 +400,7 @@ const runNode = async (session: Session, context: TaskContext, bflow: BFlow, use
                 try {
                     const callToolResult = await mcpClient.client.callTool(
                         inputForCallTool,
-                        CallToolResultSchema,
+                        CompatibilityCallToolResultSchema,
                         {
                             timeout: 3600 * 1000,
                         },

@@ -1,5 +1,5 @@
 import { Client } from "@modelcontextprotocol/sdk/client/index.js";
-import { CallToolResultSchema, ListToolsResultSchema } from "@modelcontextprotocol/sdk/types.js";
+import { CompatibilityCallToolResultSchema, } from "@modelcontextprotocol/sdk/types.js";
 import { z } from "zod";
 import { StreamableHTTPClientTransport } from "@modelcontextprotocol/sdk/client/streamableHttp.js";
 import * as p from 'path';
@@ -7,7 +7,7 @@ import _ from 'lodash';
 
 export default class Github {
     static McpServerUrl = "https://api.githubcopilot.com/mcp/";
-    
+
     static fileContentsSchema = z.object({
         content: z.string(),
         encoding: z.string().optional(),
@@ -15,7 +15,7 @@ export default class Github {
         size: z.number().optional(),
         file_path: z.string().optional(),
     });
-    
+
     private client: Client;
 
     constructor(private token: string) { }
@@ -54,7 +54,7 @@ export default class Github {
                     path,
                 }
             },
-            CallToolResultSchema,
+            CompatibilityCallToolResultSchema,
             {
                 timeout: 3600 * 1000,
             },
@@ -135,7 +135,7 @@ export default class Github {
                     sha: foundFile?.sha
                 },
             },
-            CallToolResultSchema,
+            CompatibilityCallToolResultSchema,
             {
                 timeout: 3600 * 1000,
             },

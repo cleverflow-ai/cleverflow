@@ -84,8 +84,8 @@
 					const content = data.content[0];
 					actionNodeResults.push({
 						id: key,
-						bindingData: content.data,
-						dynamicComponent: content.data?.dynamicComponent,
+						bindingData: content.resource,
+						dynamicComponent: content.resource?.dynamicComponent,
 					});
 				}
 			}
