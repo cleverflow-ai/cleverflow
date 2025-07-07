@@ -60,9 +60,8 @@ function registerResources(server: McpServer) {
 }
 
 function registerTools(server: McpServer) {
-
     server.tool(
-        "fetch-outline-text-file",
+        "fetch_outline_text_file",
         "Fetches the content of a file from Outline using its file ID.",
         {
             baseUrl: z.string(),
@@ -86,9 +85,10 @@ function registerTools(server: McpServer) {
             return {
                 content: [
                     {
-                        type: "data",
-                        data: {
-                            base64FileContent: base64File.base64Content,
+                        type: "resource",
+                        resource: {
+                            mimeType: base64File.mimeType,
+                            blob: base64File.base64Content,
                             dynamicComponent: dynamicComponent,
                         }
                     }
@@ -149,8 +149,8 @@ function registerTools(server: McpServer) {
                 return {
                     content: [
                         {
-                            type: "data",
-                            data: result
+                            type: "resource",
+                            resource: result
                         }
                     ],
                 };
@@ -161,8 +161,8 @@ function registerTools(server: McpServer) {
                 return {
                     content: [
                         {
-                            type: "data",
-                            data: result
+                            type: "resource",
+                            resource: result
                         }
                     ],
                 };
@@ -172,9 +172,10 @@ function registerTools(server: McpServer) {
                 return {
                     content: [
                         {
-                            type: "data",
-                            data: {
-                                base64FileContent: base64File.base64Content,
+                            type: "resource",
+                            resource: {
+                                mimeType: base64File.mimeType,
+                                blob: base64File.base64Content,
                                 dynamicComponent: dynamicComponent,
                             }
                         }

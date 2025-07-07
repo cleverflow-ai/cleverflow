@@ -1,13 +1,21 @@
 import { Client } from "@modelcontextprotocol/sdk/client/index.js";
+import { CallToolResultSchema, ListToolsResultSchema } from "@modelcontextprotocol/sdk/types.js";
 import { z } from "zod";
 import { StreamableHTTPClientTransport } from "@modelcontextprotocol/sdk/client/streamableHttp.js";
 import * as p from 'path';
 import _ from 'lodash';
 
 export default class Github {
-
     static McpServerUrl = "https://api.githubcopilot.com/mcp/";
-
+    
+    static fileContentsSchema = z.object({
+        content: z.string(),
+        encoding: z.string().optional(),
+        sha: z.string().optional(),
+        size: z.number().optional(),
+        file_path: z.string().optional(),
+    });
+    
     private client: Client;
 
     constructor(private token: string) { }
@@ -25,7 +33,6 @@ export default class Github {
     }
 
     public async fetch(branch: string, owner: string, repo: string, path: string): Promise<any> {
-
         if (path.startsWith('/')) {
             path = path.slice(1);
         }
@@ -45,9 +52,9 @@ export default class Github {
                     owner,
                     repo,
                     path,
-                },
+                }
             },
-            z.any(),
+            CallToolResultSchema,
             {
                 timeout: 3600 * 1000,
             },
@@ -82,7 +89,7 @@ export default class Github {
                     return JSON.parse(textContent.text);
                 } catch (exception) {
                     console.log(exception);
-                    return exception.message ?? 'Exception: cannot parsing an invalid array text';
+                    return exception.message ?? 'Exception: cannot parse an invalid array text.';
                 }
             }
         }
@@ -128,7 +135,7 @@ export default class Github {
                     sha: foundFile?.sha
                 },
             },
-            z.any(),
+            CallToolResultSchema,
             {
                 timeout: 3600 * 1000,
             },
@@ -182,7 +189,7 @@ export default class Github {
     }
 
     private isPathFile(path: string): boolean {
-        // Loại bỏ dấu slash cuối nếu có
+        // Remove trailing slashes
         const cleanPath = path.replace(/\/+$/, '');
         const ext = p.extname(cleanPath);
         return !!ext;

@@ -18,10 +18,10 @@
   },
   "dependencies": {
     "@cleverflow-ai/cleverflow.mcp": "file:../cleverflow.mcp",
-    "@modelcontextprotocol/sdk": "^1.12.0",
+    "@modelcontextprotocol/sdk": "^1.15.0",
     "file-type": "^21.0.0",
     "ts-node": "^10.9.2",
     "uuid": "^11.1.0",
-    "zod": "^3.25.7"
+    "zod": "^3.25.74"
   }
 }
