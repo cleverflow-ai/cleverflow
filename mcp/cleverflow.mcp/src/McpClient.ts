@@ -13,7 +13,7 @@ export async function createMcpClient(
     name: string,
     version: string,
     options: McpClientOptions = {
-        mcpSessionId: uuidv4(),
+        mcpSessionId: null,
         token: null
     })
     : Promise<Client> {
@@ -37,13 +37,15 @@ export async function createMcpClient(
 
     // Setup the transport i.e. Streamable HTTP for the MCP client
     const baseUrl = new URL(serverUrl);
-    const headers = {
-        'mcp-session-id': options.mcpSessionId,
-        'sessionId': uuidv4()
-    };
+    
+    let headers = {};
+    if (options.mcpSessionId) {
+        headers['mcp-session-id'] = options.mcpSessionId;
+    }
     if (options.token) {
         headers['Authorization'] = `Bearer ${options.token}`;
     }
+    
     const transport = new StreamableHTTPClientTransport(baseUrl, {
         requestInit: {
             headers: headers
