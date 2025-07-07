@@ -49,8 +49,14 @@ export default class Clients {
                 // @ts-ignore: Object literal may only specify known properties, and 'base_url' does not exist in type '{ [x: number]: any; }'
                 base_url: process.env.OLLAMA_OPENAI_URL,
                 api_key: 'ollama',
-                model: 'gemma3:latest',
-                temperature: 0,
+                model: 'gemma3:12b',
+
+                temperature: 0.1,
+                top_p: 0.1,
+                frequency_penalty: 1.5,
+                presence_penalty: 0,
+                repeat_penalty: 1.8,
+                
                 headers: {
                     "Api-Key": process.env.OLLAMA_API_KEY
                 }
@@ -64,14 +70,13 @@ export default class Clients {
                 // @ts-ignore: Object literal may only specify known properties, and 'base_url' does not exist in type '{ [x: number]: any; }'
                 base_url: process.env.OLLAMA_OPENAI_URL,
                 api_key: 'ollama',
-                model: 'gemma3:12b',
+                model: 'qwen2.5-coder:latest',
 
-                // max_tokens: 10240,
-                // temperature: 0.1,
-                // top_p: 0.1,
-                // frequency_penalty: 1.5,
-                // presence_penalty: 0,
-                // repeat_penalty: 1.8,
+                temperature: 0.1,
+                top_p: 0.1,
+                frequency_penalty: 1.5,
+                presence_penalty: 0,
+                repeat_penalty: 1.8,
 
                 headers: {
                     "Api-Key": process.env.OLLAMA_API_KEY
@@ -86,8 +91,14 @@ export default class Clients {
                 // @ts-ignore: Object literal may only specify known properties, and 'base_url' does not exist in type '{ [x: number]: any; }'
                 base_url: process.env.OLLAMA_OPENAI_URL,
                 api_key: 'ollama',
-                model: 'phi4:latest',
-                temperature: 0,
+                model: 'qwen2.5-coder:latest',
+
+                temperature: 0.1,
+                top_p: 0.1,
+                frequency_penalty: 1.5,
+                presence_penalty: 0,
+                repeat_penalty: 1.8,
+
                 headers: {
                     "Api-Key": process.env.OLLAMA_API_KEY
                 }
