@@ -179,7 +179,7 @@ test Test_ParseMarkdocBFlowElementToBFlow {
         
         tools [
             {
-                name "fetch-outline-text-file",
+                name "fetch_outline_text_file",
                 description "",
                 inputSchema {
                     required [
@@ -203,7 +203,7 @@ test Test_ParseMarkdocBFlowElementToBFlow {
                 }
             },
             {
-                name "convert-step-to-glb",
+                name "convert_step_to_glb",
                 description "",
                 inputSchema {
                     required [
