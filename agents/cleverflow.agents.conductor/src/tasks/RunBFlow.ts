@@ -127,7 +127,7 @@ function sleep(ms: number) {
 }
 
 
-const runNode = async (session: Session, context: TaskContext, bflow: BFlow, userInput: Map<string, any>, outs: Map<string, any>, node: BFlowNode, yieldUpdate: (taskStatus: TaskStatus) => void): Promise<BFlowNodeState> => {
+const runNode = async (session: Session, context: TaskContext, bflow: BFlow, userInput: Record<string, any>, outs: Record<string, any>, node: BFlowNode, yieldUpdate: (taskStatus: TaskStatus) => void): Promise<BFlowNodeState> => {
 
     console.log(`Running node: ${node.id} (${node.type})`);
     if (
@@ -316,7 +316,7 @@ const runNode = async (session: Session, context: TaskContext, bflow: BFlow, use
                 // Each Input corresponds a Node Id
                 for (const nodeId of node.inputs) {
                     // Get saved Output of required Node
-                    const out = outs.get(nodeId);
+                    const out = outs[nodeId];
                     const outResult = out?.result;
                     if (outResult) {
                         inputs.push(outResult);
@@ -353,7 +353,7 @@ const runNode = async (session: Session, context: TaskContext, bflow: BFlow, use
                     const extractedInputFromNodeContent = JSON.parse(node.toolInput ?? '{}');
                     userInputForCurrentNode = { ...extractedInputFromNodeContent, ...userInputForCurrentNode };
 
-                    const canCallTool = isValidInput(requiredParameters || [], userInputForCurrentNode);
+                    const canCallTool = isValidInput(requiredParameters || [], userInputForCurrentNode)
                     if (!canCallTool) {
                         const mpcPayload = await b.GenerateMcpToolPayload(
                             JSON.stringify(mcpTool),
@@ -365,9 +365,9 @@ const runNode = async (session: Session, context: TaskContext, bflow: BFlow, use
                         );
 
                         userInputForCurrentNode = mpcPayload ? JSON.parse(mpcPayload) : userInputForCurrentNode;
-                    }
 
-                    userInput[node.id] = userInputForCurrentNode;
+                        userInput[node.id] = userInputForCurrentNode;
+                    }
                 } catch (exception) {
                     console.error(exception);
                 }
@@ -549,6 +549,7 @@ const isValidInput = (required, userInput) => {
 }
 
 const extractData = (context: TaskContext) => {
+
     // extract bflow
     let bflowPart: DataPart = context.userMessage.parts.find((part) => {
         return part.type === 'data' && part.data && part.data.bflow;
@@ -584,14 +585,14 @@ const extractData = (context: TaskContext) => {
     }
 
     // extract outs
-    const outs: Map<string, any> = new Map();
+    const outs = {};
 
     for (const entry of context.history) {
         if (entry.role === 'agent') {
             for (const part of entry.parts) {
                 if (part.type === 'data' && part.data && part.data.outs) {
                     for (const [key, value] of Object.entries(part.data.outs)) {
-                        outs.set(key, value);
+                        outs[key] = value;
                     }
                 }
             }
@@ -599,17 +600,10 @@ const extractData = (context: TaskContext) => {
     }
 
     let userInputValue = userInputPart ? userInputPart.data.userInput : {};
-    // Ensure userInput is always a Map<string, any>
-    let userInputMap: Map<string, any>;
-    if (userInputValue instanceof Map) {
-        userInputMap = userInputValue;
-    } else {
-        userInputMap = new Map(Object.entries(userInputValue));
-    }
 
     return {
         bflow: bflowPart ? bflowPart.data.bflow as BFlow : null,
-        userInput: userInputMap,
+        userInput: userInputValue,
         outs: outs,
     };
 }
