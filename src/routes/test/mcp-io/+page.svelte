@@ -1,6 +1,7 @@
 <script lang="ts">
     import { onMount } from "svelte";
     import { createMcpClient } from "@cleverflow-ai/cleverflow.mcp/dist/McpClient.js";
+    import { CompatibilityCallToolResultSchema } from "@modelcontextprotocol/sdk/types.js";
     import MarkdocRenderer from "$lib/components/MarkdocRenderer.svelte";
     import GlbViewer from "$lib/components/GlbViewer.svelte";
     import LoadingIndicator from "$lib/components/LoadingIndicator.svelte";
@@ -100,7 +101,7 @@
                     apiKey,
                 },
             },
-            z.any(),
+            CompatibilityCallToolResultSchema,
             {
                 timeout: 3600 * 1000,
             },
@@ -153,7 +154,7 @@
                         path: filePath ?? "",
                     },
                 },
-                z.any(),
+                CompatibilityCallToolResultSchema,
                 {
                     timeout: 3600 * 1000,
                 },
@@ -205,7 +206,7 @@
                     rpModelName,
                 },
             },
-            z.any(),
+            CompatibilityCallToolResultSchema,
             {
                 timeout: 3600 * 1000,
             },
