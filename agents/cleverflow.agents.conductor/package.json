@@ -3,6 +3,7 @@
   "version": "1.0.0",
   "main": "index.js",
   "scripts": {
+    "build": "npx tsc",
     "dev": "npx tsx src/index.ts"
   },
   "keywords": [],
@@ -10,12 +11,11 @@
   "license": "ISC",
   "description": "",
   "devDependencies": {
-    "@types/node": "^22.15.18",
-    "npx": "^10.2.2",
+    "@types/node": "^24.0.10",
     "typescript": "^5.8.3"
   },
   "dependencies": {
-    "@boundaryml/baml": "^0.90.1",
+    "@boundaryml/baml": "^0.201.0",
     "@cleverflow-ai/cleverflow.agents": "file:../cleverflow.agents",
     "@cleverflow-ai/cleverflow.core": "file:../../extensions/cleverflow.core",
     "@cleverflow-ai/cleverflow.mcp": "file:../../mcp/cleverflow.mcp",

@@ -22,17 +22,16 @@
   },
   "type": "module",
   "scripts": {
-    "build": "tsc",
+    "build": "npx tsc",
     "a2a:cli": "npx tsx src/cli.ts"
   },
   "devDependencies": {
-    "@types/node": "^22.15.18",
-    "npx": "^10.2.2",
+    "@types/node": "^24.0.10",
     "typescript": "^5.8.3"
   },
   "dependencies": {
-    "@types/cors": "^2.8.18",
-    "@types/express": "^5.0.1",
+    "@types/cors": "^2.8.19",
+    "@types/express": "^5.0.3",
     "body-parser": "^2.2.0",
     "cors": "^2.8.5",
     "express": "^5.1.0",

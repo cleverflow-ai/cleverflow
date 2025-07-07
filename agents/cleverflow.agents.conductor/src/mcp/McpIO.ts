@@ -1,6 +1,7 @@
 import { createMcpClient } from "@cleverflow-ai/cleverflow.mcp/dist/McpClient.js";
 import { z } from "zod";
 import { Client } from "@modelcontextprotocol/sdk/client/index.js";
+import { CallToolResultSchema, ListToolsResultSchema } from "@modelcontextprotocol/sdk/types.js";
 
 export default class McpIO {
 
@@ -30,14 +31,14 @@ export default class McpIO {
                         path,
                     },
                 },
-                z.any(),
+                CallToolResultSchema,
                 {
                     timeout: 3600 * 1000,
                 },
             );
 
             if (callToolResult.error) {
-                throw new Error(callToolResult.error.message ?? "Unknown error");
+                throw new Error((callToolResult.error as { message?: string })?.message ?? "Unknown error");
             }
 
             const content =
@@ -75,14 +76,14 @@ export default class McpIO {
                         content: fileContent,
                     },
                 },
-                z.any(),
+                CallToolResultSchema,
                 {
                     timeout: 3600 * 1000,
                 },
             );
 
             if (callToolResult.error) {
-                throw new Error(callToolResult.error.message ?? "Unknown error");
+                throw new Error((callToolResult.error as { message?: string })?.message ?? "Unknown error");
             }
 
             const content =

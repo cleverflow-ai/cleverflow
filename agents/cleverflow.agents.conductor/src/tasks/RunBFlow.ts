@@ -1,8 +1,8 @@
+import { CallToolResultSchema, ListToolsResultSchema } from "@modelcontextprotocol/sdk/types.js";
 import { TaskContext, TaskYieldUpdate } from '@cleverflow-ai/cleverflow.agents/server';
-import * as schema from '@cleverflow-ai/cleverflow.agents/schema';
+import { Task, TaskStatus, DataPart } from "@cleverflow-ai/cleverflow.agents/schema";
 import _ from 'lodash';
 import { BFlow, BFlowNode, BFlowNodeState, BFlowNodeType } from '../baml_client/types.js';
-import { z } from "zod";
 import Session from '../sessions/Session.js';
 import PersistenceService from '../services/PersistenceService.js';
 
@@ -10,7 +10,7 @@ import { b } from '../baml_client/async_client.js';
 import Clients from '../baml/Clients.js';
 import { extractClientSession } from './Util.js';
 
-export async function* runBFlow(session: Session, context: TaskContext): AsyncGenerator<TaskYieldUpdate, schema.Task | void, unknown> {
+export async function* runBFlow(session: Session, context: TaskContext): AsyncGenerator<TaskYieldUpdate, Task | void, unknown> {
 
     const { bflow, userInput, outs } = extractData(context);
 
@@ -33,7 +33,7 @@ export async function* runBFlow(session: Session, context: TaskContext): AsyncGe
         return;
     }
 
-    const queue: TaskYieldUpdate[] = [];
+    const queue: TaskStatus[] = [];
 
     yield {
         state: 'working',
@@ -55,8 +55,8 @@ export async function* runBFlow(session: Session, context: TaskContext): AsyncGe
         try {
             const node = bflow.root;
             const result = await runNode(session, context, bflow, userInput, outs, node,
-                (taskYieldUpdate: TaskYieldUpdate) => {
-                    queue.push(taskYieldUpdate);
+                (taskStatus: TaskStatus) => {
+                    queue.push(taskStatus);
                 }
             );
 
@@ -107,14 +107,14 @@ export async function* runBFlow(session: Session, context: TaskContext): AsyncGe
             await sleep(100);
             continue;
         }
-        const taskYieldUpdate = queue.shift();
+        const taskStatus: TaskStatus = queue.shift();
 
-        if (taskYieldUpdate.state === 'completed') {
+        if (taskStatus.state === 'completed') {
             await PersistenceService.saveRunBFlow(context, outs);
         }
 
-        yield taskYieldUpdate;
-        if (['input-required', 'completed', 'failed'].includes(taskYieldUpdate.state)) {
+        yield taskStatus;
+        if (['input-required', 'completed', 'failed'].includes(taskStatus.state)) {
             isDone = true;
         }
     }
@@ -127,7 +127,7 @@ function sleep(ms: number) {
 }
 
 
-const runNode = async (session: Session, context: TaskContext, bflow: BFlow, userInput: Map<string, any>, outs: Map<string, any>, node: BFlowNode, yieldUpdate: (taskYieldUpdate: TaskYieldUpdate) => void): Promise<BFlowNodeState> => {
+const runNode = async (session: Session, context: TaskContext, bflow: BFlow, userInput: Map<string, any>, outs: Map<string, any>, node: BFlowNode, yieldUpdate: (taskStatus: TaskStatus) => void): Promise<BFlowNodeState> => {
 
     console.log(`Running node: ${node.id} (${node.type})`);
     if (
@@ -402,7 +402,7 @@ const runNode = async (session: Session, context: TaskContext, bflow: BFlow, use
                 try {
                     const callToolResult = await mcpClient.client.callTool(
                         inputForCallTool,
-                        z.any(),
+                        CallToolResultSchema,
                         {
                             timeout: 3600 * 1000,
                         },
@@ -548,11 +548,11 @@ const isValidInput = (required, userInput) => {
 }
 
 const extractData = (context: TaskContext) => {
-
     // extract bflow
-    let bflowPart = context.userMessage.parts.find((part) => {
+    let bflowPart: DataPart = context.userMessage.parts.find((part) => {
         return part.type === 'data' && part.data && part.data.bflow;
-    });
+    }) as DataPart;
+
     if (!bflowPart && context.history && context.history.length > 0) {
         // find bflowPart from history
         const latestBflowEntry = [...context.history].reverse().find(entry =>
@@ -562,14 +562,14 @@ const extractData = (context: TaskContext) => {
         if (latestBflowEntry) {
             bflowPart = latestBflowEntry.parts.find((part) => {
                 return part.type === 'data' && part.data && part.data.bflow;
-            });
+            }) as DataPart;
         }
     }
 
     // extract userInput
-    let userInputPart = context.userMessage.parts.find((part) => {
+    let userInputPart: DataPart = context.userMessage.parts.find((part) => {
         return part.type === 'data' && part.data && part.data.userInput;
-    });
+    }) as DataPart;
     if (!userInputPart && context.history && context.history.length > 0) {
         // find bflowPart from history
         const latestUserInputEntry = [...context.history].reverse().find(entry =>
@@ -578,7 +578,7 @@ const extractData = (context: TaskContext) => {
         if (latestUserInputEntry) {
             userInputPart = latestUserInputEntry.parts.find((part) => {
                 return part.type === 'data' && part.data && part.data.userInput;
-            });
+            }) as DataPart;
         }
     }
 
@@ -597,9 +597,18 @@ const extractData = (context: TaskContext) => {
         }
     }
 
+    let userInputValue = userInputPart ? userInputPart.data.userInput : {};
+    // Ensure userInput is always a Map<string, any>
+    let userInputMap: Map<string, any>;
+    if (userInputValue instanceof Map) {
+        userInputMap = userInputValue;
+    } else {
+        userInputMap = new Map(Object.entries(userInputValue));
+    }
+
     return {
-        bflow: bflowPart ? bflowPart.data.bflow : null,
-        userInput: userInputPart ? userInputPart.data.userInput : {},
+        bflow: bflowPart ? bflowPart.data.bflow as BFlow : null,
+        userInput: userInputMap,
         outs: outs,
     };
 }
