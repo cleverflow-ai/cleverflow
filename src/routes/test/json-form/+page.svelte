@@ -1,47 +1,62 @@
 <script lang="ts">
     import { onMount } from "svelte";
-    import type {
-        Task,
-        TaskSendParams,
-    } from "@cleverflow-ai/cleverflow.agents/schema";
-    import { ConductorAgent } from "$lib/agents/ConductorAgent";
+    import { SimpleForm } from "@sjsf/form";
 
-    onMount(async () => {
-        await import(
-            "@cleverflow-ai/cleverflow.core.frontend/webcomponents/json-form.js"
-        );
+    import { resolver } from "@sjsf/form/resolvers/basic";
+    import { translation } from "@sjsf/form/translations/en";
+    import { theme as skeletonTheme } from "@sjsf/skeleton3-theme";
+
+    let jsonForm = $state({
+        type: "object",
+        title: "Get File Contents Form",
+        properties: {
+            url: {
+                title: "URL",
+                type: "string",
+                format: null,
+            },
+            token: {
+                title: "Token",
+                type: "string",
+                component: "input",
+                inputType: "password",
+            },
+            branch: {
+                title: "Branch",
+                type: "boolean",
+                format: null,
+            },
+            owner: {
+                title: "Owner",
+                type: "string",
+                format: null,
+            },
+            repo: {
+                title: "Repository",
+                type: "string",
+                format: null,
+            },
+            path: {
+                title: "Path",
+                type: "string",
+                format: null,
+            },
+        },
+        required: ["url", "token", "branch", "owner", "repo", "path"],
     });
+    let defaultValues = $state({});
 
-    const run = async () => {
-        const conductorServer = import.meta.env.VITE_A2A_CONDUCTOR_SERVER;
-        console.log(`>>> conductorServer: ${conductorServer}`);
-        const conductorAgent = new ConductorAgent(conductorServer);
-        const taskParams: TaskSendParams = {
-            id: crypto.randomUUID(),
-            message: {
-                role: "user",
-                parts: [],
-            },
-            metadata: {
-                taskName: "demo-json-form",
-            },
-        };
-        conductorAgent.sendTask(taskParams, (event: Task) => {
-            const state = event.status?.state;
-            console.log(`state: ${state}`);
-            if (state === "completed") {
-                console.log(event);
-            }
-        });
-    };
+    onMount(async () => {});
+
+    const onSubmit = (data: any) => {};
 </script>
 
-<json-form theme="crimson"></json-form>
-<div>
-    <button
-        onclick={async () => await run()}
-        class="btn preset-filled-success-500"
-    >
-        Run
-    </button>
-</div>
+<SimpleForm
+    theme={skeletonTheme}
+    {translation}
+    {resolver}
+    schema={jsonForm}
+    initialValue={defaultValues}
+    validator={{ isValid: () => true }}
+    {onSubmit}
+/>

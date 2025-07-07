@@ -20,6 +20,7 @@
 
 	let event: any;
 	let jsonForm = $state({});
+	let defaultValues = $state({});
 	let serverMessage = $state(null);
 
 	onMount(async () => {
@@ -31,7 +32,20 @@
 				event = payload.event;
 				jsonForm = payload.form;
 				serverMessage = payload.serverMessage;
+
+				const partData = payload.event?.status?.message?.parts?.find(
+					(part: any) => part.type === "data",
+				);
+				const userInput = partData?.data?.userInput;
+				const nodeId = partData?.data?.node?.id;
+				if (userInput && nodeId && userInput[nodeId]) {
+					defaultValues = userInput[nodeId];
+				}
+
 				isVisible = true;
+
+				console.log(">>>> jsonForm");
+				console.log(jsonForm);
 			},
 		);
 	});
@@ -74,6 +88,7 @@
 						{translation}
 						{resolver}
 						schema={jsonForm}
+						initialValue={defaultValues}
 						validator={{ isValid: () => true }}
 						{onSubmit}
 					/>

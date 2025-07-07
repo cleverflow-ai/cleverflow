@@ -5,6 +5,7 @@ import Session from '../sessions/Session.js';
 import McpIO from '../mcp/McpIO.js';
 import { b } from '../baml_client/async_client.js';
 import Clients from '../baml/Clients.js';
+import { extractClientSession } from './Util.js';
 
 export async function* getFileContents(session: Session, context: TaskContext): AsyncGenerator<TaskYieldUpdate, schema.Task | void, unknown> {
     const clientSession = extractClientSession(context);
@@ -72,15 +73,4 @@ export async function* getFileContents(session: Session, context: TaskContext): 
         };
     }
 
-}
-
-const extractClientSession = (context: TaskContext) => {
-    let clientSession: any = context.userMessage.metadata?.session;
-    if (clientSession) {
-        return clientSession;
-    }
-    const userMessage: any = _.find(context.history, (userMessage) => {
-        return userMessage.metadata?.session;
-    });
-    return userMessage?.metadata?.session;
 }

@@ -8,6 +8,7 @@ import PersistenceService from '../services/PersistenceService.js';
 
 import { b } from '../baml_client/async_client.js';
 import Clients from '../baml/Clients.js';
+import { extractClientSession } from './Util.js';
 
 export async function* runBFlow(session: Session, context: TaskContext): AsyncGenerator<TaskYieldUpdate, schema.Task | void, unknown> {
 
@@ -312,6 +313,8 @@ const runNode = async (session: Session, context: TaskContext, bflow: BFlow, use
             let inputs: any[] = [];
 
             if (node.inputs) {
+                console.log('>>>> node');
+                console.log(JSON.stringify(node));
                 // Each Input corresponds a Node Id
                 for (const nodeId of node.inputs) {
                     // Get saved Output of required Node
@@ -348,11 +351,26 @@ const runNode = async (session: Session, context: TaskContext, bflow: BFlow, use
                 const requiredParameters = mcpTool.inputSchema?.required;
                 let userInputForCurrentNode: any = userInput[node.id] || {};
                 try {
+                    const clientSession = extractClientSession(context);
                     const extractedInputFromNodeContent = JSON.parse(node.toolInput ?? '{}');
                     userInputForCurrentNode = { ...extractedInputFromNodeContent, ...userInputForCurrentNode };
+
+                    const mpcPayload = await b.GenerateMcpToolPayload(
+                        JSON.stringify(mcpTool),
+                        JSON.stringify(userInputForCurrentNode),
+                        JSON.stringify(clientSession?.commonSettings ?? {}),
+                        {
+                            clientRegistry: new Clients({ primary: Clients.OllamaTool }).registry
+                        }
+                    );
+
+                    userInputForCurrentNode = mpcPayload ? JSON.parse(mpcPayload) : userInputForCurrentNode;
+
+                    userInput[node.id] = userInputForCurrentNode;
                 } catch (exception) {
+                    console.error(exception);
                 }
-                s
+
                 const canCallTool = isValidInput(requiredParameters || [], userInputForCurrentNode)
                 if (!canCallTool) {
                     node.state = BFlowNodeState.WAITING_FOR_DATA;
@@ -565,14 +583,14 @@ const extractData = (context: TaskContext) => {
     }
 
     // extract outs
-    const outs: any = {};
+    const outs: Map<string, any> = new Map();
 
     for (const entry of context.history) {
         if (entry.role === 'agent') {
             for (const part of entry.parts) {
                 if (part.type === 'data' && part.data && part.data.outs) {
                     for (const [key, value] of Object.entries(part.data.outs)) {
-                        outs[key] = value;
+                        outs.set(key, value);
                     }
                 }
             }

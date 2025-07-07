@@ -23,7 +23,7 @@ function GetRepoIntegrationSettings(input: string) -> RepoIntegrationSettings {
 }
 
 function GenerateMcpToolPayload(mcpTool: string, userInputManually: string, commonSettings: string) -> string {
-    client Ollama_Code
+    client Ollama_Tool
     prompt #"
        You are given:
         - `mcpTool`: a tool definition containing an input schema (defined using JSON Schema).
@@ -149,11 +149,7 @@ test Test_GenerateMcpToolPayload {
         "#
         userInputManually #"
             {
-                "url": "test",
-                "token": "test",
-                "branch": "test",
-                "owner": "test",
-                "repo": "test"
+                "path": "simple.mdoc"
             }
         "#
         commonSettings #"
