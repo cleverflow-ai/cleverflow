@@ -1,6 +1,7 @@
 import { Client } from "@modelcontextprotocol/sdk/client/index.js";
 import { createMcpClient } from "@cleverflow-ai/cleverflow.mcp/dist/McpClient.js";
 import { BFlowNodeTool } from "../baml_client";
+import GitFileReference from "./GitFileReference.js";
 
 type McpTool = {
     name: string,
@@ -29,12 +30,17 @@ type McpClientForSession = {
 export default class Session {
     id: string;
     mcpClients: McpClientForSession[] = [];
+    gitFileReference: GitFileReference | null;
 
     constructor(sessionId: string) {
         this.id = sessionId;
     }
 
-    async addClient(serverUrl: string, name: string, version: string, description: string): Promise<boolean> {
+    getId(): string {
+        return this.id;
+    }
+
+    async registerMcpClient(serverUrl: string, name: string, version: string, description: string): Promise<boolean> {
 
         try {
             const client = await createMcpClient(serverUrl, name, version);
@@ -98,4 +104,17 @@ export default class Session {
     getClientByToolName(toolName: string): McpClientForSession | null {
         return this.mcpClients.find((c) => c.tools.some((tool) => tool.name === toolName));
     }
+
+    clearMcpClients() {
+        this.mcpClients = [];
+    }
+
+    setGitFileReference(gitFileReference: GitFileReference) {
+        this.gitFileReference = gitFileReference;
+    }
+
+    getGitFileReference(): GitFileReference {
+        return this.gitFileReference;
+    }
+
 }

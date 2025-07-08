@@ -1,129 +1,80 @@
-import { TaskContext } from "@cleverflow-ai/cleverflow.agents/server";
 import McpIO from "../mcp/McpIO";
 import path from "path";
 import _ from "lodash";
+import GitFileReference from "../sessions/GitFileReference";
+import Session from "../sessions/Session";
 
 export default class PersistenceService {
 
-    static async saveGenerateBFlow(context: TaskContext, bflow: any, bflowviz: any): Promise<void> {
+    static async saveGenerateBFlow(session: Session, bflow: any, bflowviz: any): Promise<void> {
         try {
-            const clientSession: any = PersistenceService.extractClientSession(context);
+            const gitFileReference: GitFileReference = session.getGitFileReference();
+            const instanceId = gitFileReference.hashedFileContent;
+            const folderPath = path.dirname(gitFileReference.path);
 
-            console.log('>>>> clientSession');
-            console.log(clientSession);
+            await McpIO.saveFileContents(
+                gitFileReference.url,
+                gitFileReference.token,
+                gitFileReference.branch,
+                gitFileReference.owner,
+                gitFileReference.repo,
+                `${folderPath}/${instanceId}.bflow.json`,
+                JSON.stringify(bflow),
+            );
 
-            if (
-                clientSession &&
-                clientSession.url &&
-                clientSession.token &&
-                clientSession.branch &&
-                clientSession.owner &&
-                clientSession.repo &&
-                clientSession.path &&
-                clientSession.hashedFileContent
-            ) {
-                const instanceId = clientSession.hashedFileContent;
-                const folderPath = path.dirname(clientSession.path);
+            await McpIO.saveFileContents(
+                gitFileReference.url,
+                gitFileReference.token,
+                gitFileReference.branch,
+                gitFileReference.owner,
+                gitFileReference.repo,
+                `${folderPath}/${instanceId}.bflowviz.json`,
+                JSON.stringify(bflowviz),
+            );
 
-                await McpIO.saveFileContents(
-                    clientSession.url,
-                    clientSession.token,
-                    clientSession.branch,
-                    clientSession.owner,
-                    clientSession.repo,
-                    `${folderPath}/${instanceId}.bflow.json`,
-                    JSON.stringify(bflow),
-                );
-
-                await McpIO.saveFileContents(
-                    clientSession.url,
-                    clientSession.token,
-                    clientSession.branch,
-                    clientSession.owner,
-                    clientSession.repo,
-                    `${folderPath}/${instanceId}.bflowviz.json`,
-                    JSON.stringify(bflowviz),
-                );
-            }
+            console.log('>>>>> DONE!');
         } catch (exception) {
             console.error(exception);
         }
     }
 
-    static async saveRunBFlow(context: TaskContext, outs: any): Promise<void> {
+    static async saveRunBFlow(session: Session, outs: any): Promise<void> {
         try {
-            const clientSession: any = PersistenceService.extractClientSession(context);
+            const gitFileReference: GitFileReference = session.getGitFileReference();
+            const instanceId = gitFileReference.hashedFileContent;
+            const folderPath = path.dirname(gitFileReference.path);
 
-            if (
-                clientSession &&
-                clientSession.id &&
-                clientSession.url &&
-                clientSession.token &&
-                clientSession.branch &&
-                clientSession.owner &&
-                clientSession.repo &&
-                clientSession.path &&
-                clientSession.hashedFileContent
-            ) {
-                const instanceId = clientSession.hashedFileContent;
-                const folderPath = path.dirname(clientSession.path);
-
-                await McpIO.saveFileContents(
-                    clientSession.url,
-                    clientSession.token,
-                    clientSession.branch,
-                    clientSession.owner,
-                    clientSession.repo,
-                    `${folderPath}/${instanceId}-${clientSession.id}.bflowrun.json`,
-                    JSON.stringify(outs),
-                );
-            }
+            await McpIO.saveFileContents(
+                gitFileReference.url,
+                gitFileReference.token,
+                gitFileReference.branch,
+                gitFileReference.owner,
+                gitFileReference.repo,
+                `${folderPath}/${instanceId}-${session.id}.bflowrun.json`,
+                JSON.stringify(outs),
+            );
         } catch (exception) {
             console.error(exception);
         }
     }
 
-    static async saveRunBFlowNodeOutput(context: TaskContext, nodeId: string, nodeOutput: any): Promise<void> {
+    static async saveRunBFlowNodeOutput(session: Session, nodeId: string, nodeOutput: any): Promise<void> {
         try {
-            const clientSession: any = PersistenceService.extractClientSession(context);
+            const gitFileReference: GitFileReference = session.getGitFileReference();
+            const instanceId = gitFileReference.hashedFileContent;
+            const folderPath = path.dirname(gitFileReference.path);
 
-            if (
-                clientSession &&
-                clientSession.id &&
-                clientSession.url &&
-                clientSession.token &&
-                clientSession.branch &&
-                clientSession.owner &&
-                clientSession.repo &&
-                clientSession.path &&
-                clientSession.hashedFileContent
-            ) {
-                const instanceId = clientSession.hashedFileContent;
-                const folderPath = path.dirname(clientSession.path);
-
-                await McpIO.saveFileContents(
-                    clientSession.url,
-                    clientSession.token,
-                    clientSession.branch,
-                    clientSession.owner,
-                    clientSession.repo,
-                    `${folderPath}/${instanceId}-${clientSession.id}-${nodeId}.json`,
-                    JSON.stringify(nodeOutput),
-                );
-            }
+            await McpIO.saveFileContents(
+                gitFileReference.url,
+                gitFileReference.token,
+                gitFileReference.branch,
+                gitFileReference.owner,
+                gitFileReference.repo,
+                `${folderPath}/${instanceId}-${session.id}-${nodeId}.json`,
+                JSON.stringify(nodeOutput),
+            );
         } catch (exception) {
             console.error(exception);
         }
-    }
-
-    static extractClientSession(context: TaskContext) {
-        let clientSession: any = context.userMessage.metadata?.session;
-        if (clientSession) {
-            return clientSession;
-        }
-        const userMessage: any = _.find(context.history, (userMessage) => {
-            return userMessage.metadata?.session;
-        });
-        return userMessage?.metadata?.session;
     }
 }

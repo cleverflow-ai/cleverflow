@@ -110,7 +110,7 @@ export async function* runBFlow(session: Session, context: TaskContext): AsyncGe
         const taskStatus: TaskStatus = queue.shift();
 
         if (taskStatus.state === 'completed') {
-            await PersistenceService.saveRunBFlow(context, outs);
+            await PersistenceService.saveRunBFlow(session, outs);
         }
 
         yield taskStatus;
@@ -401,9 +401,10 @@ const runNode = async (session: Session, context: TaskContext, bflow: BFlow, use
                 };
 
                 try {
+
                     const callToolResult = await mcpClient.client.callTool(
                         inputForCallTool,
-                        CompatibilityCallToolResultSchema,
+                        z.any(),
                         {
                             timeout: 3600 * 1000,
                         },
@@ -448,7 +449,7 @@ const runNode = async (session: Session, context: TaskContext, bflow: BFlow, use
 
                         const nodeOutput = {};
                         nodeOutput[node.id] = callToolResult;
-                        await PersistenceService.saveRunBFlowNodeOutput(context, node.id, nodeOutput);
+                        await PersistenceService.saveRunBFlowNodeOutput(session, node.id, nodeOutput);
 
                         yieldUpdate({
                             state: 'working',

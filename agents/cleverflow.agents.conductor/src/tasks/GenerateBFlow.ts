@@ -91,7 +91,7 @@ export async function* generateBFlow(session: Session, context: TaskContext): As
         }
     };
 
-    await PersistenceService.saveGenerateBFlow(context, bflow, bflowviz);
+    await PersistenceService.saveGenerateBFlow(session, bflow, bflowviz);
 
     yield {
         state: 'completed',
