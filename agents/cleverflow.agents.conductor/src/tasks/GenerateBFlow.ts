@@ -46,6 +46,9 @@ export async function* generateBFlow(session: Session, context: TaskContext): As
     }
     const text = textPart.text;
 
+    console.log(`>>>>>>>> markdoc`);
+    console.log(text);
+
     const bflow = await b.ParseMarkdocBFlowElementToBFlow(
         text,
         session.getMcpClientTools(),

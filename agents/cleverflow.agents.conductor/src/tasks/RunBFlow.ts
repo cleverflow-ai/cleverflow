@@ -310,7 +310,7 @@ const runNode = async (session: Session, context: TaskContext, bflow: BFlow, use
 
     } else if (node.type === BFlowNodeType.ACTION || node.type === BFlowNodeType.CONDITION) {
         if (node.tool) {
-            let inputs: any[] = [];
+            let upstreamResults: any[] = [];
 
             if (node.inputs) {
                 // Each Input corresponds a Node Id
@@ -319,7 +319,7 @@ const runNode = async (session: Session, context: TaskContext, bflow: BFlow, use
                     const out = outs[nodeId];
                     const outResult = out?.result;
                     if (outResult) {
-                        inputs.push(outResult);
+                        upstreamResults.push(outResult);
                     }
                 }
             }

@@ -1,10 +1,10 @@
-import { Base64Content } from "./Base64Content.js";
+import { Content, ContentEncoding } from "./Content.js";
 
 export default class Outline {
     constructor(private baseUrl: string, private apiKey: string) {
     }
 
-    public async fetch(fileId: string): Promise<Base64Content> {
+    public async fetch(fileId: string): Promise<Content> {
         const response = await fetch(`${this.baseUrl}/documents.info`, {
             method: "POST",
             headers: {
@@ -20,6 +20,6 @@ export default class Outline {
         const result = await response.json();
         const text = result?.data?.text ?? "";
 
-        return new Base64Content(Buffer.from(text, 'utf-8').toString('base64'), 'text/plain');
+        return new Content(Buffer.from(text, 'utf-8').toString(ContentEncoding.Base64), 'text/plain', ContentEncoding.Base64);
     }
 }

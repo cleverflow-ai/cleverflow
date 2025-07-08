@@ -69,7 +69,7 @@ class BFlowViz {
 }
 
 function ParseMarkdocBFlowElementToBFlow(text: string, tools: BFlowNodeTool[]) -> BFlow {
-    client Ollama_Tool
+    client Ollama_Code
     prompt #"
         You are an expert in Markdoc and Behavior Trees.
 
@@ -157,62 +157,80 @@ test Test_ParseMarkdocBFlowElementToBFlow {
     functions [ParseMarkdocBFlowElementToBFlow]
     args {
         text #"
-            {% b-flow id="cleverflow-mcp-a2a" %}
-                {% sequence %}                    
-                    {% task-1 id="action_1" %}
-                        Fetching README.md file in repo atlascopco-dasm which onwed by clevernow from url https://gitea-atlascopco-integration.clevernow.com/api/v1 with key 04f4b0dada8fa8632dc7541f2f2131c703693e7e
-                    {% /task-1 %}
-
-                    {% task-2 id="action_2" %}
-                        Fetching a outline file by id sealing-technologies-rrOT5m2iSz from https://docs-atlascopco.clevernow.com/api with key ol_api_qHHZcDQ8EKJfx9tKwbi7E2zeT30Rnx5bq1uMfO
-                    {% /task-2 %}
-
-                    {% convert-steps-to-glb id="action_3" %}
-                        Convert a steps file to glb, some information may be required
-                        - username: info@clevernow.com
-                        - password: CleverNow88
-                        - model name: 89971.000001
-                    {% /convert-steps-to-glb %}
+            {% b-flow id="test-mcp-conversion" %}
+                {% sequence %}     
+                    {% task id="action_1" %}
+                        Fetch PDF File from: https://gitea-atlascopco-integration.clevernow.com/clevernow/atlascopco-dasm/src/branch/main/orders/40009326/Documentation/4000/EN/89971.000001_Meter/89971.000001_EDM.pdf
+                    {% /task %}
+                    
+                    {% task id="action_2" %}
+                        Convert the PDF Content from Previous Task to Text.
+                    {% /task %}	
                 {% /sequence %}
             {% /b-flow %}
         "#,
         
         tools [
             {
-                name "fetch_outline_text_file",
-                description "",
+                name "convert_doc_files_into_text_chunks",
+                description "Tool convert_doc_files_into_text_chunks from MCP client",
                 inputSchema {
                     required [
-                        "fileId",
-                        "baseUrl",
-                        "apiKey"
-                    ]
-                }
-            },
-            {
-                name "get_file_contents",
-                description "",
-                inputSchema {
-                    required [
-                        "baseUrl",
-                        "apiKey",
-                        "repoOwner",
-                        "repo",
-                        "filePath"
+                        "payloads"
                     ]
                 }
             },
             {
                 name "convert_step_to_glb",
-                description "",
+                description "Tool convert_step_to_glb from MCP client",
                 inputSchema {
                     required [
-                        "username",
-                        "password",
-                        "modelName"
+                        "rpUsername",
+                        "rpPassword",
+                        "rpModelName"
                     ]
                 }
-            }
+            }, 
+            {
+                name "fetch_outline_text_file",
+                description "Tool fetch_outline_text_file from MCP client",
+                inputSchema {
+                    required [
+                        "baseUrl",
+                        "apiKey",
+                        "fileId"
+                    ]
+                }
+            }, 
+            {
+                name "get_file_contents",
+                description "Tool get_file_contents from MCP client",
+                inputSchema {
+                    required [
+                        "url",
+                        "token",
+                        "branch",
+                        "owner",
+                        "repo",
+                        "path"
+                    ]
+                }
+            }, 
+            {
+                name "save_file_contents",
+                description "Tool save_file_contents from MCP client",
+                inputSchema {
+                    required [
+                        "url",
+                        "token",
+                        "branch",
+                        "owner",
+                        "repo",
+                        "path",
+                        "content"
+                    ]
+                }
+            }            
         ]
     }
 }

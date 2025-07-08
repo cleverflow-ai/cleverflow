@@ -1,13 +1,13 @@
 
 import { fileTypeFromBuffer } from 'file-type';
 import { detectMimeTypeFromPath } from '../common/Util.js';
-import { Base64Content } from './Base64Content.js';
+import { Content, ContentEncoding } from './Content.js';
 
 export default class Gitea {
     constructor(private url: string, private token: string) {
     }
 
-    public async fetchFileContent(branch: string, owner: string, repo: string, path: string): Promise<Base64Content | Array<any> | null> {
+    public async fetchFileContent(branch: string, owner: string, repo: string, path: string): Promise<Content | Array<any> | null> {
 
         try {
             if (path.startsWith('/')) {
@@ -22,14 +22,14 @@ export default class Gitea {
             if (Array.isArray(result)) {
                 return result;
             } else if (result.content) {
-                const buffer = Buffer.from(result.content, 'base64');
+                const buffer = Buffer.from(result.content, ContentEncoding.Base64);
 
                 const type = await fileTypeFromBuffer(buffer);
                 let mimeType = type?.mime;
                 if (!mimeType) {
                     mimeType = detectMimeTypeFromPath(path);
                 }
-                return new Base64Content(result.content, mimeType);
+                return new Content(result.content, mimeType, ContentEncoding.Base64);
             }
         } catch (exception) {
             console.log(exception);

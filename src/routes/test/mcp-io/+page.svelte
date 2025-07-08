@@ -1,7 +1,6 @@
 <script lang="ts">
     import { onMount } from "svelte";
     import { createMcpClient } from "@cleverflow-ai/cleverflow.mcp/dist/McpClient.js";
-    import { CompatibilityCallToolResultSchema } from "@modelcontextprotocol/sdk/types.js";
     import MarkdocRenderer from "$lib/components/MarkdocRenderer.svelte";
     import GlbViewer from "$lib/components/GlbViewer.svelte";
     import LoadingIndicator from "$lib/components/LoadingIndicator.svelte";
@@ -16,9 +15,7 @@
     // GITEA
     let repoOwner = $state("clevernow");
     let repo = $state("atlascopco-dasm");
-    let filePath = $state(
-        "orders/40009326/Documentation/1000/DE/Einzelteile/Einzelteile.pdf",
-    );
+    let filePath = $state("README.md");
 
     // RP
     let rpUsername = $state("");
@@ -37,9 +34,9 @@
 
     onMount(async () => {
         setDefaultForm();
-        await import(
-            "@cleverflow-ai/cleverflow.core.frontend/webcomponents/web-component-loader.js"
-        );
+        // await import(
+        //     "@cleverflow-ai/cleverflow.core.frontend/webcomponents/web-component-loader.js"
+        // );
     });
 
     function setDefaultForm(): void {
@@ -51,8 +48,7 @@
         // GITEA
         repoOwner = "clevernow";
         repo = "atlascopco-dasm";
-        filePath =
-            "orders/40009326/Documentation/1000/DE/Einzelteile/Einzelteile.pdf";
+        filePath = "README.md";
         // RP
         rpUsername = "";
         rpPassword = "";
@@ -139,9 +135,15 @@
         try {
             const client = await createMcpClient(
                 "http://localhost:3000/mcp",
+                // "http://llms.clevernow.com:8031/mcp",
                 "@cleverflow-ao/cleverflow.mcp.io",
                 "1.0.0",
+                {
+                    mcpSessionId: new Date().toISOString(),
+                },
             );
+            // const list = await client.listTools();
+            // console.log(JSON.stringify(list));
             const result = await client.callTool(
                 {
                     name: "get_file_contents",
@@ -154,7 +156,7 @@
                         path: filePath ?? "",
                     },
                 },
-                CompatibilityCallToolResultSchema,
+                z.any(),
                 {
                     timeout: 3600 * 1000,
                 },
@@ -169,9 +171,13 @@
                     : null;
             console.log(content);
             if (content) {
-                bindingData = content.data;
-                dynamicComponent = content.data?.dynamicComponent;
-                console.log(dynamicComponent);
+                bindingData = content.resource;
+                dynamicComponent = content.resource?.dynamicComponent;
+                const decoder = new TextDecoder("utf-8");
+                const str = decoder.decode(
+                    new Uint8Array(content.resource.bytes),
+                );
+                console.log(`str: ${str}`);
             }
         } catch (exception) {
             console.log(exception);

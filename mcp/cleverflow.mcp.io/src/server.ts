@@ -3,7 +3,7 @@ import Outline from "./tools/Outline.js";
 import Gitea from "./tools/Gitea.js";
 import z from "zod";
 import Github from "./tools/Github.js";
-import { Base64Content } from "./tools/Base64Content.js";
+import { Content } from "./tools/Content.js";
 import { loadWebComponentByMimeType } from "./common/Util.js";
 
 export function createServer() {
@@ -79,16 +79,17 @@ function registerTools(server: McpServer) {
 
             const outline = new Outline(baseUrl, apiKey);
 
-            const base64File = await outline.fetch(fileId);
+            const content = await outline.fetch(fileId);
 
-            const dynamicComponent = loadWebComponentByMimeType(base64File.mimeType);
+            const dynamicComponent = loadWebComponentByMimeType(content.mimeType);
             return {
                 content: [
                     {
                         type: "resource",
                         resource: {
-                            mimeType: base64File.mimeType,
-                            blob: base64File.base64Content,
+                            mimeType: content.mimeType,
+                            encoding: content.encoding,
+                            blob: content.data,
                             dynamicComponent: dynamicComponent,
                         }
                     }
@@ -167,15 +168,17 @@ function registerTools(server: McpServer) {
                     ],
                 };
             } else {
-                const base64File: Base64Content = result;
-                const dynamicComponent = loadWebComponentByMimeType(base64File.mimeType);
+                const content: Content = result;
+                const dynamicComponent = loadWebComponentByMimeType(content.mimeType);
+
                 return {
                     content: [
                         {
                             type: "resource",
                             resource: {
-                                mimeType: base64File.mimeType,
-                                blob: base64File.base64Content,
+                                mimeType: content.mimeType,
+                                encoding: content.encoding,
+                                blob: content.data,
                                 dynamicComponent: dynamicComponent,
                             }
                         }

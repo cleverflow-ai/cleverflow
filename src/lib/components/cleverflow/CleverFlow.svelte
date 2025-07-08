@@ -39,12 +39,21 @@
     let initialized = $state(false);
 
     onMount(async () => {
-        await import(
-            "@cleverflow-ai/cleverflow.core.frontend/webcomponents/markdoc-editor.js"
-        );
-        await import(
-            "@cleverflow-ai/cleverflow.core.frontend/webcomponents/markdoc-renderer.js"
-        );
+        // await import(
+        //     "@cleverflow-ai/cleverflow.core.frontend/webcomponents/markdoc-editor.js"
+        // );
+        // await import(
+        //     "@cleverflow-ai/cleverflow.core.frontend/webcomponents/markdoc-renderer.js"
+        // );
+
+        await Promise.all([
+            import(
+                "@cleverflow-ai/cleverflow.core.frontend/webcomponents/markdoc-editor.js"
+            ),
+            import(
+                "@cleverflow-ai/cleverflow.core.frontend/webcomponents/markdoc-renderer.js"
+            ),
+        ]);
 
         conductorService = new ConductorService(
             import.meta.env.VITE_A2A_CONDUCTOR_SERVER,

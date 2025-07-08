@@ -33,9 +33,9 @@ export async function* handleTask(context: TaskContext): AsyncGenerator<TaskYiel
     switch (task) {
 
         case TASKS.GET_FILE_CONTENTS:
-            const extractedGitFileReference = await extractGitFileReference(session, context);
+            const extractedGitFileReference = await extractGitFileReference(context);
             if (extractedGitFileReference) {
-                session.setGitFileReference(extractedGitFileReference);
+
                 const result = await McpIO.getFileContents(
                     extractedGitFileReference.url,
                     extractedGitFileReference.token,
@@ -46,7 +46,10 @@ export async function* handleTask(context: TaskContext): AsyncGenerator<TaskYiel
                 );
 
                 extractedGitFileReference.setHashedFileContent(md5(JSON.stringify(result)));
+                session.setGitFileReference(extractedGitFileReference);
 
+                console.log('>>>>>> extractedGitFileReference');
+                console.log(JSON.stringify(extractedGitFileReference));
                 yield {
                     state: 'completed',
                     message: { role: 'agent', parts: [{ type: 'data', data: result.resource }] }
@@ -136,7 +139,7 @@ const initializeMCPForSession = async (session: Session, context: TaskContext): 
     }
 }
 
-const extractGitFileReference = async (session: Session, context: TaskContext): Promise<GitFileReference | null> => {
+const extractGitFileReference = async (context: TaskContext): Promise<GitFileReference | null> => {
     const clientSession = extractClientSession(context);
     if (
         clientSession &&
