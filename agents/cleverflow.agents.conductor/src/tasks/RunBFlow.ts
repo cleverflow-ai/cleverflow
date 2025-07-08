@@ -349,6 +349,12 @@ const runNode = async (session: Session, context: TaskContext, bflow: BFlow, use
                 const requiredParameters = mcpTool.inputSchema?.required;
                 let userInputForCurrentNode: any = userInput[node.id] || {};
                 try {
+
+                    if (upstreamResults && upstreamResults.length > 0) {
+                        // TODO: matching mcpTool input required
+                        // TODO: convert encoding if needed. Ex: base64 to byte array (number[])
+                    }
+
                     const clientSession = extractClientSession(context);
                     const extractedInputFromNodeContent = JSON.parse(node.toolInput ?? '{}');
                     userInputForCurrentNode = { ...extractedInputFromNodeContent, ...userInputForCurrentNode };

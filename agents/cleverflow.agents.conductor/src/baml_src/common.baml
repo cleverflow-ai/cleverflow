@@ -8,6 +8,11 @@ class RepoIntegrationSettings {
   repo string
 }
 
+class OutputInputMatch {
+    matchedInputField string?
+    descriptionIndex int
+}
+
 function GetRepoIntegrationSettings(input: string) -> RepoIntegrationSettings {
     client Ollama_Code
     prompt #"
@@ -23,7 +28,7 @@ function GetRepoIntegrationSettings(input: string) -> RepoIntegrationSettings {
 }
 
 function GenerateMcpToolPayload(mcpTool: string, userInputManually: string, commonSettings: string) -> string {
-    client Ollama_Tool
+    client Ollama_Code
     prompt #"
        You are given:
         - `mcpTool`: a tool definition containing an input schema (defined using JSON Schema).
@@ -62,6 +67,65 @@ function GenerateMcpToolPayload(mcpTool: string, userInputManually: string, comm
         commonSettings:  
         {{ commonSettings }}
 
+    "#
+}
+
+function GetToolOutputDescription(nodeDescription: string, mcpTool: string, userInput: string) -> string {
+    client Ollama_Code
+    prompt #"
+       You are an AI assistant.
+
+        Below is a node from a flow-based system that uses a specific tool to process user input. The goal is to describe what this node produces, based on the tool's purpose and the given user input.
+
+        Your task:
+        Generate a **short, clear, and informative description** of the expected output that this node would produce. Base your answer on the node context, the tool's description, and the user input.
+
+        Node Description:
+        {{nodeDescription}}
+
+        Tool Information (as JSON):
+        {{mcpTool}}
+
+        User Input (as JSON):
+        {{userInput}}
+
+        Now write a concise description of what the output of this node would be.
+
+        ---
+        {{ ctx.output_format }}
+    "#
+}
+
+function MatchNodeOutputsToToolInputs(descriptions: string[], mcpTool: string) -> OutputInputMatch[] {
+    client Ollama_Code
+    prompt #"
+        You are an AI assistant working in a flow-based automation system.
+
+        You are given:
+        1. A list of descriptions representing outputs from previous nodes in the flow.
+        2. A tool (MCP Tool) that defines a JSON input schema with required and optional fields.
+
+        Your task:
+        For each description in the list, determine which input field in the tool's schema it best matches — if any. Match is based on the type, purpose, and format described.
+
+        Return a JSON array of objects in the following format:
+        - descriptionIndex: index of the description (starting from 0)
+        - matchedInputField: the name of the matched input field, or null if no suitable match
+
+        Do not include explanations or reasoning. Only return the JSON array.
+
+        ---
+
+        Mcp Tool: 
+        {{mcpTool}}
+
+        Descriptions:
+        {{descriptions}}
+
+        → Now return the matching result as a JSON array (no explanation).
+
+        ---
+        {{ ctx.output_format }}
     "#
 }
 
@@ -185,6 +249,100 @@ test Test_GenerateMcpToolPayload {
                     "repo": "examples"
                 }
             ]
+        "#
+    }
+}
+
+test Test_GetToolOutputDescription {
+    functions [GetToolOutputDescription]
+    args {
+        nodeDescription "Fetch PDF File from: https://gitea-atlascopco-integration.clevernow.com/clevernow/atlascopco-dasm/src/branch/main/orders/40009326/Documentation/4000/EN/89971.000001_Meter/89971.000001_EDM.pdf"
+        mcpTool #"
+            {
+                "name": "get_file_contents",
+                "description": "This tool is for fetching file content that come from Github or Gitea",
+                "inputSchema": {
+                    "type": "object",
+                    "properties": {
+                        "url": {
+                            "type": "string"
+                        },
+                        "token": {
+                            "type": "string"
+                        },
+                        "branch": {
+                            "type": "string"
+                        },
+                        "owner": {
+                            "type": "string"
+                        },
+                        "repo": {
+                            "type": "string"
+                        },
+                        "path": {
+                            "type": "string"
+                        }
+                    },
+                    "required": [
+                        "url",
+                        "token",
+                        "branch",
+                        "owner",
+                        "repo",
+                        "path"
+                    ],
+                    "additionalProperties": false,
+                    "$schema": "http://json-schema.org/draft-07/schema#"
+                }
+            }
+        "#
+        userInput #"
+            {
+                "url": "https://gitea-atlascopco-integration.clevernow.com/api/v1",
+                "token": "04f4b0dada8fa8632dc7541f2f2131c703693e7e",
+                "owner": "clevernow",
+                "branch": "main",
+                "repo": "atlascopco-dasm",
+                "path": "orders/40009326/Documentation/4000/EN/89971.000001_Meter/89971.000001_EDM.pdf"
+            }
+        "#
+    }
+}
+
+test Test_MatchNodeOutputsToToolInputs {
+    functions [MatchNodeOutputsToToolInputs]
+    args {
+        descriptions [
+            "Hello world"
+            "The node is configured to fetch and return the content of a specific PDF file hosted on Gitea, utilizing the provided URL endpoint, authentication token, repository details, branch name, and exact path. The expected output from this operation will be the binary data of the document located at https://gitea-atlascopco-integration.clevernow.com/clevernow/atlascopco-dasm/src/branch/main/orders/40009326/Documentation/4000/EN/89971.000001_Meter/89971.000001_EDM.pdf as a downloadable file. The operation's success ensures that the content can be accessed directly and used or further processed as needed.",
+            "TODO example 1"
+        ]
+        mcpTool #"
+            {
+                "name": "convert_doc_files_into_text_chunks",
+                "description": "Convert Documentation Files (PDF, Images, DOCX, PPTX, and HTML) into Text Chunks.\n\nArgs:\n    payloads: Documentation Files (PDF, Images, DOCX, PPTX, and HTML) as binary data.\n    chunk_size: Desired size of output text chunks in bytes. By default, it is set to 512 bytes.\n\nReturns:\n    A dictionary with processed results.",
+                "inputSchema": {
+                    "type": "object",
+                    "properties": {
+                        "payloads": {
+                            "items": {
+                                "format": "binary",
+                                "type": "string"
+                            },
+                            "title": "Payloads",
+                            "type": "array"
+                        },
+                        "chunk_size": {
+                            "default": 512,
+                            "title": "Chunk Size",
+                            "type": "integer"
+                        }
+                    },
+                    "required": [
+                        "payloads"
+                    ]
+                }
+            }
         "#
     }
 }
