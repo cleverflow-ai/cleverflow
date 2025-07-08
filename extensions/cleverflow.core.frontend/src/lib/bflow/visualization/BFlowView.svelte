@@ -15,7 +15,6 @@
 	import RunNodeResult from "./RunNodeResult.svelte";
 	import _ from "lodash";
 	import { BFlowNodeState } from "../BFlowNodeState.js";
-	import MarkdocRenderer from "../../common/components/MarkdocRenderer.svelte";
 	import LoadingIndicator from "../../common/components/LoadingIndicator.svelte";
 	import { TriangleAlert } from "lucide-svelte";
 	import { WebComponentLoader } from "../../webcomponentloader/WebComponentLoader.js";
@@ -127,8 +126,15 @@
 		<div class="w-full h-full">
 			<SvelteFlow {nodeTypes} {nodes} {edges} fitView>
 				<Controls />
-				<Background patternColor="#aaa" gap={16} />
+				<Background
+					patternColor="#aaa"
+					gap={16}
+					class="border border-surface-300"
+				/>
 			</SvelteFlow>
+
+			<slot name="run-button"></slot>
+
 			<div
 				class="w-full py-10 flex flex-col justify-start items-start gap-4"
 			>
@@ -198,12 +204,12 @@
 			</div>
 		</div>
 	</main>
-	<Drawer bind:this={drawerElement} position="right">
+	<!-- <Drawer bind:this={drawerElement} position="right">
 		{#snippet modalContent()}
 			<RunNodeResult
 				code={actionNodeResultToDisplay?.code}
 				result={actionNodeResultToDisplay?.result}
 			></RunNodeResult>
 		{/snippet}
-	</Drawer>
+	</Drawer> -->
 {/if}

@@ -128,18 +128,19 @@
 {/snippet}
 
 {#key refreshKey}
-	<main data-theme={theme}>
-		<div class="flex items-end justify-between gap-2">
-			{#if id}
+	<main data-theme={theme} class="px-4">
+		<div class="flex items-end justify-between gap-2 mb-2">
+			<!-- {#if id}
 				<span class="badge preset-filled-surface-500">{id}</span>
-			{/if}
+			{/if} -->
+			<div></div>
 			{#if controller.bflowviz}
 				<div class="flex justify-end items-center gap-2">
 					{@render runBFlowState()}
 				</div>
 			{/if}
 		</div>
-		<div class="w-full p-4 h-[500px]">
+		<div class="w-full h-[500px]">
 			{#if !text}
 				<div
 					class="h-full w-full flex flex-col items-center justify-center gap-2"
@@ -148,22 +149,21 @@
 					<div>No URL or text provided</div>
 				</div>
 			{:else if controller.bflowviz}
-				<div class="relative w-full h-full">
-					<div class="w-full h-full">
-						<BFlowView
-							bflowRunResult={controller.bflowRunResult}
-							bflowviz={controller.bflowviz}
-						/>
-					</div>
-					<div
-						class="absolute bottom-5 left-0 right-0 flex justify-center"
+				<div class="w-full h-full">
+					<BFlowView
+						bflowRunResult={controller.bflowRunResult}
+						bflowviz={controller.bflowviz}
 					>
-						{#if controller.isDocumentChanged(text)}
-							{@render reloadBFlowButton()}
-						{:else}
-							{@render runBFlowButton()}
-						{/if}
-					</div>
+						<div slot="run-button">
+							<div class="w-full flex justify-center mt-4 mb-6">
+								{#if controller.isDocumentChanged(text)}
+									{@render reloadBFlowButton()}
+								{:else}
+									{@render runBFlowButton()}
+								{/if}
+							</div>
+						</div>
+					</BFlowView>
 				</div>
 			{:else if controller.state == BFLowState.NONE || controller.state == BFLowState.CONNECT_FAILED}
 				<div
