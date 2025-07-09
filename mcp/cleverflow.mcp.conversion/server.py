@@ -18,57 +18,55 @@ mcp = FastMCP(
 
 @mcp.tool()
 def convert_doc_files_into_text_chunks(
-    payloads: list[Annotated[bytes, {"media_type": "application/octet-stream"}]],
+    payloads: list[Annotated[str, {"media_type": "application/octet-stream", "description": "Base64-encoded document data"}]],
     chunk_size: Annotated[int, {"default": 512, "description": "Size of each chunk in bytes"}] = 512
 ) -> list[dict[str, Any]]:
     """
     Convert Document Files (PDF, Images, DOCX, PPTX, HTML) into Markdown Text + Contextual Text Chunks
 
-    This tool accepts binary file payloads (documents) and outputs structured data containing:
-    - the full document converted to markdown, and
-    - extracted, contextually enriched text chunks of uniform byte size.
+    This tool accepts Base64-encoded strings representing binary document files. It returns:
+      - the full document converted into Markdown, and
+      - a list of enriched text chunks split by byte size.
 
-    Input Parameters:
-    -----------------
-    payloads (list[bytes]):
-        A list of Base64-decoded binary files. Each item must be one of the following:
-            - PDF
-            - Image (e.g., PNG, JPG)
-            - DOCX (Microsoft Word)
-            - PPTX (PowerPoint)
-            - HTML
+    Parameters:
+    -----------
+    payloads (list[str]):
+        A list of Base64-encoded strings.
+        Each string must represent one of the following document types:
+          - PDF
+          - DOCX (Microsoft Word)
+          - PPTX (PowerPoint)
+          - HTML
+          - Image (e.g., PNG, JPEG)
 
     chunk_size (int, optional):
-        Target size in **bytes** for each individual text chunk. Default is 512 bytes.
-        This is used to tune the granularity of chunked output.
+        Desired chunk size in bytes. Controls how large each text segment will be.
+        Default is `512`.
 
-    Output Schema:
-    --------------
-    Returns a list of dictionaries. Each dictionary contains metadata and extracted results for one file.
-
-    Example:
-    ```json
-    [
+    Returns:
+    --------
+    list[dict[str, Any]]:
+        One entry per input document with the following structure:
+        ```json
         {
             "file_size_bytes": 24583,
             "header_hex": "255044462d312e34",
-            "text": "# Title\\nThis is the full document content as markdown...",
+            "text": "# Document Title\\nFull document as markdown...",
             "text_chunks": [
-                "This is chunk 1 content...",
-                "Chunk 2 with context...",
+                "This is chunk 1",
+                "This is chunk 2",
                 ...
             ],
-            "duration": 0.326  // Time taken for full processing in seconds
+            "duration": 0.326
         }
-    ]
-    ```
+        ```
 
     Notes:
     ------
-    - The function internally determines document type using file headers and MIME heuristics.
-    - Markdown conversion preserves structure (headings, lists, bold/italic, etc.).
-    - Chunks are enriched via the `HybridChunker.contextualize()` function.
-    - Suitable for NLP pipelines where long documents must be split before vectorization, search indexing, or LLM consumption.
+    - This tool is designed to support LLM pipelines, RAG, and semantic chunking workflows.
+    - Markdown representation preserves structural formatting (e.g., bold, headers, links).
+    - Uses `HybridChunker` for token-aware chunking and contextual enrichment.
+    - If image content is passed, it must be a decodable format (JPG, PNG, etc.).
     """
     results = []
 
