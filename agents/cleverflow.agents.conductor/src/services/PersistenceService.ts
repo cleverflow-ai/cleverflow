@@ -11,6 +11,7 @@ export default class PersistenceService {
             const gitFileReference: GitFileReference = session.getGitFileReference();
             const instanceId = gitFileReference.hashedFileContent;
             const folderPath = path.dirname(gitFileReference.path);
+            const fileNameWithoutExt = path.basename(gitFileReference.path, path.extname(gitFileReference.path));
 
             await McpIO.saveFileContents(
                 gitFileReference.url,
@@ -18,7 +19,7 @@ export default class PersistenceService {
                 gitFileReference.branch,
                 gitFileReference.owner,
                 gitFileReference.repo,
-                `${folderPath}/${instanceId}.bflow.json`,
+                `${folderPath}/${fileNameWithoutExt}-${instanceId}.bflow.json`,
                 JSON.stringify(bflow),
             );
 
@@ -28,7 +29,7 @@ export default class PersistenceService {
                 gitFileReference.branch,
                 gitFileReference.owner,
                 gitFileReference.repo,
-                `${folderPath}/${instanceId}.bflowviz.json`,
+                `${folderPath}/${fileNameWithoutExt}-${instanceId}.bflowviz.json`,
                 JSON.stringify(bflowviz),
             );
 
@@ -43,6 +44,7 @@ export default class PersistenceService {
             const gitFileReference: GitFileReference = session.getGitFileReference();
             const instanceId = gitFileReference.hashedFileContent;
             const folderPath = path.dirname(gitFileReference.path);
+            const fileNameWithoutExt = path.basename(gitFileReference.path, path.extname(gitFileReference.path));
 
             await McpIO.saveFileContents(
                 gitFileReference.url,
@@ -50,7 +52,7 @@ export default class PersistenceService {
                 gitFileReference.branch,
                 gitFileReference.owner,
                 gitFileReference.repo,
-                `${folderPath}/${instanceId}-${session.id}.bflowrun.json`,
+                `${folderPath}/${fileNameWithoutExt}-${instanceId}-${session.id}.bflowrun.json`,
                 JSON.stringify(outs),
             );
         } catch (exception) {
@@ -63,6 +65,7 @@ export default class PersistenceService {
             const gitFileReference: GitFileReference = session.getGitFileReference();
             const instanceId = gitFileReference.hashedFileContent;
             const folderPath = path.dirname(gitFileReference.path);
+            const fileNameWithoutExt = path.basename(gitFileReference.path, path.extname(gitFileReference.path));
 
             await McpIO.saveFileContents(
                 gitFileReference.url,
@@ -70,7 +73,7 @@ export default class PersistenceService {
                 gitFileReference.branch,
                 gitFileReference.owner,
                 gitFileReference.repo,
-                `${folderPath}/${instanceId}-${session.id}-${nodeId}.json`,
+                `${folderPath}/${fileNameWithoutExt}-${instanceId}-${session.id}-${nodeId}.json`,
                 JSON.stringify(nodeOutput),
             );
         } catch (exception) {
