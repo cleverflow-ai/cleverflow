@@ -126,11 +126,14 @@ function registerTools(server: McpServer) {
                     const github = new Github(token);
                     result = await github.fetch(branch, owner, repo, path);
                 } catch (exception: any) {
-                    console.log(exception);
                     return {
-                        error: {
-                            message: exception.message,
-                        },
+                        isError: true,
+                        content: [
+                            {
+                                type: "text",
+                                text: exception.message
+                            }
+                        ],
                     };
                 }
             } else {
@@ -139,19 +142,24 @@ function registerTools(server: McpServer) {
                     result = await gitea.fetchFileContent(branch, owner, repo, path);
                 } catch (exception) {
                     return {
-                        error: {
-                            message: exception.message,
-                        },
+                        isError: true,
+                        content: [
+                            {
+                                type: "text",
+                                text: exception.message
+                            }
+                        ],
                     };
                 }
             }
 
             if (!result) {
                 return {
+                    isError: true,
                     content: [
                         {
-                            type: "resource",
-                            resource: result
+                            type: "text",
+                            text: "File not found or could not be fetched."
                         }
                     ],
                 };
@@ -215,12 +223,16 @@ function registerTools(server: McpServer) {
             if (url === Github.McpServerUrl) {
                 try {
                     const github = new Github(token);
-                    await github.createOrUpdateFile(branch, owner, repo, path, content, null);
+                    isSuccessful = await github.createOrUpdateFile(branch, owner, repo, path, content, null);
                 } catch (exception: any) {
                     return {
-                        error: {
-                            message: exception.message,
-                        },
+                        isError: true,
+                        content: [
+                            {
+                                type: "text",
+                                text: exception.message
+                            }
+                        ],
                     };
                 }
             } else {
@@ -229,9 +241,13 @@ function registerTools(server: McpServer) {
                     isSuccessful = await gitea.saveFileContent(branch, owner, repo, path, content);
                 } catch (exception) {
                     return {
-                        error: {
-                            message: exception.message,
-                        },
+                        isError: true,
+                        content: [
+                            {
+                                type: "text",
+                                text: exception.message
+                            }
+                        ],
                     };
                 }
             }

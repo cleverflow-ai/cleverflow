@@ -30,7 +30,7 @@ export default class BFlowController {
         bflow: any,
         onProgress: (data: any) => void,
         onCompleted: (data: any) => void,
-        onFailed: (error: Error) => void,
+        onFailed: (error: Error, data: any) => void,
     ) => Promise<void>;
 
     public refresh: (() => void) | null = null;
@@ -46,7 +46,7 @@ export default class BFlowController {
             bflow: any,
             onProgress: (data: any) => void,
             onCompleted: (data: any) => void,
-            onFailed: (error: Error) => void,
+            onFailed: (error: Error, data: any) => void,
         ) => Promise<void>
     ) {
         this.generateBFlow = generateBFlow;
@@ -218,10 +218,20 @@ export default class BFlowController {
                     this.setState(BFLowState.RUN_BFLOW_SUCCESS);
                     addToast("Successfully ran BFlow", ToastType.SUCCESS);
                 },
-                (error: Error) => {
+                (error: Error, data: any) => {
                     console.error(">>> BFlow run failed");
+
+                    const bflow = data?.bflow;
+                    const bflowRunResult = data?.outs;
+
+                    if (bflow && bflowRunResult) {
+                        this.bflow = bflow;
+                        this.bflowRunResult = bflowRunResult;
+                        this.updateBFlowRunResult();
+                    }
+
                     this.setState(BFLowState.RUN_BFLOW_FAILED);
-                    addToast("Failed to run BFlow", ToastType.ERROR);
+                    addToast(error.message, ToastType.ERROR);
                 }
             );
         } catch (e: any) {
@@ -249,6 +259,7 @@ export default class BFlowController {
         if (vizNode) {
             this.bflowviz.currentDate = new Date();
             vizNode.data.state = node.state;
+            vizNode.data.stateMessage = node.stateMessage;
         }
         if (node.goto && node.goto.length > 0) {
             _.forEach(node.goto, (childNode: any) => {

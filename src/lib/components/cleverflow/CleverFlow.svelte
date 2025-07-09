@@ -79,7 +79,7 @@
                 bflow: any,
                 onProgress: (data: any) => void,
                 onCompleted: (data: any) => void,
-                onFailed: (error: Error) => void,
+                onFailed: (error: Error, data: any) => void,
             ) => {
                 await conductorService?.runBFlow(
                     session,

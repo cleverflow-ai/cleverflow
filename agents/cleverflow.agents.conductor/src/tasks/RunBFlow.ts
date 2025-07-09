@@ -312,23 +312,14 @@ const runNode = async (session: Session, context: TaskContext, bflow: BFlow, use
         if (node.tool) {
             let upstreamResults: any[] = [];
 
-            console.log('>>>>>>>>>>>>>>>>>>>>>>>>>>>> ');
-            console.log('>>>>>>>>>>>>>>>>>>>>>>>>>>>> ');
-            console.log('>>>>>>>>>>>>>>>>>>>>>>>>>>>> ');
-
             try {
                 if (node.inputs) {
                     // Each Input corresponds a Node Id
                     for (const nodeId of node.inputs) {
                         // Get saved Output of required Node
                         const out = outs[nodeId];
-                        console.log(`>>>> nodeId: ${nodeId}`);
-
                         if (out) {
-                            console.log(`>>>> out`);
                             upstreamResults.push(out);
-                        } else {
-                            console.log(`>>>> NO out`);
                         }
                     }
                 }
@@ -475,28 +466,25 @@ const runNode = async (session: Session, context: TaskContext, bflow: BFlow, use
 
                     // callTool error
                     if (callToolResult.isError) {
-                        node.state = BFlowNodeState.WAITING_FOR_DATA;
-                        const errorMessage =
-                            callToolResult.content &&
-                                Array.isArray(callToolResult.content) &&
-                                callToolResult.content.length > 0
-                                ? callToolResult.content[0].text
-                                : 'Cannot complete action. Please check your input or try again.';
+                        node.state = BFlowNodeState.FAILURE;
+                        node.stateMessage = callToolResult.content &&
+                            Array.isArray(callToolResult.content) &&
+                            callToolResult.content.length > 0
+                            ? callToolResult.content[0].text
+                            : 'Cannot complete action. Please check your input or try again.';
+
                         yieldUpdate({
-                            state: 'input-required',
+                            state: 'failed',
                             message: {
                                 role: 'agent',
                                 parts: [{
                                     type: 'text',
-                                    text: errorMessage,
+                                    text: node.stateMessage,
                                 }, {
                                     type: 'data',
                                     data: {
-                                        node: {
-                                            id: node.id
-                                        },
-                                        userInput,
-                                        inputSchema: mcpTool,
+                                        bflow: bflow,
+                                        outs: outs,
                                         createdAt: new Date(),
                                     }
                                 }]
@@ -542,22 +530,20 @@ const runNode = async (session: Session, context: TaskContext, bflow: BFlow, use
                     }
 
                 } catch (callToolException) {
-                    node.state = BFlowNodeState.WAITING_FOR_DATA;
+                    node.state = BFlowNodeState.FAILURE;
+                    node.stateMessage = callToolException.message ?? 'Tool did not respond';
                     yieldUpdate({
-                        state: 'input-required',
+                        state: 'failed',
                         message: {
                             role: 'agent',
                             parts: [{
                                 type: 'text',
-                                text: callToolException.message ?? 'Tool did not respond',
+                                text: node.stateMessage,
                             }, {
                                 type: 'data',
                                 data: {
-                                    node: {
-                                        id: node.id
-                                    },
-                                    userInput,
-                                    inputSchema: mcpTool,
+                                    bflow: bflow,
+                                    outs: outs,
                                     createdAt: new Date(),
                                 }
                             }]
@@ -567,13 +553,14 @@ const runNode = async (session: Session, context: TaskContext, bflow: BFlow, use
                 }
             } else {
                 node.state = BFlowNodeState.FAILURE;
+                node.stateMessage = 'Mcp client was not found';
                 yieldUpdate({
                     state: 'failed',
                     message: {
                         role: 'agent',
                         parts: [{
                             type: 'text',
-                            text: 'Mcp client was not found'
+                            text: node.stateMessage
                         }, {
                             type: 'data',
                             data: {
@@ -589,13 +576,14 @@ const runNode = async (session: Session, context: TaskContext, bflow: BFlow, use
 
         } else {
             node.state = BFlowNodeState.FAILURE;
+            node.stateMessage = 'No MCP Tool';
             yieldUpdate({
                 state: 'failed',
                 message: {
                     role: 'agent',
                     parts: [{
                         type: 'text',
-                        text: 'No MCP Tool'
+                        text: node.stateMessage
                     }, {
                         type: 'data',
                         data: {

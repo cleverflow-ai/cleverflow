@@ -42,7 +42,7 @@ export default class MarkdocRendererController {
             bflow: any,
             onProgress: (data: any) => void,
             onCompleted: (data: any) => void,
-            onFailed: (error: Error) => void,
+            onFailed: (error: Error, data: any) => void,
         ) => Promise<void>
     ) {
         this.generateBFlow = generateBFlow;

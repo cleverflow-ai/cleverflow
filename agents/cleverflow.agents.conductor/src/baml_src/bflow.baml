@@ -40,6 +40,7 @@ class BFlowNode {
   description string?
   config string?
   state BFlowNodeState?
+  stateMessage string?
   goto BFlowNode[]?
   tool BFlowNodeTool?
   toolInput string?

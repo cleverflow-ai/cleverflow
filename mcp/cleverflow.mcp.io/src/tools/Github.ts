@@ -96,7 +96,7 @@ export default class Github {
         return null;
     }
 
-    public async createOrUpdateFile(branch: string, owner: string, repo: string, path: string, fileContent: string, message: string | null): Promise<any> {
+    public async createOrUpdateFile(branch: string, owner: string, repo: string, path: string, fileContent: string, message: string | null): Promise<boolean> {
 
         if (path.startsWith('/')) {
             path = path.slice(1);

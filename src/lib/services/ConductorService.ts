@@ -1,4 +1,4 @@
-import type { Task, TaskSendParams, TaskState, TextPart } from "@cleverflow-ai/cleverflow.agents/schema";
+import type { DataPart, Task, TaskSendParams, TaskState, TextPart } from "@cleverflow-ai/cleverflow.agents/schema";
 import type Session from "$lib/session/Session.svelte";
 import md5 from "md5";
 import { ConductorClient } from "./ConductorClient.js";
@@ -126,8 +126,12 @@ export default class ConductorService {
             this.conductorClient?.sendTask(taskParams, (state: TaskState, event: Task) => {
                 console.log(`>>> state: ${state}`);
                 if (state === 'completed') {
-                    const bflow = event.status?.message?.parts?.[0]?.data?.bflow;
-                    const bflowviz = event.status?.message?.parts?.[0]?.data?.bflowviz;
+                    let dataPart: DataPart | null = event.status?.message?.parts?.find((part) => {
+                        return part.type === 'data' && part.data;
+                    }) as DataPart | null;
+
+                    const bflow = dataPart?.data?.bflow;
+                    const bflowviz = dataPart?.data?.bflowviz;
                     onCompleted({
                         bflow,
                         bflowviz,
@@ -137,8 +141,9 @@ export default class ConductorService {
                     onFailed(new Error("Failed to convert text to BFlow"));
                     resolve();
                 } else if (state === 'working') {
-                    const text = event.status?.message?.parts?.[0]?.text;
-                    onProgress(text);
+                    const textPart: TextPart | null = event.status?.message?.parts?.[0] as TextPart | null
+                    const text = textPart?.text;
+                    onProgress(text ?? "");
                 } else {
                     onFailed(new Error(`Unexpected state: ${state}`));
                     resolve();
@@ -152,7 +157,7 @@ export default class ConductorService {
         bflow: any,
         onProgress: (data: any) => void,
         onCompleted: (data: any) => void,
-        onFailed: (error: Error) => void
+        onFailed: (error: Error, data: any) => void
     ): Promise<void> {
 
         try {
@@ -178,26 +183,31 @@ export default class ConductorService {
                 },
             };
             this.conductorClient?.sendTask(taskParams, (state: TaskState, event: Task) => {
-                if (['working', 'completed'].includes(state)) {
-                    let dataPart = event.status?.message?.parts?.find((part) => {
-                        return part.type === 'data' && part.data;
-                    });
-                    const bflow = dataPart?.data?.bflow;
-                    const outs = dataPart?.data?.outs;
+                let dataPart: DataPart | null = event.status?.message?.parts?.find((part) => {
+                    return part.type === 'data' && part.data;
+                }) as DataPart | null;
 
+                let textPart: TextPart | null = event.status?.message?.parts?.find((part) => {
+                    return part.type === 'text' && part.text;
+                }) as TextPart | null;
+
+                const bflow = dataPart?.data?.bflow;
+                const outs = dataPart?.data?.outs;
+
+                if (['working', 'completed', 'failed'].includes(state)) {
                     if (state === 'completed') {
                         onCompleted({ bflow, outs });
+                    } else if (state === 'failed') {
+                        onFailed(new Error(textPart?.text ?? "Failed to run BFlow"), { bflow, outs });
                     } else {
                         onProgress({ bflow, outs });
                     }
-                } else if (state === 'failed') {
-                    onFailed(new Error("Failed to run BFlow"));
                 } else {
-                    onFailed(new Error("Unexpected state while running BFlow"));
+                    onFailed(new Error(textPart?.text ?? "Unexpected state while running BFlow"), { bflow, outs });
                 }
             });
         } catch (e: any) {
-            onFailed(new Error(e.message ?? "Unexpected state while running BFlow"));
+            onFailed(new Error(e.message ?? "Unexpected state while running BFlow"), null);
         }
     }
 }

@@ -4,7 +4,7 @@
 	import { onMount } from "svelte";
 	import { BFlowNodeState } from "../BFlowNodeState.js";
 	import postal from "postal";
-	import { CircleAlert } from "lucide-svelte";
+	import { CircleAlert, TriangleAlert } from "lucide-svelte";
 
 	const channel = postal.channel("b-flow-view");
 
@@ -68,6 +68,15 @@
 				<CircleAlert class="text-warning-500 w-3 h-3" />
 				<span class="text-[10px] text-warning-500"
 					>Waiting for Input</span
+				>
+			</div>
+		{/if}
+
+		{#if data.state === BFlowNodeState.FAILURE && data.stateMessage}
+			<div class="flex justify-start items-start gap-1">
+				<TriangleAlert class="text-error-500 w-3 h-3" />
+				<span class="text-[8px] text-error-500"
+					>{data.stateMessage}</span
 				>
 			</div>
 		{/if}
