@@ -43,7 +43,7 @@ class BFlowNode {
   goto BFlowNode[]?
   tool BFlowNodeTool?
   toolInput string?
-  inputs string?
+  inputs string[]?
   output BFlowNodeOutput?
 }
 

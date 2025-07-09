@@ -13,6 +13,11 @@ class OutputInputMatch {
     descriptionIndex int
 }
 
+class FieldEncoding {
+    name string
+    encoding string
+}
+
 function GetRepoIntegrationSettings(input: string) -> RepoIntegrationSettings {
     client Ollama_Code
     prompt #"
@@ -126,6 +131,41 @@ function MatchNodeOutputsToToolInputs(descriptions: string[], mcpTool: string) -
         {{descriptions}}
 
         → Now return the matching result as a JSON array (no explanation).
+
+        ---
+        {{ ctx.output_format }}
+    "#
+}
+
+function DetectFieldEncodings(mcpTool: string) -> FieldEncoding[] {
+    client Ollama_Code
+    prompt #"
+        You are an AI assistant.
+
+        You are given a JSON object that describes an MCP tool, including its input schema. Your task is to analyze this schema and determine the encoding type for each required input field.
+
+        Each field's encoding must be classified as one of the following:
+        - "utf8": for plain text inputs
+        - "base64": for string inputs that are encoded data
+        - "byte-array": for raw binary data, such as files or buffers
+
+        Steps:
+        1. Read the `inputSchema.required` array to get the list of required fields.
+        2. For each required field, find its definition in `inputSchema.properties`.
+        3. Based on properties such as `type`, `format`, or context (e.g., if it's a file, binary, array of binary), determine the most appropriate encoding.
+        4. Return a list of objects in the format:
+        - `name`: the field name
+        - `encoding`: "utf8", "base64", or "byte-array"
+
+        Redact or skip any sensitive information such as passwords, API keys, or tokens if present.
+
+        Now process the following MCP tool schema and return the inferred encodings for each required field.
+
+        MCP Tool:
+        {{mcpTool}}
+
+
+        Now return an array of objects (FieldEncoding[]) describing the encoding of each field.
 
         ---
         {{ ctx.output_format }}
@@ -320,6 +360,39 @@ test Test_MatchNodeOutputsToToolInputs {
             "The node is configured to fetch and return the content of a specific PDF file hosted on Gitea, utilizing the provided URL endpoint, authentication token, repository details, branch name, and exact path. The expected output from this operation will be the binary data of the document located at https://gitea-atlascopco-integration.clevernow.com/clevernow/atlascopco-dasm/src/branch/main/orders/40009326/Documentation/4000/EN/89971.000001_Meter/89971.000001_EDM.pdf as a downloadable file. The operation's success ensures that the content can be accessed directly and used or further processed as needed.",
             "TODO example 1"
         ]
+        mcpTool #"
+            {
+                "name": "convert_doc_files_into_text_chunks",
+                "description": "Convert Documentation Files (PDF, Images, DOCX, PPTX, and HTML) into Text Chunks.\n\nArgs:\n    payloads: Documentation Files (PDF, Images, DOCX, PPTX, and HTML) as binary data.\n    chunk_size: Desired size of output text chunks in bytes. By default, it is set to 512 bytes.\n\nReturns:\n    A dictionary with processed results.",
+                "inputSchema": {
+                    "type": "object",
+                    "properties": {
+                        "payloads": {
+                            "items": {
+                                "format": "binary",
+                                "type": "string"
+                            },
+                            "title": "Payloads",
+                            "type": "array"
+                        },
+                        "chunk_size": {
+                            "default": 512,
+                            "title": "Chunk Size",
+                            "type": "integer"
+                        }
+                    },
+                    "required": [
+                        "payloads"
+                    ]
+                }
+            }
+        "#
+    }
+}
+
+test Test_DetectFieldEncodings {
+    functions [DetectFieldEncodings]
+    args {
         mcpTool #"
             {
                 "name": "convert_doc_files_into_text_chunks",

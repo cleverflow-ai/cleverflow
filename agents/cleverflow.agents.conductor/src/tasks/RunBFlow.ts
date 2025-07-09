@@ -2,7 +2,7 @@ import { CallToolResultSchema, CompatibilityCallToolResultSchema, ListToolsResul
 import { TaskContext, TaskYieldUpdate } from '@cleverflow-ai/cleverflow.agents/server';
 import { Task, TaskStatus, DataPart } from "@cleverflow-ai/cleverflow.agents/schema";
 import _ from 'lodash';
-import { BFlow, BFlowNode, BFlowNodeState, BFlowNodeType } from '../baml_client/types.js';
+import { BFlow, BFlowNode, BFlowNodeState, BFlowNodeType, FieldEncoding, OutputInputMatch } from '../baml_client/types.js';
 import Session from '../sessions/Session.js';
 import PersistenceService from '../services/PersistenceService.js';
 import { z } from "zod";
@@ -312,16 +312,28 @@ const runNode = async (session: Session, context: TaskContext, bflow: BFlow, use
         if (node.tool) {
             let upstreamResults: any[] = [];
 
-            if (node.inputs) {
-                // Each Input corresponds a Node Id
-                for (const nodeId of node.inputs) {
-                    // Get saved Output of required Node
-                    const out = outs[nodeId];
-                    const outResult = out?.result;
-                    if (outResult) {
-                        upstreamResults.push(outResult);
+            console.log('>>>>>>>>>>>>>>>>>>>>>>>>>>>> ');
+            console.log('>>>>>>>>>>>>>>>>>>>>>>>>>>>> ');
+            console.log('>>>>>>>>>>>>>>>>>>>>>>>>>>>> ');
+
+            try {
+                if (node.inputs) {
+                    // Each Input corresponds a Node Id
+                    for (const nodeId of node.inputs) {
+                        // Get saved Output of required Node
+                        const out = outs[nodeId];
+                        console.log(`>>>> nodeId: ${nodeId}`);
+
+                        if (out) {
+                            console.log(`>>>> out`);
+                            upstreamResults.push(out);
+                        } else {
+                            console.log(`>>>> NO out`);
+                        }
                     }
                 }
+            } catch (exception) {
+                console
             }
 
             node.state = BFlowNodeState.RUNNING;
@@ -348,18 +360,56 @@ const runNode = async (session: Session, context: TaskContext, bflow: BFlow, use
                 const mcpTool = mcpClient.tools.find((tool) => tool.name === node.tool.name);
                 const requiredParameters = mcpTool.inputSchema?.required;
                 let userInputForCurrentNode: any = userInput[node.id] || {};
+                const upstreamResultsMapping = {};
+
                 try {
 
-                    if (upstreamResults && upstreamResults.length > 0) {
-                        // TODO: matching mcpTool input required
-                        // TODO: convert encoding if needed. Ex: base64 to byte array (number[])
+                    const upstreamResultDescriptions = upstreamResults.map((result: any) =>
+                        typeof result.description === "string" ? result.description : ""
+                    );
+
+                    if (upstreamResultDescriptions && upstreamResultDescriptions.length > 0) {
+                        const mappingInputOutput = await b.MatchNodeOutputsToToolInputs(
+                            upstreamResultDescriptions,
+                            JSON.stringify(mcpTool),
+                            {
+                                clientRegistry: new Clients({ primary: Clients.OllamaCode }).registry
+                            }
+                        );
+                        _.forEach(mappingInputOutput, (item: OutputInputMatch) => {
+                            if (item.matchedInputField && item.descriptionIndex >= 0 && item.descriptionIndex <= upstreamResultDescriptions.length) {
+                                upstreamResultsMapping[item.matchedInputField] = upstreamResults[item.descriptionIndex];
+                            }
+                        });
+
+                        const fieldsEncoding = await b.DetectFieldEncodings(
+                            JSON.stringify(mcpTool),
+                            {
+                                clientRegistry: new Clients({ primary: Clients.OllamaCode }).registry
+                            }
+                        );
+                        _.forEach(fieldsEncoding, (fieldEncoding: FieldEncoding) => {
+                            try {
+                                const resource = upstreamResultsMapping[fieldEncoding.name].content[0].resource;
+                                const blob = resource.blob;
+                                console.log('----------------------------------- resource: ', resource.encoding);
+                                if (fieldEncoding.encoding === 'utf8') {
+                                    upstreamResultsMapping[fieldEncoding.name] = Buffer.from(blob, "base64").toString("utf8");
+                                } else if (fieldEncoding.encoding === 'byte-array') {
+                                    // TODO: hack array
+                                    upstreamResultsMapping[fieldEncoding.name] = [blob];
+                                }
+                            } catch (exception) {
+                                console.error(exception);
+                            }
+                        });
                     }
 
                     const clientSession = extractClientSession(context);
                     const extractedInputFromNodeContent = JSON.parse(node.toolInput ?? '{}');
                     userInputForCurrentNode = { ...extractedInputFromNodeContent, ...userInputForCurrentNode };
 
-                    const canCallTool = isValidInput(requiredParameters || [], userInputForCurrentNode)
+                    const canCallTool = isValidInput(requiredParameters || [], userInputForCurrentNode, upstreamResultsMapping)
                     if (!canCallTool) {
                         const mpcPayload = await b.GenerateMcpToolPayload(
                             JSON.stringify(mcpTool),
@@ -378,7 +428,7 @@ const runNode = async (session: Session, context: TaskContext, bflow: BFlow, use
                     console.error(exception);
                 }
 
-                const canCallTool = isValidInput(requiredParameters || [], userInputForCurrentNode)
+                const canCallTool = isValidInput(requiredParameters || [], userInputForCurrentNode, upstreamResultsMapping)
                 if (!canCallTool) {
                     node.state = BFlowNodeState.WAITING_FOR_DATA;
                     yieldUpdate({
@@ -401,9 +451,14 @@ const runNode = async (session: Session, context: TaskContext, bflow: BFlow, use
                     return node.state;
                 }
 
+                const mergedInput: Record<string, any> = {
+                    ...userInputForCurrentNode,
+                    ...upstreamResultsMapping,
+                };
+
                 const inputForCallTool = {
                     name: mcpTool.name,
-                    arguments: userInputForCurrentNode,
+                    arguments: mergedInput,
                 };
 
                 try {
@@ -451,7 +506,14 @@ const runNode = async (session: Session, context: TaskContext, bflow: BFlow, use
                     node.state = BFlowNodeState.SUCCESS;
 
                     if (node.id) {
-                        callToolResult.description = await b.GetToolOutputDescription(node.description, JSON.stringify(mcpTool), JSON.stringify(userInputForCurrentNode));
+                        callToolResult.description = await b.GetToolOutputDescription(
+                            node.description,
+                            JSON.stringify(mcpTool),
+                            JSON.stringify(userInputForCurrentNode),
+                            {
+                                clientRegistry: new Clients({ primary: Clients.OllamaCode }).registry
+                            }
+                        );
                         outs[node.id] = callToolResult;
 
                         const nodeOutput = {};
@@ -549,9 +611,13 @@ const runNode = async (session: Session, context: TaskContext, bflow: BFlow, use
     return node.state;
 }
 
-const isValidInput = (required, userInput) => {
+const isValidInput = (required: Record<string, any>, userInput: Record<string, any>, upstreamResults: Record<string, any>) => {
+    const mergedInput: Record<string, any> = {
+        ...userInput,
+        ...upstreamResults,
+    };
     return required.every(key => {
-        const value = userInput[key];
+        const value = mergedInput[key];
         return value !== undefined && value !== null && value !== '';
     });
 }
