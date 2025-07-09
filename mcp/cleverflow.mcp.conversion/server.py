@@ -13,7 +13,7 @@ app = typer.Typer()
 # Create an MCP server
 mcp = FastMCP(
     "CLEVER°FLOW | Conversion MCP", 
-    # maximum_message_size=100 * 1024 * 1024
+    #maximum_message_size=100 * 1024 * 1024
 )
 
 @mcp.tool()
@@ -22,14 +22,53 @@ def convert_doc_files_into_text_chunks(
     chunk_size: Annotated[int, {"default": 512, "description": "Size of each chunk in bytes"}] = 512
 ) -> list[dict[str, Any]]:
     """
-    Convert Documentation Files (PDF, Images, DOCX, PPTX, and HTML) into Text Chunks.
+    Convert Document Files (PDF, Images, DOCX, PPTX, HTML) into Markdown Text + Contextual Text Chunks
 
-    Args:
-        payloads: Documentation Files (PDF, Images, DOCX, PPTX, and HTML) as binary data.
-        chunk_size: Desired size of output text chunks in bytes. By default, it is set to 512 bytes.
+    This tool accepts binary file payloads (documents) and outputs structured data containing:
+    - the full document converted to markdown, and
+    - extracted, contextually enriched text chunks of uniform byte size.
 
-    Returns:
-        A dictionary with processed results.
+    Input Parameters:
+    -----------------
+    payloads (list[bytes]):
+        A list of Base64-decoded binary files. Each item must be one of the following:
+            - PDF
+            - Image (e.g., PNG, JPG)
+            - DOCX (Microsoft Word)
+            - PPTX (PowerPoint)
+            - HTML
+
+    chunk_size (int, optional):
+        Target size in **bytes** for each individual text chunk. Default is 512 bytes.
+        This is used to tune the granularity of chunked output.
+
+    Output Schema:
+    --------------
+    Returns a list of dictionaries. Each dictionary contains metadata and extracted results for one file.
+
+    Example:
+    ```json
+    [
+        {
+            "file_size_bytes": 24583,
+            "header_hex": "255044462d312e34",
+            "text": "# Title\\nThis is the full document content as markdown...",
+            "text_chunks": [
+                "This is chunk 1 content...",
+                "Chunk 2 with context...",
+                ...
+            ],
+            "duration": 0.326  // Time taken for full processing in seconds
+        }
+    ]
+    ```
+
+    Notes:
+    ------
+    - The function internally determines document type using file headers and MIME heuristics.
+    - Markdown conversion preserves structure (headings, lists, bold/italic, etc.).
+    - Chunks are enriched via the `HybridChunker.contextualize()` function.
+    - Suitable for NLP pipelines where long documents must be split before vectorization, search indexing, or LLM consumption.
     """
     results = []
 
