@@ -152,7 +152,7 @@ function DetectFieldEncodings(mcpTool: string) -> FieldEncoding[] {
         Steps:
         1. Read the `inputSchema.required` array to get the list of required fields.
         2. For each required field, find its definition in `inputSchema.properties`.
-        3. Based on properties such as `type`, `format`, or context (e.g., if it's a file, binary, array of binary), determine the most appropriate encoding.
+        3. Based mainly on the property namely `type`, determine the most appropriate encoding.
         4. Return a list of objects in the format:
         - `name`: the field name
         - `encoding`: "utf8", "base64", or "byte-array"
@@ -396,7 +396,7 @@ test Test_DetectFieldEncodings {
         mcpTool #"
             {
                 "name": "convert_doc_files_into_text_chunks",
-                "description": "Convert Documentation Files (PDF, Images, DOCX, PPTX, and HTML) into Text Chunks.\n\nArgs:\n    payloads: Documentation Files (PDF, Images, DOCX, PPTX, and HTML) as binary data.\n    chunk_size: Desired size of output text chunks in bytes. By default, it is set to 512 bytes.\n\nReturns:\n    A dictionary with processed results.",
+                "description": "Convert Document Files (PDF, Images, DOCX, PPTX, HTML) into Markdown Text + Contextual Text Chunks\n\nThis tool accepts binary file payloads (documents) and outputs structured data containing:\n- the full document converted to markdown, and\n- extracted, contextually enriched text chunks of uniform byte size.\n\nInput Parameters:\n-----------------\npayloads (list[bytes]):\n    A list of Base64-decoded binary files. Each item must be one of the following:\n        - PDF\n        - Image (e.g., PNG, JPG)\n        - DOCX (Microsoft Word)\n        - PPTX (PowerPoint)\n        - HTML\n\nchunk_size (int, optional):\n    Target size in **bytes** for each individual text chunk. Default is 512 bytes.\n    This is used to tune the granularity of chunked output.\n\nOutput Schema:\n--------------\nReturns a list of dictionaries. Each dictionary contains metadata and extracted results for one file.\n\nExample:\n```json\n[\n    {\n        \"file_size_bytes\": 24583,\n        \"header_hex\": \"255044462d312e34\",\n        \"text\": \" Title\\nThis is the full document content as markdown...\",\n        \"text_chunks\": [\n            \"This is chunk 1 content...\",\n            \"Chunk 2 with context...\",\n            ...\n        ],\n        \"duration\": 0.326  // Time taken for full processing in seconds\n    }\n]\n```\n\nNotes:\n------\n- The function internally determines document type using file headers and MIME heuristics.\n- Markdown conversion preserves structure (headings, lists, bold/italic, etc.).\n- Chunks are enriched via the `HybridChunker.contextualize()` function.\n- Suitable for NLP pipelines where long documents must be split before vectorization, search indexing, or LLM consumption.",
                 "inputSchema": {
                     "type": "object",
                     "properties": {
@@ -417,8 +417,27 @@ test Test_DetectFieldEncodings {
                     "required": [
                         "payloads"
                     ]
+                },
+                "outputSchema": {
+                    "type": "object",
+                    "properties": {
+                        "result": {
+                            "items": {
+                                "additionalProperties": true,
+                                "type": "object"
+                            },
+                            "title": "Result",
+                            "type": "array"
+                        }
+                    },
+                    "required": [
+                        "result"
+                    ],
+                    "title": "_WrappedResult",
+                    "x-fastmcp-wrap-result": true
                 }
             }
         "#
+            
     }
 }

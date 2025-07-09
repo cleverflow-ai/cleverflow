@@ -388,15 +388,17 @@ const runNode = async (session: Session, context: TaskContext, bflow: BFlow, use
                                 clientRegistry: new Clients({ primary: Clients.OllamaCode }).registry
                             }
                         );
+
                         _.forEach(fieldsEncoding, (fieldEncoding: FieldEncoding) => {
                             try {
                                 const resource = upstreamResultsMapping[fieldEncoding.name].content[0].resource;
                                 const blob = resource.blob;
-                                console.log('----------------------------------- resource: ', resource.encoding);
                                 if (fieldEncoding.encoding === 'utf8') {
                                     upstreamResultsMapping[fieldEncoding.name] = Buffer.from(blob, "base64").toString("utf8");
                                 } else if (fieldEncoding.encoding === 'byte-array') {
-                                    // TODO: hack array
+                                    const buffer = Buffer.from(blob, "base64");
+                                    upstreamResultsMapping[fieldEncoding.name] = [Array.from(buffer)];
+                                } else if (fieldEncoding.encoding === 'base64') {
                                     upstreamResultsMapping[fieldEncoding.name] = [blob];
                                 }
                             } catch (exception) {
