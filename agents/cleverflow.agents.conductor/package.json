@@ -3,7 +3,8 @@
   "version": "1.0.0",
   "main": "index.js",
   "scripts": {
-    "build": "npx tsc",
+    "baml-generate": "baml-cli generate --from ./src/baml_src",
+    "build": "npm run baml-generate && tsc",
     "dev": "npx tsx src/index.ts"
   },
   "keywords": [],
