@@ -73,12 +73,14 @@ function GenerateMcpToolPayload(mcpTool: string, userInputManually: string, comm
 function GetToolOutputDescription(nodeDescription: string, mcpTool: string, userInput: string) -> string {
     client Ollama_Code
     prompt #"
-       You are an AI assistant.
+        You are an AI assistant.
 
         Below is a node from a flow-based system that uses a specific tool to process user input. The goal is to describe what this node produces, based on the tool's purpose and the given user input.
 
         Your task:
         Generate a **short, clear, and informative description** of the expected output that this node would produce. Base your answer on the node context, the tool's description, and the user input.
+
+        Make sure to **omit or redact any sensitive information**, such as usernames, passwords, API keys, tokens, or any credentials that may appear in the input.
 
         Node Description:
         {{nodeDescription}}
@@ -93,6 +95,7 @@ function GetToolOutputDescription(nodeDescription: string, mcpTool: string, user
 
         ---
         {{ ctx.output_format }}
+
     "#
 }
 

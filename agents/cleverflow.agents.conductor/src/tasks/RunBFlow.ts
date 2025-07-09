@@ -424,7 +424,7 @@ const runNode = async (session: Session, context: TaskContext, bflow: BFlow, use
                                 Array.isArray(callToolResult.content) &&
                                 callToolResult.content.length > 0
                                 ? callToolResult.content[0].text
-                                : '';
+                                : 'Cannot complete action. Please check your input or try again.';
                         yieldUpdate({
                             state: 'input-required',
                             message: {
@@ -451,6 +451,7 @@ const runNode = async (session: Session, context: TaskContext, bflow: BFlow, use
                     node.state = BFlowNodeState.SUCCESS;
 
                     if (node.id) {
+                        callToolResult.description = await b.GetToolOutputDescription(node.description, JSON.stringify(mcpTool), JSON.stringify(userInputForCurrentNode));
                         outs[node.id] = callToolResult;
 
                         const nodeOutput = {};
