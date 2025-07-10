@@ -13,6 +13,13 @@ class OutputInputMatch {
     descriptionIndex int
 }
 
+class OutputInputMatch2 {
+    field string
+    isFieldArray bool
+    query string
+    queryLanguage string
+}
+
 class FieldEncoding {
     name string
     encoding string
@@ -138,7 +145,7 @@ function MatchNodeOutputsToToolInputs(descriptions: string[], mcpTool: string) -
 }
 
 function DetectFieldEncodings(mcpTool: string) -> FieldEncoding[] {
-    client Ollama_Code
+    client Ollama_Tool
     prompt #"
         You are an AI assistant.
 
@@ -169,6 +176,53 @@ function DetectFieldEncodings(mcpTool: string) -> FieldEncoding[] {
 
         ---
         {{ ctx.output_format }}
+    "#
+}
+
+function MatchNodeOutputsToToolInputs2(upstreamResult: string, mcpTool: string) -> OutputInputMatch2[] {
+    client Ollama_Tool
+    prompt #"
+        /no_think
+
+        You are an expert in extracting matching values from JSON structures.
+
+        You are given:
+
+        - `upstreamResult`: the input JSON object for a MCP tool.
+        - `mcpTool`: the full JSON Schema definition of the MCP tool, including its input schema.
+
+        Your task:
+
+        For each input field listed in the `"required"` array of `mcpTool.inputSchema`, generate an object with the following structure:
+
+        - `field`: the name of the required input field.
+        - `isFieldArray`: `true` if the input field's type in the schema is `"array"` (i.e., `mcpTool.inputSchema.properties[field].type === "array"`), otherwise `false`.
+        - `query`: a best-effort JSONata-like expression that extracts the corresponding value from `upstreamResult`. The expression **must accurately point to the correct field or structure** within `upstreamResult`, even if the syntax is not fully valid.
+        - `queryLanguage`: always `"jsonata"`
+
+        Constraints:
+
+        - The top priority is **matching accuracy** — the expression must clearly and precisely indicate the path to the correct data in `upstreamResult`.
+        - It is acceptable if the expression is not fully valid JSONata syntax.
+        - Do not invent or assume any values.
+        - Do not use optional chaining (`?`, `[]?`, `?.`) or JavaScript-like constructs (`=>`, `#map`, etc.).
+        - Do not prefix expressions with variables like `$upstreamResult`.
+        - The expression must always start from the root of the `upstreamResult` object.
+        - Do not include explanation, formatting, or markdown in the output.
+        - Output must be a JSON array of objects matching the structure above.
+
+        Inputs:
+
+        - `upstreamResult`:  
+        {{upstreamResult}}
+
+        - `mcpTool`:  
+        {{mcpTool}}
+
+        ---
+        {{ ctx.output_format }}
+
+
     "#
 }
 
@@ -439,5 +493,62 @@ test Test_DetectFieldEncodings {
             }
         "#
             
+    }
+}
+
+test Test_MatchNodeOutputsToToolInputs2 {
+    functions [MatchNodeOutputsToToolInputs2]
+    args {
+        upstreamResult #"
+            {
+                "content": [
+                    {
+                        "type": "dummy",
+                        "resource": {
+                            "mimeType": "application/pdf",
+				            "encoding": "base64",
+                            "blob": "dummy=",
+                            "dynamicComponent": {
+                                "tag": "dummy",
+                                "scriptBase64": "dummy",
+                                "propBindings": [
+                                    {
+                                        "componentProp": "dummy",
+                                        "dataPath": "dummy"
+                                    }
+                                ]
+                            }
+                        }
+                    }
+                ],
+            }
+        "#
+        mcpTool #"
+            {
+                "name": "convert_doc_files_into_text_chunks",
+                "description": "Convert Document Files (PDF, Images, DOCX, PPTX, HTML) into Markdown Text + Contextual Text Chunks\n\nThis tool accepts Base64-encoded strings representing binary document files. It returns:\n  - the full document converted into Markdown, and\n  - a list of enriched text chunks split by byte size.\n\nParameters:\n-----------\npayloads (list[str]):\n    A list of Base64-encoded strings.\n    Each string must represent one of the following document types:\n      - PDF\n      - DOCX (Microsoft Word)\n      - PPTX (PowerPoint)\n      - HTML\n      - Image (e.g., PNG, JPEG)\n\nchunk_size (int, optional):\n    Desired chunk size in bytes. Controls how large each text segment will be.\n    Default is `512`.\n\nReturns:\n--------\nlist[dict[str, Any]]:\n    One entry per input document with the following structure:\n    ```json\n    {\n        \"file_size_bytes\": 24583,\n        \"header_hex\": \"255044462d312e34\",\n        \"text\": \"Document Title\\nFull document as markdown...\",\n        \"text_chunks\": [\n            \"This is chunk 1\",\n            \"This is chunk 2\",\n            ...\n        ],\n        \"duration\": 0.326\n    }\n    ```\n\nNotes:\n------\n- This tool is designed to support LLM pipelines, RAG, and semantic chunking workflows.\n- Markdown representation preserves structural formatting (e.g., bold, headers, links).\n- Uses `HybridChunker` for token-aware chunking and contextual enrichment.\n- If image content is passed, it must be a decodable format (JPG, PNG, etc.).",
+                "inputSchema": {
+                    "type": "object",
+                    "properties": {
+                        "payloads": {
+                            "items": {
+                                "format": "binary",
+                                "type": "string"
+                            },
+                            "title": "Payloads",
+                            "type": "array"
+                        },
+                        "chunk_size": {
+                            "default": 512,
+                            "title": "Chunk Size",
+                            "type": "integer"
+                        }
+                    },
+                    "required": [
+                        "payloads"
+                    ]
+                }
+            }
+        "#
     }
 }

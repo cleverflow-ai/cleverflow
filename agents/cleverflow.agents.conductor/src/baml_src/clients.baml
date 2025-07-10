@@ -2,7 +2,7 @@ client<llm> Ollama_Default {
   provider "openai-generic"
   options {
     base_url env.OLLAMA_OPENAI_URL
-    model "gemma:12b"
+    model "gemma3:12b"
     headers {
       "Api-Key" env.OLLAMA_API_KEY
     }
@@ -15,7 +15,7 @@ client<llm> Ollama_Tool {
   provider "openai-generic"
   options {
     base_url env.OLLAMA_OPENAI_URL
-    model "qwen2.5-coder:latest"
+    model "qwen3:14b"
     headers {
       "Api-Key" env.OLLAMA_API_KEY
     }
