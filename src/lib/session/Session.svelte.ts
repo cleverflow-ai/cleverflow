@@ -40,7 +40,7 @@ export default class Session {
         const hash = this.computeChecksum();
         if (!this.id || hash !== this.checksum) {
             this.checksum = hash;
-            this.id = `${new Date().toISOString()}_${hash}`;
+            this.id = `${new Date().getTime()}_${hash}`;
         }
         return true;
     }

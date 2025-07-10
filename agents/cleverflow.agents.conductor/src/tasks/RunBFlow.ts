@@ -496,6 +496,7 @@ const runNode = async (session: Session, context: TaskContext, bflow: BFlow, use
                     node.state = BFlowNodeState.SUCCESS;
 
                     if (node.id) {
+                        callToolResult.nodeId = node.id;
                         callToolResult.description = await b.GetToolOutputDescription(
                             node.description,
                             JSON.stringify(mcpTool),
@@ -504,11 +505,11 @@ const runNode = async (session: Session, context: TaskContext, bflow: BFlow, use
                                 clientRegistry: new Clients({ primary: Clients.OllamaCode }).registry
                             }
                         );
-                        outs[node.id] = callToolResult;
 
-                        const nodeOutput = {};
-                        nodeOutput[node.id] = callToolResult;
-                        await PersistenceService.saveRunBFlowNodeOutput(session, node.id, nodeOutput);
+                        callToolResult.finishedAt = new Date().toISOString();
+                        await PersistenceService.saveRunBFlowNodeOutput(session, node.id, callToolResult);
+
+                        outs[node.id] = callToolResult;
 
                         yieldUpdate({
                             state: 'working',

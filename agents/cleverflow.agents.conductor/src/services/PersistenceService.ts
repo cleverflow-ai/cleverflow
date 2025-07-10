@@ -33,7 +33,6 @@ export default class PersistenceService {
                 JSON.stringify(bflowviz),
             );
 
-            console.log('>>>>> DONE!');
         } catch (exception) {
             console.error(exception);
         }
@@ -60,21 +59,21 @@ export default class PersistenceService {
         }
     }
 
-    static async saveRunBFlowNodeOutput(session: Session, nodeId: string, nodeOutput: any): Promise<void> {
+    static async saveRunBFlowNodeOutput(session: Session, nodeId: string, callToolResult: any): Promise<void> {
         try {
             const gitFileReference: GitFileReference = session.getGitFileReference();
             const instanceId = gitFileReference.hashedFileContent;
             const folderPath = path.dirname(gitFileReference.path);
             const fileNameWithoutExt = path.basename(gitFileReference.path, path.extname(gitFileReference.path));
-
+            callToolResult.resultLink = `${folderPath}/${fileNameWithoutExt}-${instanceId}-${session.id}-${nodeId}.json`;
             await McpIO.saveFileContents(
                 gitFileReference.url,
                 gitFileReference.token,
                 gitFileReference.branch,
                 gitFileReference.owner,
                 gitFileReference.repo,
-                `${folderPath}/${fileNameWithoutExt}-${instanceId}-${session.id}-${nodeId}.json`,
-                JSON.stringify(nodeOutput),
+                callToolResult.resultLink,
+                JSON.stringify(callToolResult),
             );
         } catch (exception) {
             console.error(exception);

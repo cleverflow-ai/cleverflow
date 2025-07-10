@@ -98,6 +98,8 @@
 		"vite": "^6.0.0"
 	},
 	"dependencies": {
+		"@babylonjs/core": "^8.9.0",
+		"@babylonjs/loaders": "^8.9.0",
 		"@cartamd/plugin-component": "^1.1.0",
 		"@cleverflow-ai/cleverflow.core": "file:../cleverflow.core",
 		"@inlang/paraglide-sveltekit": "^0.15.5",
@@ -111,17 +113,17 @@
 		"@types/js-beautify": "^1.14.3",
 		"@types/md5": "^2.3.5",
 		"@types/postal": "^1.0.35",
+		"@zerodevx/svelte-json-view": "^1.0.11",
 		"ajv": "^8.17.1",
 		"autoprefixer": "^10.4.20",
 		"carta-md": "^4.7.0",
+		"date-fns": "^4.1.0",
 		"isomorphic-dompurify": "^2.22.0",
 		"js-yaml": "^4.1.0",
 		"lodash": "^4.17.21",
 		"md5": "^2.3.0",
 		"nats": "^2.29.2",
 		"postal": "^2.0.6",
-		"postcss": "^8.5.3",
-		"@babylonjs/core": "^8.9.0",
-		"@babylonjs/loaders": "^8.9.0"
+		"postcss": "^8.5.3"
 	}
 }

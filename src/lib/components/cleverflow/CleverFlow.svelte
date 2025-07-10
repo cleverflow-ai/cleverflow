@@ -39,13 +39,6 @@
     let initialized = $state(false);
 
     onMount(async () => {
-        // await import(
-        //     "@cleverflow-ai/cleverflow.core.frontend/webcomponents/markdoc-editor.js"
-        // );
-        // await import(
-        //     "@cleverflow-ai/cleverflow.core.frontend/webcomponents/markdoc-renderer.js"
-        // );
-
         await Promise.all([
             import(
                 "@cleverflow-ai/cleverflow.core.frontend/webcomponents/markdoc-editor.js"
@@ -60,6 +53,7 @@
         );
 
         markdocRendererController = new MarkdocRendererController(
+            // generate bflow
             async (
                 text: string,
                 onProgress: (state: string) => void,
@@ -75,6 +69,7 @@
                     onFailed,
                 );
             },
+            // run bflow
             async (
                 bflow: any,
                 onProgress: (data: any) => void,

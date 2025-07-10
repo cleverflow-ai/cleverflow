@@ -16,13 +16,15 @@
 	import _ from "lodash";
 	import { BFlowNodeState } from "../BFlowNodeState.js";
 	import LoadingIndicator from "../../common/components/LoadingIndicator.svelte";
-	import { TriangleAlert } from "lucide-svelte";
+	import { TriangleAlert, Check, Clock } from "lucide-svelte";
 	import { WebComponentLoader } from "../../webcomponentloader/WebComponentLoader.js";
+	import { JsonView } from "@zerodevx/svelte-json-view";
+	import { format } from "date-fns";
+	import { enUS } from "date-fns/locale";
 
 	const channel = postal.channel("b-flow-view");
 
 	const { bflowRunResult, bflowviz } = $props();
-	let actionNodeResults: any[] = $state([]);
 
 	const nodeTypes = {
 		ENTRY: EntryNode,
@@ -71,24 +73,25 @@
 		edges = writable(bflowviz.edges);
 		isInitialize = true;
 
-		actionNodeResults = [];
-		for (const key in bflowRunResult) {
-			if (bflowRunResult.hasOwnProperty(key)) {
-				const data = bflowRunResult[key];
-				if (
-					data.content &&
-					Array.isArray(data.content) &&
-					data.content.length > 0
-				) {
-					const content = data.content[0];
-					actionNodeResults.push({
-						id: key,
-						bindingData: content.resource,
-						dynamicComponent: content.resource?.dynamicComponent,
-					});
-				}
-			}
-		}
+		// for (const key in bflowRunResult) {
+		// 	if (bflowRunResult.hasOwnProperty(key)) {
+		// 		const data = bflowRunResult[key];
+		// 		const nodeResult: any = {
+		// 			id: key,
+		// 		};
+		// 		if (
+		// 			data.content &&
+		// 			Array.isArray(data.content) &&
+		// 			data.content.length > 0
+		// 		) {
+		// 			const content = data.content[0];
+		// 			nodeResult.bindingData = content.resource;
+		// 			nodeResult.dynamicComponent =
+		// 				content.resource?.dynamicComponent;
+		// 		}
+		// 		actionNodeResults.push(nodeResult);
+		// 	}
+		// }
 	});
 
 	onDestroy(() => {
@@ -96,7 +99,7 @@
 	});
 
 	const showRunNodeResult = (nodeId: string) => {
-		if (!actionNodeResults || actionNodeResults.length === 0) {
+		if (!bflowRunResult) {
 			addToast(
 				"BFlow has not been run yet. Please run it first.",
 				ToastType.WARNING,
@@ -104,10 +107,7 @@
 			return;
 		}
 
-		actionNodeResultToDisplay = _.find(
-			actionNodeResults,
-			(result) => result.id === nodeId,
-		);
+		actionNodeResultToDisplay = bflowRunResult[nodeId];
 
 		if (!actionNodeResultToDisplay) {
 			addToast(
@@ -139,9 +139,16 @@
 				class="w-full py-10 flex flex-col justify-start items-start gap-4"
 			>
 				{#each [...bflowviz.nodes].reverse() as node}
-					{@const nodeResult = _.find(
-						actionNodeResults,
-						(result) => result.id === node.id,
+					{@const nodeResult = bflowRunResult[node.id]}
+					{@const content = _.find(
+						nodeResult.content,
+						(content: any) => {
+							return (
+								content &&
+								content.type === "resource" &&
+								content.resource
+							);
+						},
 					)}
 
 					{@const isActionNode = node.type === "ACTION"}
@@ -150,53 +157,110 @@
 
 					{#if isActionNode && !isIdleNode}
 						<div
-							class="w-full card rounded-none bg-base-100 shadow-md p-4"
+							class="w-full card rounded-none bg-base-100 shadow-lg border border-surface-50-950 p-4 flex flex-col justify-start items-start gap-3"
 						>
 							{#if node.name}
-								<div class="font-bold">
-									{node.name}
+								<div
+									class="w-full flex justify-start items-center gap-2"
+								>
+									<span class="flex-1 font-bold"
+										>{node.name}</span
+									>
+									{#if state === BFlowNodeState.SUCCESS}
+										<span
+											class="badge-icon preset-filled-success-500"
+										>
+											<Check size={16} />
+										</span>
+									{:else if state === BFlowNodeState.FAILURE}
+										<span
+											class="badge-icon preset-filled-error-500"
+										>
+											<TriangleAlert size={16} />
+										</span>
+									{/if}
 								</div>
 							{/if}
+
 							{#if node.description}
-								<div class="text-sm text-surface-300">
+								<div class="text-xs text-surface-300">
 									{node.description}
 								</div>
 							{/if}
 
+							<!-- Datetime | resultLink -->
+							<div class="flex justify-start items-center gap-2">
+								{#if nodeResult && nodeResult.finishedAt}
+									<div
+										class="flex justify-start items-center gap-1"
+									>
+										<Clock size={16} />
+										<span
+											>{format(
+												new Date(nodeResult.finishedAt),
+												"Pp",
+												{ locale: enUS },
+											)}</span
+										>
+									</div>
+									{#if nodeResult.resultLink}
+										<div class="font-bold">|</div>
+									{/if}
+								{/if}
+								{#if nodeResult && nodeResult.resultLink}
+									<a
+										class="text-primary-500"
+										href={nodeResult.resultLink}
+										target="_blank">Result Link</a
+									>
+								{/if}
+							</div>
+
 							{#if nodeResult}
-								<div class="mt-4">
-									<WebComponentLoader
-										tag={nodeResult.dynamicComponent?.tag}
-										scriptBase64={nodeResult
-											.dynamicComponent?.scriptBase64}
-										propBindings={nodeResult
-											.dynamicComponent?.propBindings}
-										bindingData={nodeResult.bindingData}
-									></WebComponentLoader>
+								<div
+									class="w-full mt-4 flex flex-col justify-start items-start gap-3"
+								>
+									{#if content && content.resource?.dynamicComponent}
+										{@const dynamicComponent =
+											content.resource?.dynamicComponent}
+										<WebComponentLoader
+											tag={dynamicComponent?.tag}
+											scriptBase64={dynamicComponent?.scriptBase64}
+											propBindings={dynamicComponent?.propBindings}
+											bindingData={content.resource}
+										></WebComponentLoader>
+									{:else if state === BFlowNodeState.SUCCESS}
+										<JsonView json={nodeResult} />
+									{:else if state === BFlowNodeState.FAILURE}
+										<div
+											class="w-full flex justify-start items-center gap-4 p-4"
+										>
+											<TriangleAlert />
+											<p>{node.stateMessage}</p>
+										</div>
+										<div>
+											<JsonView json={nodeResult} />
+										</div>
+									{/if}
 								</div>
 							{:else if state === BFlowNodeState.RUNNING || state === BFlowNodeState.WAITING_FOR_DATA}
-								<div
-									class="w-full rounded-none gap-4 p-4 flex justify-start items-center gap-1"
-								>
-									<LoadingIndicator></LoadingIndicator>
-								</div>
-							{:else if state === BFlowNodeState.SUCCESS}
-								<div
-									class="w-full text-success-500 gap-4 p-4 flex justify-start items-center gap-1"
-								>
-									<div>
-										<p class="font-bold">Success</p>
-									</div>
+								<LoadingIndicator></LoadingIndicator>
+							{:else if state === BFlowNodeState.SUCCESS && nodeResult}
+								<div>
+									<JsonView json={nodeResult} />
 								</div>
 							{:else if state === BFlowNodeState.FAILURE}
 								<div
-									class="w-full text-error-500 gap-4 p-4 flex justify-start items-center gap-1"
+									class="w-full flex justify-start items-center gap-4 p-4"
 								>
 									<TriangleAlert />
-									<div>
-										<p class="font-bold">Failed</p>
-									</div>
+									<p>Failed</p>
 								</div>
+								{#if nodeResult}
+									<div>
+										<JsonView json={nodeResult} />
+									</div>
+								{/if}
 							{/if}
 						</div>
 					{/if}
