@@ -16,6 +16,7 @@ class OutputInputMatch {
 class OutputInputMatch2 {
     field string
     isFieldArray bool
+    isFieldRequired bool
     query string
     queryLanguage string
 }
@@ -191,25 +192,38 @@ function MatchNodeOutputsToToolInputs2(upstreamResult: string, mcpTool: string) 
         - `upstreamResult`: the input JSON object for a MCP tool.
         - `mcpTool`: the full JSON Schema definition of the MCP tool, including its input schema.
 
-        Your task:
+        ### JSONata syntax examples:
+
+        - Access a field: `object.property`
+        - Extract list of values from array (returns array): `array[].property`  
+        → e.g., `content[].resource.blob` returns all `blob` values from each `content` item
+        - Extract single value: `a.b.c`
+        - Access specific array element: `array[0].property`
+        - Filter array (if needed): `array[field="value"].target`
+
+        ### Rules:
+
+        - The expression must always start from the root of `upstreamResult`.
+        - Do not use optional chaining (`?`, `?.`, `[]?`) or JavaScript-like constructs.
+        - Do not prefix expressions with variables like `$upstreamResult`.
+        - The expression must clearly and precisely indicate the path to the correct data in `upstreamResult`, even if not fully valid JSONata.
+        - Matching accuracy is top priority.
+        - If `isFieldArray` is `true`, the `query` must return an array.
+        - If `isFieldArray` is `false`, the `query` must return a single object or value.
+        - Only include required fields in the output — i.e., fields listed in `mcpTool.inputSchema.required`.
+        - Do not include any fields that are not in the required list.
+        - All output objects must have `isFieldRequired: true`.
+
+        ### Your task:
 
         For each input field listed in the `"required"` array of `mcpTool.inputSchema`, generate an object with the following structure:
 
         - `field`: the name of the required input field.
         - `isFieldArray`: `true` if the input field's type in the schema is `"array"` (i.e., `mcpTool.inputSchema.properties[field].type === "array"`), otherwise `false`.
-        - `query`: a best-effort JSONata-like expression that extracts the corresponding value from `upstreamResult`. The expression **must accurately point to the correct field or structure** within `upstreamResult`, even if the syntax is not fully valid.
+        - `isFieldRequired`: always `true`, because you are only including fields listed in `mcpTool.inputSchema.required`. (If the field is not in the `required` array, it must not be included in the output at all.)
+
+        - `query`: a best-effort JSONata-like expression that extracts the corresponding value from `upstreamResult`, respecting the rules above.
         - `queryLanguage`: always `"jsonata"`
-
-        Constraints:
-
-        - The top priority is **matching accuracy** — the expression must clearly and precisely indicate the path to the correct data in `upstreamResult`.
-        - It is acceptable if the expression is not fully valid JSONata syntax.
-        - Do not invent or assume any values.
-        - Do not use optional chaining (`?`, `[]?`, `?.`) or JavaScript-like constructs (`=>`, `#map`, etc.).
-        - Do not prefix expressions with variables like `$upstreamResult`.
-        - The expression must always start from the root of the `upstreamResult` object.
-        - Do not include explanation, formatting, or markdown in the output.
-        - Output must be a JSON array of objects matching the structure above.
 
         Inputs:
 
@@ -221,7 +235,6 @@ function MatchNodeOutputsToToolInputs2(upstreamResult: string, mcpTool: string) 
 
         ---
         {{ ctx.output_format }}
-
 
     "#
 }
@@ -508,6 +521,7 @@ test Test_MatchNodeOutputsToToolInputs2 {
                             "mimeType": "application/pdf",
 				            "encoding": "base64",
                             "blob": "dummy=",
+                            "createdBy": "mr hello",
                             "dynamicComponent": {
                                 "tag": "dummy",
                                 "scriptBase64": "dummy",
@@ -538,6 +552,10 @@ test Test_MatchNodeOutputsToToolInputs2 {
                             "title": "Payloads",
                             "type": "array"
                         },
+                        "author": {
+                            "title": "Author",
+                            "type": "string"
+                        },
                         "chunk_size": {
                             "default": 512,
                             "title": "Chunk Size",
@@ -545,7 +563,8 @@ test Test_MatchNodeOutputsToToolInputs2 {
                         }
                     },
                     "required": [
-                        "payloads"
+                        "payloads",
+                        "author"
                     ]
                 }
             }
