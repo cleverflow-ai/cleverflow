@@ -2,7 +2,7 @@ import { CallToolResultSchema, CompatibilityCallToolResultSchema, ListToolsResul
 import { TaskContext, TaskYieldUpdate } from '@cleverflow-ai/cleverflow.agents/server';
 import { Task, TaskStatus, DataPart } from "@cleverflow-ai/cleverflow.agents/schema";
 import _, { create } from 'lodash';
-import { BFlow, BFlowNode, BFlowNodeState, BFlowNodeType, FieldEncoding, OutputInputMatch } from '../baml_client/types.js';
+import { BFlow, BFlowNode, BFlowNodeState, BFlowNodeType, Encoding, FieldEncoding, FieldType, OutputInputMatch } from '../baml_client/types.js';
 import Session from '../sessions/Session.js';
 import PersistenceService from '../services/PersistenceService.js';
 import { z } from "zod";
@@ -366,15 +366,6 @@ const runNode = async (session: Session, context: TaskContext, bflow: BFlow, use
                             }
                         );
 
-                        console.log('>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>');
-                        console.log('>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>');
-                        console.log('>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>');
-                        console.log('>>>> MatchNodeOutputsToToolInputs');
-                        console.log('>>>> mappingInputOutput');
-                        console.log(JSON.stringify(mappingInputOutput));
-                        console.log(`>>>> upstreamResultsSkeleton`);
-                        console.log(JSON.stringify(upstreamResultsSkeleton));
-
                         for (let i = 0; i < mappingInputOutput.length; i++) {
                             const item: OutputInputMatch = mappingInputOutput[i];
                             if (item.queryLanguage === 'jsonata') {
@@ -384,12 +375,10 @@ const runNode = async (session: Session, context: TaskContext, bflow: BFlow, use
                         }
                     }
 
-
-
                     // TODO: using coding as enum
                     // convert data using encoding
                     // upstreamResultData can be an array. 
-
+                    // default upstreamResult using Base64 encoding???
                     // const fieldsEncoding = await b.DetectFieldEncodings(
                     //     JSON.stringify(mcpTool),
                     //     {
@@ -399,15 +388,30 @@ const runNode = async (session: Session, context: TaskContext, bflow: BFlow, use
 
                     // _.forEach(fieldsEncoding, (fieldEncoding: FieldEncoding) => {
                     //     try {
-                    //         const upstreamResultData = upstreamResultsMapping[fieldEncoding.name];
-                    //         if (fieldEncoding.encoding === 'utf8') {
-                    //             upstreamResultsMapping[fieldEncoding.name] = Buffer.from(upstreamResultData, "base64").toString("utf8");
-                    //         } else if (fieldEncoding.encoding === 'byte-array') {
-                    //             const buffer = Buffer.from(upstreamResultData, "base64");
-                    //             upstreamResultsMapping[fieldEncoding.name] = Array.from(buffer); // ← FIXED
-                    //         } else if (fieldEncoding.encoding === 'base64') {
-                    //             upstreamResultsMapping[fieldEncoding.name] = [upstreamResultData];
+                    //         const upstreamResultData = upstreamResultsMapping[fieldEncoding.field];
+                    //         if (fieldEncoding.type === FieldType.Array) {
+                    //             for (let i = 0; i < upstreamResultData.length; i++) {
+                    //                 const itemData = upstreamResultData[i];
+                    //                 if (fieldEncoding.itemEncoding === Encoding.Utf8) {
+                    //                     upstreamResultData[i] = Buffer.from(itemData, "base64").toString("utf8");
+                    //                 } else if (fieldEncoding.encoding === Encoding.ByteArray) {
+                    //                     const buffer = Buffer.from(itemData, "base64");
+                    //                     upstreamResultData[i] = Array.from(buffer);
+                    //                 } else if (fieldEncoding.encoding === Encoding.Base64) {
+                    //                     upstreamResultData[i] = itemData;
+                    //                 }
+                    //             }
+                    //         } else {
+                    //             if (fieldEncoding.encoding === Encoding.Utf8) {
+                    //                 upstreamResultsMapping[fieldEncoding.field] = Buffer.from(upstreamResultData, "base64").toString("utf8");
+                    //             } else if (fieldEncoding.encoding === Encoding.ByteArray) {
+                    //                 const buffer = Buffer.from(upstreamResultData, "base64");
+                    //                 upstreamResultsMapping[fieldEncoding.field] = Array.from(buffer);
+                    //             } else if (fieldEncoding.encoding === Encoding.Base64) {
+                    //                 upstreamResultsMapping[fieldEncoding.field] = upstreamResultData;
+                    //             }
                     //         }
+
                     //     } catch (exception) {
                     //         console.error(exception);
                     //     }

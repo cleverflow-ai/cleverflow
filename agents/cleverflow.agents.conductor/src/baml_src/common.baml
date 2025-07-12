@@ -16,9 +16,26 @@ class OutputInputMatch {
     queryLanguage string
 }
 
+enum Encoding {
+    Utf8
+    Base64
+    ByteArray
+}
+
+enum FieldType {
+    String
+    Number
+    Boolean
+    Array
+    Object
+}
+
 class FieldEncoding {
-    name string
-    encoding string
+    field string
+    type FieldType
+    encoding Encoding?
+    itemType FieldType?
+    itemEncoding Encoding?
 }
 
 function GetRepoIntegrationSettings(input: string) -> RepoIntegrationSettings {
@@ -79,34 +96,22 @@ function GenerateMcpToolPayload(mcpTool: string, userInputManually: string, comm
 }
 
 function DetectFieldEncodings(mcpTool: string) -> FieldEncoding[] {
-    client Ollama_Tool
+    client Ollama_Code
     prompt #"
-        You are an AI assistant.
-
-        You are given a JSON object that describes an MCP tool, including its input schema. Your task is to analyze this schema and determine the encoding type for each required input field.
-
-        Each field's encoding must be classified as one of the following:
-        - "utf8": for plain text inputs
-        - "base64": for string inputs that are encoded data
-        - "byte-array": for raw binary data, such as files or buffers
-
-        Steps:
-        1. Read the `inputSchema.required` array to get the list of required fields.
-        2. For each required field, find its definition in `inputSchema.properties`.
-        3. Based mainly on the property namely `type`, determine the most appropriate encoding.
-        4. Return a list of objects in the format:
-        - `name`: the field name
-        - `encoding`: "utf8", "base64", or "byte-array"
-
-        Redact or skip any sensitive information such as passwords, API keys, or tokens if present.
-
-        Now process the following MCP tool schema and return the inferred encodings for each required field.
+        Given the following MCP tool schema, extract the encoding information for all fields listed in inputSchema.required. For each required field, output a JSON object with:
+            - field: the name of the required input field
+            - type: its declared JSON Schema type
+            - encoding: inferred encoding, such as "Utf8", "Base64", "ByteArray", etc. (optional, only for scalar fields)
+            - itemType: if the field is an array, specify the item type
+            - itemEncoding: if the field is an array, specify the encoding of each item
+        Important:
+            If type is "array", only use itemEncoding, not encoding.
+            Only set encoding if the entire field value is encoded, not its parts.
+        Use the "description" and "inputSchema" fields to help you infer the actual encoding the tool expects. Be careful: "type": "string" with "format": "binary" usually means the field expects base64-encoded binary. If the field is an array, consider how each item is encoded.
+        Return the result as a JSON array of objects.
 
         MCP Tool:
         {{mcpTool}}
-
-
-        Now return an array of objects (FieldEncoding[]) describing the encoding of each field.
 
         ---
         {{ ctx.output_format }}
@@ -319,7 +324,7 @@ test Test_DetectFieldEncodings {
                         }
                     },
                     "required": [
-                        "payloads"
+                        "payloads", "chunk_size"
                     ]
                 },
                 "outputSchema": {

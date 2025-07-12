@@ -11,6 +11,9 @@ class JsonForm {
   required string[]
 }
 
+// TODO: add node description
+// change function name to GenerateJsonForm
+// generate only required fields
 function ConvertToJsonForm(input: string) -> JsonForm {
     client Ollama_Tool
     prompt #"
