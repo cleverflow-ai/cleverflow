@@ -355,48 +355,48 @@ const runNode = async (session: Session, context: TaskContext, bflow: BFlow, use
 
                 try {
 
-                    const upstreamResultDescriptions = upstreamResults.map((result: any) =>
-                        typeof result.description === "string" ? result.description : ""
-                    );
+                    // const upstreamResultDescriptions = upstreamResults.map((result: any) =>
+                    //     typeof result.description === "string" ? result.description : ""
+                    // );
 
-                    if (upstreamResultDescriptions && upstreamResultDescriptions.length > 0) {
-                        const mappingInputOutput = await b.MatchNodeOutputsToToolInputs(
-                            upstreamResultDescriptions,
-                            JSON.stringify(mcpTool),
-                            {
-                                clientRegistry: new Clients({ primary: Clients.OllamaCode }).registry
-                            }
-                        );
-                        _.forEach(mappingInputOutput, (item: OutputInputMatch) => {
-                            if (item.matchedInputField && item.descriptionIndex >= 0 && item.descriptionIndex <= upstreamResultDescriptions.length) {
-                                upstreamResultsMapping[item.matchedInputField] = upstreamResults[item.descriptionIndex];
-                            }
-                        });
+                    // if (upstreamResultDescriptions && upstreamResultDescriptions.length > 0) {
+                    //     const mappingInputOutput = await b.MatchNodeOutputsToToolInputs(
+                    //         upstreamResultDescriptions,
+                    //         JSON.stringify(mcpTool),
+                    //         {
+                    //             clientRegistry: new Clients({ primary: Clients.OllamaCode }).registry
+                    //         }
+                    //     );
+                    //     _.forEach(mappingInputOutput, (item: OutputInputMatch) => {
+                    //         if (item.matchedInputField && item.descriptionIndex >= 0 && item.descriptionIndex <= upstreamResultDescriptions.length) {
+                    //             upstreamResultsMapping[item.matchedInputField] = upstreamResults[item.descriptionIndex];
+                    //         }
+                    //     });
 
-                        const fieldsEncoding = await b.DetectFieldEncodings(
-                            JSON.stringify(mcpTool),
-                            {
-                                clientRegistry: new Clients({ primary: Clients.OllamaCode }).registry
-                            }
-                        );
+                    //     const fieldsEncoding = await b.DetectFieldEncodings(
+                    //         JSON.stringify(mcpTool),
+                    //         {
+                    //             clientRegistry: new Clients({ primary: Clients.OllamaCode }).registry
+                    //         }
+                    //     );
 
-                        _.forEach(fieldsEncoding, (fieldEncoding: FieldEncoding) => {
-                            try {
-                                const resource = upstreamResultsMapping[fieldEncoding.name].content[0].resource;
-                                const blob = resource.blob;
-                                if (fieldEncoding.encoding === 'utf8') {
-                                    upstreamResultsMapping[fieldEncoding.name] = Buffer.from(blob, "base64").toString("utf8");
-                                } else if (fieldEncoding.encoding === 'byte-array') {
-                                    const buffer = Buffer.from(blob, "base64");
-                                    upstreamResultsMapping[fieldEncoding.name] = [Array.from(buffer)];
-                                } else if (fieldEncoding.encoding === 'base64') {
-                                    upstreamResultsMapping[fieldEncoding.name] = [blob];
-                                }
-                            } catch (exception) {
-                                console.error(exception);
-                            }
-                        });
-                    }
+                    //     _.forEach(fieldsEncoding, (fieldEncoding: FieldEncoding) => {
+                    //         try {
+                    //             const resource = upstreamResultsMapping[fieldEncoding.name].content[0].resource;
+                    //             const blob = resource.blob;
+                    //             if (fieldEncoding.encoding === 'utf8') {
+                    //                 upstreamResultsMapping[fieldEncoding.name] = Buffer.from(blob, "base64").toString("utf8");
+                    //             } else if (fieldEncoding.encoding === 'byte-array') {
+                    //                 const buffer = Buffer.from(blob, "base64");
+                    //                 upstreamResultsMapping[fieldEncoding.name] = [Array.from(buffer)];
+                    //             } else if (fieldEncoding.encoding === 'base64') {
+                    //                 upstreamResultsMapping[fieldEncoding.name] = [blob];
+                    //             }
+                    //         } catch (exception) {
+                    //             console.error(exception);
+                    //         }
+                    //     });
+                    // }
 
                     const clientSession = extractClientSession(context);
                     const extractedInputFromNodeContent = JSON.parse(node.toolInput ?? '{}');
@@ -497,14 +497,14 @@ const runNode = async (session: Session, context: TaskContext, bflow: BFlow, use
 
                     if (node.id) {
                         callToolResult.nodeId = node.id;
-                        callToolResult.description = await b.GetToolOutputDescription(
-                            node.description,
-                            JSON.stringify(mcpTool),
-                            JSON.stringify(userInputForCurrentNode),
-                            {
-                                clientRegistry: new Clients({ primary: Clients.OllamaCode }).registry
-                            }
-                        );
+                        // callToolResult.description = await b.GetToolOutputDescription(
+                        //     node.description,
+                        //     JSON.stringify(mcpTool),
+                        //     JSON.stringify(userInputForCurrentNode),
+                        //     {
+                        //         clientRegistry: new Clients({ primary: Clients.OllamaCode }).registry
+                        //     }
+                        // );
 
                         callToolResult.finishedAt = new Date().toISOString();
                         await PersistenceService.saveRunBFlowNodeOutput(session, node.id, callToolResult);
@@ -633,6 +633,8 @@ const extractData = (context: TaskContext) => {
         }
     }
 
+    let userInputValue = {};
+
     // extract userInput
     let userInputPart: DataPart = context.userMessage.parts.find((part) => {
         return part.type === 'data' && part.data && part.data.userInput;
@@ -649,6 +651,9 @@ const extractData = (context: TaskContext) => {
         }
     }
 
+    userInputValue = userInputPart ? userInputPart.data.userInput : {};
+
+
     // extract outs
     const outs = {};
 
@@ -663,8 +668,6 @@ const extractData = (context: TaskContext) => {
             }
         }
     }
-
-    let userInputValue = userInputPart ? userInputPart.data.userInput : {};
 
     return {
         bflow: bflowPart ? bflowPart.data.bflow as BFlow : null,

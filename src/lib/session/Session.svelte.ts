@@ -13,15 +13,9 @@ export default class Session {
     path: string = $state("");
     commonSettings: string = $state("");
 
+    runBFlowCount: number = 0;
+
     hashedFileContent: string | null = null;
-
-    private buildHashString(): string {
-        return `${this.url}-${this.token}-${this.branch}-${this.owner}-${this.repo}-${this.path}-${this.hashedFileContent}-${this.commonSettings}`;
-    }
-
-    private computeChecksum(): string {
-        return md5(this.buildHashString());
-    }
 
     hasRequiredConfig(): boolean {
         if ((this.url && this.token && this.branch && this.owner && this.repo && this.path) || this.commonSettings) {
@@ -68,5 +62,21 @@ export default class Session {
             hashedFileContent: this.hashedFileContent,
             commonSettings: this.commonSettings,
         }
+    }
+
+    increaseRunBFlowCount() {
+        this.runBFlowCount += 1;
+    }
+
+    getRunBFlowCount(): number {
+        return this.runBFlowCount;
+    }
+
+    private buildHashString(): string {
+        return `${this.url}-${this.token}-${this.branch}-${this.owner}-${this.repo}-${this.path}-${this.hashedFileContent}-${this.commonSettings}`;
+    }
+
+    private computeChecksum(): string {
+        return md5(this.buildHashString());
     }
 }

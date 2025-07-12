@@ -76,12 +76,15 @@
                 onCompleted: (data: any) => void,
                 onFailed: (error: Error, data: any) => void,
             ) => {
+                session.increaseRunBFlowCount();
                 await conductorService?.runBFlow(
                     session,
                     bflow,
                     onProgress,
                     onCompleted,
-                    onFailed,
+                    (error: Error, data: any) => {
+                        onFailed(error, data);
+                    },
                 );
             },
         );
@@ -114,7 +117,7 @@
             session.ensureSession();
 
             const event = await conductorService.getFileContents(session);
-            console.log(JSON.stringify(event));
+
             let dataPart: DataPart = event?.status?.message?.parts?.find(
                 (part) => {
                     return part.type === "data" && part.data;

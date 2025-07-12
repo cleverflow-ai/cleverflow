@@ -21,11 +21,12 @@ export async function* handleTask(context: TaskContext): AsyncGenerator<TaskYiel
 
     console.log(JSON.stringify(context));
 
-    const [workspaceId, dataId, instanceId, sessionId, task] = taskId.split('|');
+    const [workspaceId, dataId, instanceId, sessionId, runBFlowCount, task] = taskId.split('|');
     console.log('workspaceId: ', workspaceId);
     console.log('dataId: ', dataId);
     console.log('instanceId: ', instanceId);
     console.log('sessionId: ', sessionId);
+    console.log('runBFlowCount: ', runBFlowCount);
     console.log('task: ', task);
 
     let session: Session = generateSession(sessionId);

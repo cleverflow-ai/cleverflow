@@ -20,10 +20,11 @@ export default class ConductorService {
             const dataId = md5(session.path);
             const instanceId = session.hashedFileContent;
             const sessionId = session.id;
+            const runCount = session.getRunBFlowCount();
 
             return new Promise((resolve) => {
                 const taskParams: TaskSendParams = {
-                    id: `${workspaceId}|${dataId}|${instanceId}|${sessionId}|get-file-contents`,
+                    id: `${workspaceId}|${dataId}|${instanceId}|${sessionId}|${runCount}|get-file-contents`,
                     sessionId: sessionId,
                     message: {
                         role: "user",
@@ -60,10 +61,11 @@ export default class ConductorService {
             const dataId = md5(session.path);
             const instanceId = session.hashedFileContent;
             const sessionId = session.id;
+            const runCount = session.getRunBFlowCount();
 
             return new Promise((resolve) => {
                 const taskParams: TaskSendParams = {
-                    id: `${workspaceId}|${dataId}|${instanceId}|${sessionId}|save-file-content`,
+                    id: `${workspaceId}|${dataId}|${instanceId}|${sessionId}|${runCount}|save-file-content`,
                     sessionId: sessionId,
                     message: {
                         role: "user",
@@ -107,10 +109,11 @@ export default class ConductorService {
         const dataId = md5(session.path);
         const instanceId = session.hashedFileContent;
         const sessionId = session.id;
+        const runCount = session.getRunBFlowCount();
 
         return new Promise((resolve) => {
             const taskParams: TaskSendParams = {
-                id: `${workspaceId}|${dataId}|${instanceId}|${sessionId}|generate-bflow`,
+                id: `${workspaceId}|${dataId}|${instanceId}|${sessionId}|${runCount}|generate-bflow`,
                 sessionId: sessionId,
                 message: {
                     role: "user",
@@ -165,9 +168,10 @@ export default class ConductorService {
             const dataId = md5(session.path);
             const instanceId = session.hashedFileContent;
             const sessionId = session.id;
+            const runCount = session.getRunBFlowCount();
 
             const taskParams: TaskSendParams = {
-                id: `${workspaceId}|${dataId}|${instanceId}|${sessionId}|run-bflow`,
+                id: `${workspaceId}|${dataId}|${instanceId}|${sessionId}|${runCount}|run-bflow`,
                 sessionId: sessionId,
                 message: {
                     role: "user",

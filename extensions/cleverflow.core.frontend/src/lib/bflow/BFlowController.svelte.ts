@@ -15,6 +15,7 @@ export default class BFlowController {
     public bflowviz: any = $state(null);
     public bflowRunResult: any = $state(null);
 
+
     private text: string | undefined;
 
     // private instanceId: string;

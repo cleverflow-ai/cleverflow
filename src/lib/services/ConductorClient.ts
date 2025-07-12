@@ -62,9 +62,9 @@ export class ConductorClient {
         if (!inputSchema) {
             return;
         }
-        const [workspaceId, dataId, instanceId, sessionId, task] = inputRequiredEvent.id.split('|');
+        const [workspaceId, dataId, instanceId, sessionId, runBFlowCount, task] = inputRequiredEvent.id.split('|');
         const taskParams: TaskSendParams = {
-            id: `${workspaceId}|${dataId}|${instanceId}|${sessionId}|generate-json-form`,
+            id: `${workspaceId}|${dataId}|${instanceId}|${sessionId}|${runBFlowCount}|generate-json-form`,
             message: {
                 role: "user",
                 parts: [
