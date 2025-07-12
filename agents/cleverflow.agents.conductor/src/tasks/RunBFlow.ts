@@ -1,7 +1,7 @@
 import { CallToolResultSchema, CompatibilityCallToolResultSchema, ListToolsResultSchema } from "@modelcontextprotocol/sdk/types.js";
 import { TaskContext, TaskYieldUpdate } from '@cleverflow-ai/cleverflow.agents/server';
 import { Task, TaskStatus, DataPart } from "@cleverflow-ai/cleverflow.agents/schema";
-import _ from 'lodash';
+import _, { create } from 'lodash';
 import { BFlow, BFlowNode, BFlowNodeState, BFlowNodeType, FieldEncoding, OutputInputMatch } from '../baml_client/types.js';
 import Session from '../sessions/Session.js';
 import PersistenceService from '../services/PersistenceService.js';
@@ -9,6 +9,7 @@ import { z } from "zod";
 import { b } from '../baml_client/async_client.js';
 import Clients from '../baml/Clients.js';
 import { extractClientSession } from './Util.js';
+import jsonata from 'jsonata';
 
 export async function* runBFlow(session: Session, context: TaskContext): AsyncGenerator<TaskYieldUpdate, Task | void, unknown> {
 
@@ -355,48 +356,62 @@ const runNode = async (session: Session, context: TaskContext, bflow: BFlow, use
 
                 try {
 
-                    // const upstreamResultDescriptions = upstreamResults.map((result: any) =>
-                    //     typeof result.description === "string" ? result.description : ""
+                    if (upstreamResults && upstreamResults.length > 0) {
+                        const upstreamResultsSkeleton = createSkeleton(upstreamResults);
+                        const mappingInputOutput = await b.MatchNodeOutputsToToolInputs(
+                            JSON.stringify(upstreamResultsSkeleton),
+                            JSON.stringify(mcpTool),
+                            {
+                                clientRegistry: new Clients({ primary: Clients.OllamaTool }).registry
+                            }
+                        );
+
+                        console.log('>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>');
+                        console.log('>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>');
+                        console.log('>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>');
+                        console.log('>>>> MatchNodeOutputsToToolInputs');
+                        console.log('>>>> mappingInputOutput');
+                        console.log(JSON.stringify(mappingInputOutput));
+                        console.log(`>>>> upstreamResultsSkeleton`);
+                        console.log(JSON.stringify(upstreamResultsSkeleton));
+
+                        for (let i = 0; i < mappingInputOutput.length; i++) {
+                            const item: OutputInputMatch = mappingInputOutput[i];
+                            if (item.queryLanguage === 'jsonata') {
+                                const expression = jsonata(item.query);
+                                upstreamResultsMapping[item.field] = await expression.evaluate(upstreamResults);
+                            }
+                        }
+                    }
+
+
+
+                    // TODO: using coding as enum
+                    // convert data using encoding
+                    // upstreamResultData can be an array. 
+
+                    // const fieldsEncoding = await b.DetectFieldEncodings(
+                    //     JSON.stringify(mcpTool),
+                    //     {
+                    //         clientRegistry: new Clients({ primary: Clients.OllamaCode }).registry
+                    //     }
                     // );
 
-                    // if (upstreamResultDescriptions && upstreamResultDescriptions.length > 0) {
-                    //     const mappingInputOutput = await b.MatchNodeOutputsToToolInputs(
-                    //         upstreamResultDescriptions,
-                    //         JSON.stringify(mcpTool),
-                    //         {
-                    //             clientRegistry: new Clients({ primary: Clients.OllamaCode }).registry
+                    // _.forEach(fieldsEncoding, (fieldEncoding: FieldEncoding) => {
+                    //     try {
+                    //         const upstreamResultData = upstreamResultsMapping[fieldEncoding.name];
+                    //         if (fieldEncoding.encoding === 'utf8') {
+                    //             upstreamResultsMapping[fieldEncoding.name] = Buffer.from(upstreamResultData, "base64").toString("utf8");
+                    //         } else if (fieldEncoding.encoding === 'byte-array') {
+                    //             const buffer = Buffer.from(upstreamResultData, "base64");
+                    //             upstreamResultsMapping[fieldEncoding.name] = Array.from(buffer); // ← FIXED
+                    //         } else if (fieldEncoding.encoding === 'base64') {
+                    //             upstreamResultsMapping[fieldEncoding.name] = [upstreamResultData];
                     //         }
-                    //     );
-                    //     _.forEach(mappingInputOutput, (item: OutputInputMatch) => {
-                    //         if (item.matchedInputField && item.descriptionIndex >= 0 && item.descriptionIndex <= upstreamResultDescriptions.length) {
-                    //             upstreamResultsMapping[item.matchedInputField] = upstreamResults[item.descriptionIndex];
-                    //         }
-                    //     });
-
-                    //     const fieldsEncoding = await b.DetectFieldEncodings(
-                    //         JSON.stringify(mcpTool),
-                    //         {
-                    //             clientRegistry: new Clients({ primary: Clients.OllamaCode }).registry
-                    //         }
-                    //     );
-
-                    //     _.forEach(fieldsEncoding, (fieldEncoding: FieldEncoding) => {
-                    //         try {
-                    //             const resource = upstreamResultsMapping[fieldEncoding.name].content[0].resource;
-                    //             const blob = resource.blob;
-                    //             if (fieldEncoding.encoding === 'utf8') {
-                    //                 upstreamResultsMapping[fieldEncoding.name] = Buffer.from(blob, "base64").toString("utf8");
-                    //             } else if (fieldEncoding.encoding === 'byte-array') {
-                    //                 const buffer = Buffer.from(blob, "base64");
-                    //                 upstreamResultsMapping[fieldEncoding.name] = [Array.from(buffer)];
-                    //             } else if (fieldEncoding.encoding === 'base64') {
-                    //                 upstreamResultsMapping[fieldEncoding.name] = [blob];
-                    //             }
-                    //         } catch (exception) {
-                    //             console.error(exception);
-                    //         }
-                    //     });
-                    // }
+                    //     } catch (exception) {
+                    //         console.error(exception);
+                    //     }
+                    // });
 
                     const clientSession = extractClientSession(context);
                     const extractedInputFromNodeContent = JSON.parse(node.toolInput ?? '{}');
@@ -674,4 +689,24 @@ const extractData = (context: TaskContext) => {
         userInput: userInputValue,
         outs: outs,
     };
+}
+
+const createSkeleton = (obj: any): any => {
+    if (typeof obj === 'string') {
+        return 'dummy';
+    } else if (typeof obj === 'number') {
+        return 0;
+    } else if (typeof obj === 'boolean') {
+        return obj;
+    } else if (Array.isArray(obj)) {
+        return obj.map(createSkeleton);
+    } else if (obj && typeof obj === 'object') {
+        const result = {};
+        for (const key in obj) {
+            result[key] = createSkeleton(obj[key]);
+        }
+        return result;
+    } else {
+        return null;
+    }
 }

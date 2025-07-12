@@ -154,7 +154,6 @@ function MatchNodeOutputsToToolInputs(upstreamResult: string, mcpTool: string) -
         - `field`: the name of the required input field.
         - `isFieldArray`: `true` if the input field's type in the schema is `"array"` (i.e., `mcpTool.inputSchema.properties[field].type === "array"`), otherwise `false`.
         - `isFieldRequired`: always `true`, because you are only including fields listed in `mcpTool.inputSchema.required`. (If the field is not in the `required` array, it must not be included in the output at all.)
-
         - `query`: a best-effort JSONata-like expression that extracts the corresponding value from `upstreamResult`, respecting the rules above.
         - `queryLanguage`: always `"jsonata"`
 
@@ -356,10 +355,10 @@ test Test_MatchNodeOutputsToToolInputs {
                     {
                         "type": "dummy",
                         "resource": {
-                            "mimeType": "application/pdf",
-				            "encoding": "base64",
+                            "mimeType": "dummy",
+				            "encoding": "dummy",
                             "blob": "dummy",
-                            "createdBy": "mr hello",
+                            "createdBy": "dummy",
                             "dynamicComponent": {
                                 "tag": "dummy",
                                 "scriptBase64": "dummy",
@@ -373,7 +372,7 @@ test Test_MatchNodeOutputsToToolInputs {
                         }
                     }
                 ],
-                "source": "CleverNow MCP IO"
+                "source": "dummy"
             }
         "#
         mcpTool #"
