@@ -30,6 +30,13 @@ export default class Gitea {
                     mimeType = detectMimeTypeFromPath(path);
                 }
                 return new Content(result.content, mimeType, ContentEncoding.Base64);
+            } else if (result.size > 0 && result.download_url) {
+                // large file: size > 0 and content is empty.
+                const largeBase64String = await this.fetchFileFromUrl(result.download_url);
+                if (largeBase64String) {
+                    result.content = largeBase64String;
+                }
+                return new Content(result.content, detectMimeTypeFromPath(result.download_url), ContentEncoding.Base64);
             }
         } catch (exception) {
             console.log(exception);
@@ -102,4 +109,21 @@ export default class Gitea {
         }
         return await response.json();
     }
+
+    private async fetchFileFromUrl(url: string): Promise<string | null> {
+        const response = await fetch(`${url}?token=${this.token}`, {
+            method: "GET"
+        });
+
+        if (!response.ok) {
+            const errorText = await response.text();
+            console.error("Fetch failed:", response.status, errorText);
+            return null;
+        }
+
+        const buffer = Buffer.from(await response.arrayBuffer());
+
+        return buffer.toString("base64");
+    }
+
 }
