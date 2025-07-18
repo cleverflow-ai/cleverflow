@@ -32,8 +32,12 @@ export function detectMimeTypeFromPath(path: string) {
         case 'yaml':
         case 'yml':
             return 'application/x-yaml';
-        default:
+        case 'glb':
+            return 'model/gltf-binary';
+        case 'txt':
             return 'text/plain';
+        default:
+            return 'unknown';
     }
 }
 

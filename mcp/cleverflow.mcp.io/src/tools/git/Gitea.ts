@@ -1,14 +1,17 @@
 
 import { fileTypeFromBuffer } from 'file-type';
-import { detectMimeTypeFromPath } from '../common/Util.js';
-import { Content, ContentEncoding } from './Content.js';
+import { detectMimeTypeFromPath } from '../../common/Util.js';
+import { Content, ContentEncoding } from '../Content.js';
+import Git from './Git.js';
+import GitFile from './GitFile.js';
 
-export default class Gitea {
-    constructor(private url: string, private token: string) {
+export default class Gitea extends Git {
+
+    constructor(url: string, token: string) {
+        super(url, token);
     }
 
-    public async fetchFileContent(branch: string, owner: string, repo: string, path: string): Promise<Content | Array<any> | null> {
-
+    public async fetchFileContent(branch: string, owner: string, repo: string, path: string): Promise<Content | Array<GitFile> | null> {
         try {
             if (path.startsWith('/')) {
                 path = path.slice(1);

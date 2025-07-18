@@ -4,27 +4,25 @@ import { z } from "zod";
 import { StreamableHTTPClientTransport } from "@modelcontextprotocol/sdk/client/streamableHttp.js";
 import * as p from 'path';
 import _ from 'lodash';
+import Git from "./Git.js";
+import { Content } from "../Content.js";
+import GitFile from "./GitFile.js";
 
-export default class Github {
-    static McpServerUrl = "https://api.githubcopilot.com/mcp/";
+export default class Github extends Git {
 
-    static fileContentsSchema = z.object({
-        content: z.string(),
-        encoding: z.string().optional(),
-        sha: z.string().optional(),
-        size: z.number().optional(),
-        file_path: z.string().optional(),
-    });
+    static readonly McpServerUrl = "https://api.githubcopilot.com/mcp/";
 
     private client: Client;
 
-    constructor(private token: string) { }
+    constructor(url: string, token: string) {
+        super(url, token);
+    }
 
     private async createClient() {
         if (!this.client) {
             console.log('>>>  create Github mcp client: token ', this.token);
             this.client = await this.createMcpClient(
-                Github.McpServerUrl,
+                this.url,
                 '@copilot/github',
                 '1.0.0',
                 this.token,
@@ -32,7 +30,8 @@ export default class Github {
         }
     }
 
-    public async fetch(branch: string, owner: string, repo: string, path: string): Promise<any> {
+
+    public async fetchFileContent(branch: string, owner: string, repo: string, path: string): Promise<Content | Array<GitFile> | null> {
         if (path.startsWith('/')) {
             path = path.slice(1);
         }
@@ -96,7 +95,7 @@ export default class Github {
         return null;
     }
 
-    public async createOrUpdateFile(branch: string, owner: string, repo: string, path: string, fileContent: string, message: string | null): Promise<boolean> {
+    public async saveFileContent(branch: string, owner: string, repo: string, path: string, fileContent: string, message: string | null): Promise<boolean> {
 
         if (path.startsWith('/')) {
             path = path.slice(1);
@@ -111,8 +110,8 @@ export default class Github {
         if (folderPath === '') {
             folderPath = '/';
         }
-        const folderContent = await this.fetch(branch, owner, repo, folderPath);
-        const foundFile = _.find(folderContent, (item: any) => {
+        const folderContent = await this.fetchFileContent(branch, owner, repo, folderPath);
+        const foundFile: any = _.find(folderContent, (item: any) => {
             return item.type === 'file' &&
                 (
                     item.path === path ||

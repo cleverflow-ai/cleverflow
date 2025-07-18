@@ -1,10 +1,11 @@
 import { McpServer, ResourceTemplate } from "@modelcontextprotocol/sdk/server/mcp.js";
 import Outline from "./tools/Outline.js";
-import Gitea from "./tools/Gitea.js";
+import Gitea from "./tools/git/Gitea.js";
 import z from "zod";
-import Github from "./tools/Github.js";
+import Github from "./tools/git/Github.js";
 import { Content } from "./tools/Content.js";
 import { loadWebComponentByMimeType } from "./common/Util.js";
+import Git from "./tools/git/Git.js";
 
 export function createServer() {
     const server = new McpServer({
@@ -119,76 +120,64 @@ function registerTools(server: McpServer) {
                 }
             });
 
-            let result: any = null;
+            let git: Git;
 
             if (url === Github.McpServerUrl) {
-                try {
-                    const github = new Github(token);
-                    result = await github.fetch(branch, owner, repo, path);
-                } catch (exception: any) {
-                    return {
-                        isError: true,
-                        content: [
-                            {
-                                type: "text",
-                                text: exception.message
-                            }
-                        ],
-                    };
-                }
+                git = new Github(url, token);
             } else {
-                try {
-                    const gitea = new Gitea(url, token);
-                    result = await gitea.fetchFileContent(branch, owner, repo, path);
-                } catch (exception) {
-                    return {
-                        isError: true,
-                        content: [
-                            {
-                                type: "text",
-                                text: exception.message
-                            }
-                        ],
-                    };
-                }
+                git = new Gitea(url, token);
             }
 
-            if (!result) {
+            try {
+                const result = await git.fetchFileContent(branch, owner, repo, path);
+
+                if (!result) {
+                    return {
+                        isError: true,
+                        content: [
+                            {
+                                type: "text",
+                                text: "File not found or could not be fetched."
+                            }
+                        ],
+                    };
+                }
+
+                if (Array.isArray(result)) {
+                    // TODO
+                    return {
+                        content: [
+                            {
+                                type: "resource",
+                                resource: result
+                            }
+                        ],
+                    };
+                } else {
+                    const content: Content = result;
+                    const dynamicComponent = loadWebComponentByMimeType(content.mimeType);
+
+                    return {
+                        content: [
+                            {
+                                type: "resource",
+                                resource: {
+                                    mimeType: content.mimeType,
+                                    encoding: content.encoding,
+                                    blob: content.data,
+                                    dynamicComponent: dynamicComponent,
+                                }
+                            }
+                        ],
+                    };
+                }
+            } catch (exception: any) {
                 return {
                     isError: true,
                     content: [
                         {
                             type: "text",
-                            text: "File not found or could not be fetched."
-                        }
-                    ],
-                };
-            }
-
-            if (Array.isArray(result)) {
-                // TODO
-                return {
-                    content: [
-                        {
-                            type: "resource",
-                            resource: result
-                        }
-                    ],
-                };
-            } else {
-                const content: Content = result;
-                const dynamicComponent = loadWebComponentByMimeType(content.mimeType);
-
-                return {
-                    content: [
-                        {
-                            type: "resource",
-                            resource: {
-                                mimeType: content.mimeType,
-                                encoding: content.encoding,
-                                blob: content.data,
-                                dynamicComponent: dynamicComponent,
-                            }
+                            text: exception.message
                         }
                     ],
                 };
@@ -218,49 +207,36 @@ function registerTools(server: McpServer) {
                 }
             });
 
-            let isSuccessful: any;
+            let git: Git;
 
             if (url === Github.McpServerUrl) {
-                try {
-                    const github = new Github(token);
-                    isSuccessful = await github.createOrUpdateFile(branch, owner, repo, path, content, null);
-                } catch (exception: any) {
-                    return {
-                        isError: true,
-                        content: [
-                            {
-                                type: "text",
-                                text: exception.message
-                            }
-                        ],
-                    };
-                }
+                git = new Github(url, token);
             } else {
-                try {
-                    const gitea = new Gitea(url, token);
-                    isSuccessful = await gitea.saveFileContent(branch, owner, repo, path, content);
-                } catch (exception) {
-                    return {
-                        isError: true,
-                        content: [
-                            {
-                                type: "text",
-                                text: exception.message
-                            }
-                        ],
-                    };
-                }
+                git = new Gitea(url, token);
             }
 
-            return {
-                isError: !isSuccessful,
-                content: [
-                    {
-                        type: "text",
-                        text: !isSuccessful ? "Failed to update the file." : "File updated successfully!"
-                    }
-                ],
-            };
+            try {
+                const isSuccessful = await git.saveFileContent(branch, owner, repo, path, content, '');
+                return {
+                    isError: !isSuccessful,
+                    content: [
+                        {
+                            type: "text",
+                            text: !isSuccessful ? "Failed to update the file." : "File updated successfully!"
+                        }
+                    ],
+                };
+            } catch (exception) {
+                return {
+                    isError: true,
+                    content: [
+                        {
+                            type: "text",
+                            text: exception.message
+                        }
+                    ],
+                };
+            }
         }
     );
 }
