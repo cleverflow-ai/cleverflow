@@ -69,25 +69,6 @@
             "1.0.0",
         );
 
-        // // List resources
-        // const resources = await client.listResources();
-        // console.log("Resources:", resources);
-        // // Read a resource
-        // const resource = await client.readResource({
-        //     uri: `outline://${fileId}`,
-        //     arguments: {
-        //         fileId,
-        //         baseUrl,
-        //         apiKey,
-        //     },
-        // });
-        // console.log('Resource:', resource);
-        // console.log('Text:', resource.contents[0].text);
-
-        // List tools
-        // const tools = await client.listTools();
-        // console.log("Tools:", tools);
-
         const result = await client.callTool(
             {
                 name: "fetch-outline-text-file",
@@ -144,16 +125,34 @@
             );
             // const list = await client.listTools();
             // console.log(JSON.stringify(list));
+            // const result = await client.callTool(
+            //     {
+            //         name: "get_file_contents",
+            //         arguments: {
+            //             url: baseUrl,
+            //             token: apiKey,
+            //             branch: "main",
+            //             owner: repoOwner,
+            //             repo,
+            //             path: filePath ?? "",
+            //         },
+            //     },
+            //     z.any(),
+            //     {
+            //         timeout: 3600 * 1000,
+            //     },
+            // );
+
             const result = await client.callTool(
                 {
-                    name: "get_file_contents",
+                    name: "list_repository_files",
                     arguments: {
                         url: baseUrl,
                         token: apiKey,
                         branch: "main",
                         owner: repoOwner,
                         repo,
-                        path: filePath ?? "",
+                        pattern: "clevernow/assets/{2d-3d}/*.*",
                     },
                 },
                 z.any(),
@@ -179,7 +178,7 @@
                 );
                 console.log(`str: ${str}`);
             }
-        } catch (exception) {
+        } catch (exception: any) {
             console.log(exception);
             console.log(exception.message);
         }

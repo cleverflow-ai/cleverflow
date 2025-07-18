@@ -3,9 +3,10 @@ import Outline from "./tools/Outline.js";
 import Gitea from "./tools/git/Gitea.js";
 import z from "zod";
 import Github from "./tools/git/Github.js";
-import { Content } from "./tools/Content.js";
+import { Content, ContentEncoding } from "./tools/Content.js";
 import { loadWebComponentByMimeType } from "./common/Util.js";
 import Git from "./tools/git/Git.js";
+import GitFilesBrowser from "./tools/GitFilesBrowser.js";
 
 export function createServer() {
     const server = new McpServer({
@@ -237,6 +238,44 @@ function registerTools(server: McpServer) {
                     ],
                 };
             }
+        }
+    );
+
+    server.tool(
+        "list_repository_files",
+        "Lists all files in a specified repository that match a given pattern. This tool works with both Github and Gitea repositories. To use it, provide the repository URL, authentication token, branch name, owner, repository name, and a pattern (such as a glob or file extension) to filter the files. The tool will return a list of file paths that match the pattern.",
+        {
+            url: z.string(),
+            token: z.string(),
+            branch: z.string(),
+            owner: z.string(),
+            repo: z.string(),
+            pattern: z.string(),
+        },
+        async ({ url, token, branch, owner, repo, pattern }, extra) => {
+
+            await extra.sendNotification({
+                method: "notifications/message",
+                params: {
+                    level: "info",
+                    message: "Listing repository files...",
+                }
+            });
+
+            const gitFilesBrowser = new GitFilesBrowser(url, token, branch, owner, repo);
+            const allFilePaths = await gitFilesBrowser.run(pattern);
+            return {
+                content: [
+                    {
+                        type: "resource",
+                        resource: {
+                            mimeType: 'text/plain',
+                            encoding: ContentEncoding.Utf8,
+                            blob: allFilePaths,
+                        }
+                    }
+                ],
+            };
         }
     );
 }
