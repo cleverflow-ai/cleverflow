@@ -97,7 +97,7 @@ function ParseMarkdocBFlowElementToBFlow(text: string, tools: BFlowNodeTool[]) -
 
         Analyze each node's text content to:
 
-        Generate a description if not explicitly given.
+        Keep node's content as its description, do not change it.
 
         Detect references to outputs from previous nodes, and include those node ids in the inputs array.
 

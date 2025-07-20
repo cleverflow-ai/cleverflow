@@ -101,7 +101,7 @@ export default class Session {
         })));
     }
 
-    getClientByToolName(toolName: string): McpClientForSession | null {
+    getMcpClientByToolName(toolName: string): McpClientForSession | null {
         return this.mcpClients.find((c) => c.tools.some((tool) => tool.name === toolName));
     }
 

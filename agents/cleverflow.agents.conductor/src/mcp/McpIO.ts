@@ -134,7 +134,7 @@ export default class McpIO {
 
             console.log(content);
 
-            return !content?.isError;
+            return content;
 
         } finally {
             mcpClient?.close();

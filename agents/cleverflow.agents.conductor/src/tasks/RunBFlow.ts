@@ -348,171 +348,183 @@ const runNode = async (session: Session, context: TaskContext, bflow: BFlow, use
         });
 
         if (node.tool) {
-            const mcpClient = session.getClientByToolName(node.tool.name);
-            if (mcpClient) {
-                const mcpTool = mcpClient.tools.find((tool) => tool.name === node.tool.name);
-                const requiredParameters = mcpTool.inputSchema?.required;
-                let userInputForCurrentNode: any = userInput[node.id] || {};
-                const upstreamResultsMapping = {};
+            return await runNodeWithMcpTool(session, context, bflow, userInput, outs, node, upstreamResults, yieldUpdate);
+        } else {
+            return await runNodeUsingLLMAndV8(session, bflow, outs, node, upstreamResults, yieldUpdate);
+        }
+    }
 
-                try {
+    return node.state;
+}
 
-                    if (upstreamResults && upstreamResults.length > 0) {
-                        const upstreamResultsSkeleton = createSkeleton(upstreamResults);
-                        const mappingInputOutput = await b.MatchNodeOutputsToToolInputs(
-                            JSON.stringify(upstreamResultsSkeleton),
-                            JSON.stringify(mcpTool),
-                            {
-                                clientRegistry: new Clients({ primary: Clients.OllamaTool }).registry
-                            }
-                        );
+const runNodeWithMcpTool = async (session: Session, context: TaskContext, bflow: BFlow, userInput: Record<string, any>, outs: Record<string, any>, node: BFlowNode, upstreamResults: Record<string, any>, yieldUpdate: (taskStatus: TaskStatus) => void): Promise<BFlowNodeState> => {
+    const mcpClient = session.getMcpClientByToolName(node.tool.name);
+    if (mcpClient) {
+        const mcpTool = mcpClient.tools.find((tool) => tool.name === node.tool.name);
 
-                        for (let i = 0; i < mappingInputOutput.length; i++) {
-                            const item: OutputInputMatch = mappingInputOutput[i];
-                            if (item.queryLanguage === 'jsonata') {
-                                const expression = jsonata(item.query);
-                                upstreamResultsMapping[item.field] = await expression.evaluate(upstreamResults);
-                            }
-                        }
+        // TODO: hardcode tool's name
+        if (mcpTool?.name === 'execute_js') {
+            return await runNodeUsingLLMAndV8(session, bflow, outs, node, upstreamResults, yieldUpdate);
+        }
+
+        const requiredParameters = mcpTool.inputSchema?.required;
+        let userInputForCurrentNode: any = userInput[node.id] || {};
+        const upstreamResultsMapping = {};
+
+        try {
+
+            if (upstreamResults && upstreamResults.length > 0) {
+                const upstreamResultsSkeleton = createSkeleton(upstreamResults);
+                const mappingInputOutput = await b.MatchNodeOutputsToToolInputs(
+                    JSON.stringify(upstreamResultsSkeleton),
+                    JSON.stringify(mcpTool),
+                    {
+                        clientRegistry: new Clients({ primary: Clients.OllamaTool }).registry
                     }
+                );
 
-                    // TODO: using coding as enum
-                    // convert data using encoding
-                    // upstreamResultData can be an array. 
-                    // default upstreamResult using Base64 encoding???
-                    // const fieldsEncoding = await b.DetectFieldEncodings(
-                    //     JSON.stringify(mcpTool),
-                    //     {
-                    //         clientRegistry: new Clients({ primary: Clients.OllamaCode }).registry
-                    //     }
-                    // );
-
-                    // _.forEach(fieldsEncoding, (fieldEncoding: FieldEncoding) => {
-                    //     try {
-                    //         const upstreamResultData = upstreamResultsMapping[fieldEncoding.field];
-                    //         if (fieldEncoding.type === FieldType.Array) {
-                    //             for (let i = 0; i < upstreamResultData.length; i++) {
-                    //                 const itemData = upstreamResultData[i];
-                    //                 if (fieldEncoding.itemEncoding === Encoding.Utf8) {
-                    //                     upstreamResultData[i] = Buffer.from(itemData, "base64").toString("utf8");
-                    //                 } else if (fieldEncoding.encoding === Encoding.ByteArray) {
-                    //                     const buffer = Buffer.from(itemData, "base64");
-                    //                     upstreamResultData[i] = Array.from(buffer);
-                    //                 } else if (fieldEncoding.encoding === Encoding.Base64) {
-                    //                     upstreamResultData[i] = itemData;
-                    //                 }
-                    //             }
-                    //         } else {
-                    //             if (fieldEncoding.encoding === Encoding.Utf8) {
-                    //                 upstreamResultsMapping[fieldEncoding.field] = Buffer.from(upstreamResultData, "base64").toString("utf8");
-                    //             } else if (fieldEncoding.encoding === Encoding.ByteArray) {
-                    //                 const buffer = Buffer.from(upstreamResultData, "base64");
-                    //                 upstreamResultsMapping[fieldEncoding.field] = Array.from(buffer);
-                    //             } else if (fieldEncoding.encoding === Encoding.Base64) {
-                    //                 upstreamResultsMapping[fieldEncoding.field] = upstreamResultData;
-                    //             }
-                    //         }
-
-                    //     } catch (exception) {
-                    //         console.error(exception);
-                    //     }
-                    // });
-
-                    const clientSession = extractClientSession(context);
-                    const extractedInputFromNodeContent = JSON.parse(node.toolInput ?? '{}');
-                    userInputForCurrentNode = { ...extractedInputFromNodeContent, ...userInputForCurrentNode };
-
-                    const canCallTool = isValidInput(requiredParameters || [], userInputForCurrentNode, upstreamResultsMapping)
-                    if (!canCallTool) {
-                        const mpcPayload = await b.GenerateMcpToolPayload(
-                            JSON.stringify(mcpTool),
-                            JSON.stringify(userInputForCurrentNode),
-                            JSON.stringify(clientSession?.commonSettings ?? {}),
-                            {
-                                clientRegistry: new Clients({ primary: Clients.OllamaDefault }).registry
-                            }
-                        );
-
-                        userInputForCurrentNode = mpcPayload ? JSON.parse(mpcPayload) : userInputForCurrentNode;
-
-                        userInput[node.id] = userInputForCurrentNode;
+                for (let i = 0; i < mappingInputOutput.length; i++) {
+                    const item: OutputInputMatch = mappingInputOutput[i];
+                    if (item.queryLanguage === 'jsonata') {
+                        const expression = jsonata(item.query);
+                        upstreamResultsMapping[item.field] = await expression.evaluate(upstreamResults);
                     }
-                } catch (exception) {
-                    console.error(exception);
                 }
+            }
 
-                const canCallTool = isValidInput(requiredParameters || [], userInputForCurrentNode, upstreamResultsMapping)
-                if (!canCallTool) {
-                    node.state = BFlowNodeState.WAITING_FOR_DATA;
+            // TODO: using coding as enum
+            // convert data using encoding
+            // upstreamResultData can be an array. 
+            // default upstreamResult using Base64 encoding???
+            // const fieldsEncoding = await b.DetectFieldEncodings(
+            //     JSON.stringify(mcpTool),
+            //     {
+            //         clientRegistry: new Clients({ primary: Clients.OllamaCode }).registry
+            //     }
+            // );
+
+            // _.forEach(fieldsEncoding, (fieldEncoding: FieldEncoding) => {
+            //     try {
+            //         const upstreamResultData = upstreamResultsMapping[fieldEncoding.field];
+            //         if (fieldEncoding.type === FieldType.Array) {
+            //             for (let i = 0; i < upstreamResultData.length; i++) {
+            //                 const itemData = upstreamResultData[i];
+            //                 if (fieldEncoding.itemEncoding === Encoding.Utf8) {
+            //                     upstreamResultData[i] = Buffer.from(itemData, "base64").toString("utf8");
+            //                 } else if (fieldEncoding.encoding === Encoding.ByteArray) {
+            //                     const buffer = Buffer.from(itemData, "base64");
+            //                     upstreamResultData[i] = Array.from(buffer);
+            //                 } else if (fieldEncoding.encoding === Encoding.Base64) {
+            //                     upstreamResultData[i] = itemData;
+            //                 }
+            //             }
+            //         } else {
+            //             if (fieldEncoding.encoding === Encoding.Utf8) {
+            //                 upstreamResultsMapping[fieldEncoding.field] = Buffer.from(upstreamResultData, "base64").toString("utf8");
+            //             } else if (fieldEncoding.encoding === Encoding.ByteArray) {
+            //                 const buffer = Buffer.from(upstreamResultData, "base64");
+            //                 upstreamResultsMapping[fieldEncoding.field] = Array.from(buffer);
+            //             } else if (fieldEncoding.encoding === Encoding.Base64) {
+            //                 upstreamResultsMapping[fieldEncoding.field] = upstreamResultData;
+            //             }
+            //         }
+
+            //     } catch (exception) {
+            //         console.error(exception);
+            //     }
+            // });
+
+            const clientSession = extractClientSession(context);
+            const extractedInputFromNodeContent = JSON.parse(node.toolInput ?? '{}');
+            userInputForCurrentNode = { ...extractedInputFromNodeContent, ...userInputForCurrentNode };
+
+            const canCallTool = isValidInput(requiredParameters || [], userInputForCurrentNode, upstreamResultsMapping)
+            if (!canCallTool) {
+                const mpcPayload = await b.GenerateMcpToolPayload(
+                    JSON.stringify(mcpTool),
+                    JSON.stringify(userInputForCurrentNode),
+                    JSON.stringify(clientSession?.commonSettings ?? {}),
+                    {
+                        clientRegistry: new Clients({ primary: Clients.OllamaDefault }).registry
+                    }
+                );
+
+                userInputForCurrentNode = mpcPayload ? JSON.parse(mpcPayload) : userInputForCurrentNode;
+
+                userInput[node.id] = userInputForCurrentNode;
+            }
+        } catch (exception) {
+            console.error(exception);
+        }
+
+        const canCallTool = isValidInput(requiredParameters || [], userInputForCurrentNode, upstreamResultsMapping)
+        if (!canCallTool) {
+            node.state = BFlowNodeState.WAITING_FOR_DATA;
+            yieldUpdate({
+                state: 'input-required',
+                message: {
+                    role: 'agent',
+                    parts: [{
+                        type: 'data',
+                        data: {
+                            node: {
+                                id: node.id
+                            },
+                            userInput,
+                            inputSchema: mcpTool,
+                            createdAt: new Date(),
+                        }
+                    }]
+                }
+            });
+        } else {
+            const mergedInput: Record<string, any> = {
+                ...userInputForCurrentNode,
+                ...upstreamResultsMapping,
+            };
+
+            const inputForCallTool = {
+                name: mcpTool.name,
+                arguments: mergedInput,
+            };
+
+            try {
+
+                const callToolResult = await mcpClient.client.callTool(
+                    inputForCallTool,
+                    z.any(),
+                    {
+                        timeout: 3600 * 1000,
+                    },
+                );
+
+                // callTool error
+                if (callToolResult.isError) {
+                    node.state = BFlowNodeState.FAILURE;
+                    node.stateMessage = callToolResult.content &&
+                        Array.isArray(callToolResult.content) &&
+                        callToolResult.content.length > 0
+                        ? callToolResult.content[0].text
+                        : 'Cannot complete action. Please check your input or try again.';
+
                     yieldUpdate({
-                        state: 'input-required',
+                        state: 'failed',
                         message: {
                             role: 'agent',
                             parts: [{
+                                type: 'text',
+                                text: node.stateMessage,
+                            }, {
                                 type: 'data',
                                 data: {
-                                    node: {
-                                        id: node.id
-                                    },
-                                    userInput,
-                                    inputSchema: mcpTool,
+                                    bflow: bflow,
+                                    outs: outs,
                                     createdAt: new Date(),
                                 }
                             }]
                         }
                     });
-                    return node.state;
-                }
-
-                const mergedInput: Record<string, any> = {
-                    ...userInputForCurrentNode,
-                    ...upstreamResultsMapping,
-                };
-
-                const inputForCallTool = {
-                    name: mcpTool.name,
-                    arguments: mergedInput,
-                };
-
-                try {
-
-                    const callToolResult = await mcpClient.client.callTool(
-                        inputForCallTool,
-                        z.any(),
-                        {
-                            timeout: 3600 * 1000,
-                        },
-                    );
-
-                    // callTool error
-                    if (callToolResult.isError) {
-                        node.state = BFlowNodeState.FAILURE;
-                        node.stateMessage = callToolResult.content &&
-                            Array.isArray(callToolResult.content) &&
-                            callToolResult.content.length > 0
-                            ? callToolResult.content[0].text
-                            : 'Cannot complete action. Please check your input or try again.';
-
-                        yieldUpdate({
-                            state: 'failed',
-                            message: {
-                                role: 'agent',
-                                parts: [{
-                                    type: 'text',
-                                    text: node.stateMessage,
-                                }, {
-                                    type: 'data',
-                                    data: {
-                                        bflow: bflow,
-                                        outs: outs,
-                                        createdAt: new Date(),
-                                    }
-                                }]
-                            }
-                        });
-                        return node.state;
-                    }
-
+                } else {
                     node.state = BFlowNodeState.SUCCESS;
 
                     if (node.id) {
@@ -541,39 +553,17 @@ const runNode = async (session: Session, context: TaskContext, bflow: BFlow, use
                             }
                         });
                     }
-
-                } catch (callToolException) {
-                    node.state = BFlowNodeState.FAILURE;
-                    node.stateMessage = callToolException.message ?? 'Tool did not respond';
-                    yieldUpdate({
-                        state: 'failed',
-                        message: {
-                            role: 'agent',
-                            parts: [{
-                                type: 'text',
-                                text: node.stateMessage,
-                            }, {
-                                type: 'data',
-                                data: {
-                                    bflow: bflow,
-                                    outs: outs,
-                                    createdAt: new Date(),
-                                }
-                            }]
-                        }
-                    });
-                    return node.state;
                 }
-            } else {
+            } catch (callToolException) {
                 node.state = BFlowNodeState.FAILURE;
-                node.stateMessage = 'Mcp client was not found';
+                node.stateMessage = callToolException.message ?? 'Tool did not respond';
                 yieldUpdate({
                     state: 'failed',
                     message: {
                         role: 'agent',
                         parts: [{
                             type: 'text',
-                            text: node.stateMessage
+                            text: node.stateMessage,
                         }, {
                             type: 'data',
                             data: {
@@ -584,17 +574,118 @@ const runNode = async (session: Session, context: TaskContext, bflow: BFlow, use
                         }]
                     }
                 });
-                return node.state;
             }
+        }
+    } else {
+        node.state = BFlowNodeState.FAILURE;
+        node.stateMessage = 'Mcp client was not found';
+        yieldUpdate({
+            state: 'failed',
+            message: {
+                role: 'agent',
+                parts: [{
+                    type: 'text',
+                    text: node.stateMessage
+                }, {
+                    type: 'data',
+                    data: {
+                        bflow: bflow,
+                        outs: outs,
+                        createdAt: new Date(),
+                    }
+                }]
+            }
+        });
+    }
+    return node.state;
+}
 
+const runNodeUsingLLMAndV8 = async (session: Session, bflow: BFlow, outs: Record<string, any>, node: BFlowNode, upstreamResults: Record<string, any>, yieldUpdate: (taskStatus: TaskStatus) => void): Promise<BFlowNodeState> => {
+    yieldUpdate({
+        state: 'working',
+        message: {
+            role: 'agent',
+            parts: [{
+                type: 'text',
+                text: 'Generating JS Code...'
+            }, {
+                type: 'data',
+                data: {
+                    bflow: bflow,
+                    outs: outs,
+                    createdAt: new Date(),
+                }
+            }]
+        }
+    });
+    let jsCode = await b.WriteJSCode(
+        node.description,
+        {
+            clientRegistry: new Clients({ primary: Clients.OllamaTool }).registry
+        }
+    );
+    jsCode = jsCode.replaceAll('<think>', '').replaceAll('</think>', '');
+    console.log(`>>>> jsCode`);
+    console.log(jsCode);
+    // TODO
+    let jsCodeInput: any = null;
+    if (upstreamResults && upstreamResults.length > 0) {
+        const result = upstreamResults[0];
+        if (result.content && Array.isArray(result.content)) {
+            jsCodeInput = result.content[0].resource?.blob;
         } else {
+            jsCodeInput = result;
+        }
+    }
+    console.log('>>>> jsCodeInput');
+    console.log(JSON.stringify(jsCodeInput));
+
+    const callToolResult = await McpIO.runJSCode(jsCode, jsCodeInput);
+    if (callToolResult.isError) {
+        node.state = BFlowNodeState.FAILURE;
+        node.stateMessage = callToolResult.content &&
+            Array.isArray(callToolResult.content) &&
+            callToolResult.content.length > 0
+            ? callToolResult.content[0].text
+            : 'Cannot complete action. Please check your input or try again.';
+
+        yieldUpdate({
+            state: 'failed',
+            message: {
+                role: 'agent',
+                parts: [{
+                    type: 'text',
+                    text: node.stateMessage,
+                }, {
+                    type: 'data',
+                    data: {
+                        bflow: bflow,
+                        outs: outs,
+                        createdAt: new Date(),
+                    }
+                }]
+            }
+        });
+
+    } else {
+        node.state = BFlowNodeState.SUCCESS;
+
+        if (node.id) {
+            callToolResult.nodeId = node.id;
+            callToolResult.jsCode = jsCode;
+
+            callToolResult.finishedAt = new Date().toISOString();
+            await PersistenceService.saveRunBFlowNodeOutput(session, node.id, callToolResult);
+
+            outs[node.id] = callToolResult;
+
             yieldUpdate({
                 state: 'working',
                 message: {
                     role: 'agent',
                     parts: [{
                         type: 'text',
-                        text: 'Generating JS Code...'
+                        text: 'update'
                     }, {
                         type: 'data',
                         data: {
@@ -605,36 +696,8 @@ const runNode = async (session: Session, context: TaskContext, bflow: BFlow, use
                     }]
                 }
             });
-            const jsCode = await b.WriteJSCode(
-                node.description,
-                {
-                    clientRegistry: new Clients({ primary: Clients.OllamaTool }).registry
-                }
-            );
-            McpIO.runJSCode(jsCode, upstreamResults);
-            // node.state = BFlowNodeState.FAILURE;
-            // node.stateMessage = 'No MCP Tool';
-            // yieldUpdate({
-            //     state: 'failed',
-            //     message: {
-            //         role: 'agent',
-            //         parts: [{
-            //             type: 'text',
-            //             text: node.stateMessage
-            //         }, {
-            //             type: 'data',
-            //             data: {
-            //                 bflow: bflow,
-            //                 outs: outs,
-            //                 createdAt: new Date(),
-            //             }
-            //         }]
-            //     }
-            // });
-            // return node.state;
         }
     }
-
     return node.state;
 }
 
