@@ -152,7 +152,8 @@
                         branch: "main",
                         owner: repoOwner,
                         repo,
-                        pattern: "clevernow/assets/{2d-3d}/*.*",
+                        pattern:
+                            "orders/{orderNumber}/Documentation/{positionInOrder}/{language}/{productVariant}/*.pdf",
                     },
                 },
                 z.any(),

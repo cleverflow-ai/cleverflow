@@ -10,6 +10,7 @@ import { b } from '../baml_client/async_client.js';
 import Clients from '../baml/Clients.js';
 import { extractClientSession } from './Util.js';
 import jsonata from 'jsonata';
+import McpIO from "../mcp/McpIO.js";
 
 export async function* runBFlow(session: Session, context: TaskContext): AsyncGenerator<TaskYieldUpdate, Task | void, unknown> {
 
@@ -310,43 +311,43 @@ const runNode = async (session: Session, context: TaskContext, bflow: BFlow, use
         return node.state;
 
     } else if (node.type === BFlowNodeType.ACTION || node.type === BFlowNodeType.CONDITION) {
-        if (node.tool) {
-            let upstreamResults: any[] = [];
+        let upstreamResults: any[] = [];
 
-            try {
-                if (node.inputs) {
-                    // Each Input corresponds a Node Id
-                    for (const nodeId of node.inputs) {
-                        // Get saved Output of required Node
-                        const out = outs[nodeId];
-                        if (out) {
-                            upstreamResults.push(out);
-                        }
+        try {
+            if (node.inputs) {
+                // Each Input corresponds a Node Id
+                for (const nodeId of node.inputs) {
+                    // Get saved Output of required Node
+                    const out = outs[nodeId];
+                    if (out) {
+                        upstreamResults.push(out);
                     }
                 }
-            } catch (exception) {
-                console
             }
+        } catch (exception) {
+            console
+        }
 
-            node.state = BFlowNodeState.RUNNING;
-            yieldUpdate({
-                state: 'working',
-                message: {
-                    role: 'agent',
-                    parts: [{
-                        type: 'text',
-                        text: 'update'
-                    }, {
-                        type: 'data',
-                        data: {
-                            bflow: bflow,
-                            outs: outs,
-                            createdAt: new Date(),
-                        }
-                    }]
-                }
-            });
+        node.state = BFlowNodeState.RUNNING;
+        yieldUpdate({
+            state: 'working',
+            message: {
+                role: 'agent',
+                parts: [{
+                    type: 'text',
+                    text: 'update'
+                }, {
+                    type: 'data',
+                    data: {
+                        bflow: bflow,
+                        outs: outs,
+                        createdAt: new Date(),
+                    }
+                }]
+            }
+        });
 
+        if (node.tool) {
             const mcpClient = session.getClientByToolName(node.tool.name);
             if (mcpClient) {
                 const mcpTool = mcpClient.tools.find((tool) => tool.name === node.tool.name);
@@ -516,14 +517,6 @@ const runNode = async (session: Session, context: TaskContext, bflow: BFlow, use
 
                     if (node.id) {
                         callToolResult.nodeId = node.id;
-                        // callToolResult.description = await b.GetToolOutputDescription(
-                        //     node.description,
-                        //     JSON.stringify(mcpTool),
-                        //     JSON.stringify(userInputForCurrentNode),
-                        //     {
-                        //         clientRegistry: new Clients({ primary: Clients.OllamaCode }).registry
-                        //     }
-                        // );
 
                         callToolResult.finishedAt = new Date().toISOString();
                         await PersistenceService.saveRunBFlowNodeOutput(session, node.id, callToolResult);
@@ -595,15 +588,13 @@ const runNode = async (session: Session, context: TaskContext, bflow: BFlow, use
             }
 
         } else {
-            node.state = BFlowNodeState.FAILURE;
-            node.stateMessage = 'No MCP Tool';
             yieldUpdate({
-                state: 'failed',
+                state: 'working',
                 message: {
                     role: 'agent',
                     parts: [{
                         type: 'text',
-                        text: node.stateMessage
+                        text: 'Generating JS Code...'
                     }, {
                         type: 'data',
                         data: {
@@ -614,7 +605,33 @@ const runNode = async (session: Session, context: TaskContext, bflow: BFlow, use
                     }]
                 }
             });
-            return node.state;
+            const jsCode = await b.WriteJSCode(
+                node.description,
+                {
+                    clientRegistry: new Clients({ primary: Clients.OllamaTool }).registry
+                }
+            );
+            McpIO.runJSCode(jsCode, upstreamResults);
+            // node.state = BFlowNodeState.FAILURE;
+            // node.stateMessage = 'No MCP Tool';
+            // yieldUpdate({
+            //     state: 'failed',
+            //     message: {
+            //         role: 'agent',
+            //         parts: [{
+            //             type: 'text',
+            //             text: node.stateMessage
+            //         }, {
+            //             type: 'data',
+            //             data: {
+            //                 bflow: bflow,
+            //                 outs: outs,
+            //                 createdAt: new Date(),
+            //             }
+            //         }]
+            //     }
+            // });
+            // return node.state;
         }
     }
 

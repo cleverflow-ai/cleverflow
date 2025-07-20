@@ -175,6 +175,37 @@ function MatchNodeOutputsToToolInputs(upstreamResult: string, mcpTool: string) -
     "#
 }
 
+function WriteJSCode(taskDescription: string) -> string {
+    client Ollama_Tool
+    prompt #"
+        /no_think
+
+        You are an AI that writes JavaScript code to be embedded and executed in a Node.js VM environment.
+
+        Given the following task description and input data, generate ONLY the **self-contained JavaScript function body** — that is, only the inner contents of a function, without the function declaration.
+
+        ### Strict Rules:
+        - Do NOT wrap the output in any function, IIFE, or code block.
+        - Do NOT include the words: function, export, =>, or return inside a string.
+        - Do NOT include any backticks, code fences (like ```javascript), markdown formatting, comments, or explanations.
+        - The output must be a valid JavaScript function body.
+
+        ### Execution Context:
+        Your code will be inserted like this:
+            const result = (function(data) {
+                // [your generated code here.]
+            })(data);
+            return result;
+
+        ### Requirements:
+        {{taskDescription}}
+        - Remember to return the final result: `return result;`
+
+        Output only valid JavaScript code — nothing else.
+    "#
+}
+
+
 test Test_GetRepoIntegrationSettings {
     functions [GetRepoIntegrationSettings]
     args {
@@ -416,6 +447,23 @@ test Test_MatchNodeOutputsToToolInputs {
                     ]
                 }
             }
+        "#
+    }
+}
+
+test Test_WriteJSCode {
+    functions [WriteJSCode]
+    args {
+        taskDescription #"
+           Given an array of file paths as input, where each path follows the format:
+            "orders/{orderNumber}/Documentation/{positionInOrder}/{language}/{filename}.pdf" or ".PDF"
+
+            Extract the following fields:
+            - orderNumber (string)
+            - positionInOrder (integer)
+            - language (string)
+
+            Ignore entries that don't match the pattern.
         "#
     }
 }

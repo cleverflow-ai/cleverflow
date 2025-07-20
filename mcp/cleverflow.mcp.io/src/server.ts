@@ -7,6 +7,7 @@ import { Content, ContentEncoding } from "./tools/Content.js";
 import { loadWebComponentByMimeType } from "./common/Util.js";
 import Git from "./tools/git/Git.js";
 import GitFilesBrowser from "./tools/GitFilesBrowser.js";
+import { executeJS } from "./tools/ExecuteJS.js";
 
 export function createServer() {
     const server = new McpServer({
@@ -278,4 +279,37 @@ function registerTools(server: McpServer) {
             };
         }
     );
+
+    server.tool(
+        "execute_js",
+        "Executes a JavaScript snippet with a given input object in a secure sandbox using the V8 engine. The JavaScript code should return a value based on the input. This tool is useful for dynamic logic evaluation, templating, and configurable behavior. The input object is available as `data` inside the JavaScript code.",
+        {
+            jsCode: z.string().describe("JavaScript code to execute. Use the variable `data` to access input."),
+            input: z.any().describe("An input object that will be passed into the JavaScript code as `data`."),
+        },
+        async ({ jsCode, input }, extra) => {
+            await extra.sendNotification({
+                method: "notifications/message",
+                params: {
+                    level: "info",
+                    message: "Executing JavaScript code...",
+                }
+            });
+
+            const result = executeJS(jsCode, input);
+            return {
+                content: [
+                    {
+                        type: "resource",
+                        resource: {
+                            mimeType: 'text/plain',
+                            encoding: ContentEncoding.Utf8,
+                            blob: result,
+                        }
+                    }
+                ],
+            };
+        }
+    );
+
 }

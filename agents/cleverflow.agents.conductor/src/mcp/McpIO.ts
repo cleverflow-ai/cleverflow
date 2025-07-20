@@ -1,5 +1,4 @@
 import { createMcpClient } from "@cleverflow-ai/cleverflow.mcp/dist/McpClient.js";
-import { z } from "zod";
 import { Client } from "@modelcontextprotocol/sdk/client/index.js";
 import { CompatibilityCallToolResultSchema } from "@modelcontextprotocol/sdk/types.js";
 
@@ -74,6 +73,46 @@ export default class McpIO {
                         repo,
                         path,
                         content: fileContent,
+                    },
+                },
+                CompatibilityCallToolResultSchema,
+                {
+                    timeout: 3600 * 1000,
+                },
+            );
+
+            if (callToolResult.error) {
+                throw new Error((callToolResult.error as { message?: string })?.message ?? "Unknown error");
+            }
+
+            const content =
+                callToolResult.content &&
+                    Array.isArray(callToolResult.content) &&
+                    callToolResult.content.length > 0
+                    ? callToolResult.content[0]
+                    : null;
+
+            console.log(content);
+
+            return !content?.isError;
+
+        } finally {
+            mcpClient?.close();
+        }
+    }
+
+    static async runJSCode(jsCode: string, input: any): Promise<any> {
+
+        const mcpClient = await McpIO.createClient();
+
+        try {
+
+            const callToolResult = await mcpClient.callTool(
+                {
+                    name: "execute_js",
+                    arguments: {
+                        jsCode,
+                        input,
                     },
                 },
                 CompatibilityCallToolResultSchema,
