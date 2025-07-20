@@ -456,7 +456,7 @@ test Test_WriteJSCode {
     args {
         taskDescription #"
            Given an array of file paths as input, where each path follows the format:
-            "orders/{orderNumber}/Documentation/{positionInOrder}/{language}/{filename}.pdf" or ".PDF"
+            "orders/{orderNumber}/Documentation/{positionInOrder}/{language}/{productVariant}/*.pdf"
 
             Extract the following fields:
             - orderNumber (string)
