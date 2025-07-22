@@ -23,13 +23,22 @@ pipeline_options.do_ocr = True
 pipeline_options.do_table_structure = True
 pipeline_options.table_structure_options.do_cell_matching = True
 
+# See also: https://github.com/docling-project/docling/blob/5d98bcea1bd03aff426f903211c931620ff8fcc1/docling/datamodel/base_models.py#L45
 converter = DocumentConverter(
         allowed_formats=[
-                    InputFormat.PDF,
-                    InputFormat.IMAGE,
-                    InputFormat.DOCX,
-                    InputFormat.HTML,
-                    InputFormat.PPTX,
+            InputFormat.DOCX,
+            InputFormat.PPTX,
+            InputFormat.HTML,
+            InputFormat.IMAGE,
+            InputFormat.PDF,
+            InputFormat.ASCIIDOC,
+            InputFormat.MD,
+            InputFormat.CSV,
+            InputFormat.XLSX,
+            InputFormat.XML_USPTO,
+            InputFormat.XML_JATS,
+            InputFormat.JSON_DOCLING,
+            InputFormat.AUDIO
         ],
         format_options={
             InputFormat.PDF: PdfFormatOption(
