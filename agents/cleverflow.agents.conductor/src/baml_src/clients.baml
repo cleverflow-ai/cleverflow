@@ -34,5 +34,6 @@ client<llm> Ollama_Code {
     }
     api_key "ollama"
     tempature 0.1
+    max_token 10000
   }
 }

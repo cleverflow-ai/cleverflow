@@ -68,7 +68,7 @@
 
 <svelte:element this={"style"}>{@html css}</svelte:element>
 
-<div class="w-full card rounded-none p-4 bg-base-100 shadow-md">
+<div class="w-full overflow-x-auto card rounded-none p-4 bg-base-100 shadow-md">
 	{#if rendered}
 		{@html rendered}
 	{/if}

@@ -63,43 +63,6 @@ function registerResources(server: McpServer) {
 }
 
 function registerTools(server: McpServer) {
-    server.tool(
-        "fetch_outline_text_file",
-        "Fetches the content of a file from Outline using its file ID.",
-        {
-            baseUrl: z.string(),
-            apiKey: z.string(),
-            fileId: z.string(),
-        },
-        async ({ fileId, baseUrl, apiKey }, extra) => {
-            await extra.sendNotification({
-                method: "notifications/message",
-                params: {
-                    level: "info",
-                    message: "Fetching outline file content...",
-                }
-            });
-
-            const outline = new Outline(baseUrl, apiKey);
-
-            const content = await outline.fetch(fileId);
-
-            const dynamicComponent = loadWebComponentByMimeType(content.mimeType);
-            return {
-                content: [
-                    {
-                        type: "resource",
-                        resource: {
-                            mimeType: content.mimeType,
-                            encoding: content.encoding,
-                            blob: content.data,
-                            dynamicComponent: dynamicComponent,
-                        }
-                    }
-                ],
-            };
-        }
-    );
 
     server.tool(
         "get_file_contents",
@@ -239,6 +202,44 @@ function registerTools(server: McpServer) {
                     ],
                 };
             }
+        }
+    );
+
+    server.tool(
+        "fetch_outline_text_file",
+        "Fetches the content of a file from Outline using its file ID, given authentication.",
+        {
+            baseUrl: z.string(),
+            apiKey: z.string(),
+            fileId: z.string(),
+        },
+        async ({ fileId, baseUrl, apiKey }, extra) => {
+            await extra.sendNotification({
+                method: "notifications/message",
+                params: {
+                    level: "info",
+                    message: "Fetching outline file content...",
+                }
+            });
+
+            const outline = new Outline(baseUrl, apiKey);
+
+            const content = await outline.fetch(fileId);
+
+            const dynamicComponent = loadWebComponentByMimeType(content.mimeType);
+            return {
+                content: [
+                    {
+                        type: "resource",
+                        resource: {
+                            mimeType: content.mimeType,
+                            encoding: content.encoding,
+                            blob: content.data,
+                            dynamicComponent: dynamicComponent,
+                        }
+                    }
+                ],
+            };
         }
     );
 

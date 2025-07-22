@@ -205,6 +205,18 @@ function WriteJSCode(taskDescription: string) -> string {
     "#
 }
 
+function ExecuteDynamicTask(prompt: string, input: string) -> string {
+    client Ollama_Code
+    prompt #"
+        {{prompt}}
+
+        Input:
+            {{input}}
+
+        Return only the result. No explanation.
+    "#
+}
+
 
 test Test_GetRepoIntegrationSettings {
     functions [GetRepoIntegrationSettings]
@@ -464,6 +476,33 @@ test Test_WriteJSCode {
             - language (string)
 
             Ignore entries that don't match the pattern.
+        "#
+    }
+}
+
+test Test_ExecuteDynamicTask {
+    functions [ExecuteDynamicTask]
+    args {
+        prompt #"
+           Using the information provided in explanation, which describes the structure and meaning of each token in a product designation, extract all relevant product features from the following type key: productVariant.
+
+            Return the result as a structured list showing:
+            The name of each feature
+            The corresponding value from productVariant
+            A short interpretation based on explanation
+
+            If any token is unclear or undefined in explanation, label it as "unspecified" and note that interpretation is not available. Ensure output is complete, concise, and aligns with the explanation logic.
+        "#
+        input #"
+            Explanation: 
+                |   Nummer | Bezeichnung               | Merkmale                                                                           |\\n|----------|---------------------------|------------------------------------------------------------------------------------|
+            productVariant:
+                {
+                    "orderNumber": "40009326",
+                    "positionInOrder": 1000,
+                    "language": "DE",
+                    "productVariant": "86351.400018_Fasspumpe EBP.30-DB-0200-P0165D-AW"
+                }
         "#
     }
 }

@@ -230,7 +230,9 @@
 											bindingData={content.resource}
 										></WebComponentLoader>
 									{:else if state === BFlowNodeState.SUCCESS}
-										<JsonView json={nodeResult} />
+										<div class="w-full overflow-x-auto">
+											<JsonView json={nodeResult} />
+										</div>
 									{:else if state === BFlowNodeState.FAILURE}
 										<div
 											class="w-full flex justify-start items-center gap-4 p-4"
@@ -238,7 +240,7 @@
 											<TriangleAlert />
 											<p>{node.stateMessage}</p>
 										</div>
-										<div>
+										<div class="w-full overflow-x-auto">
 											<JsonView json={nodeResult} />
 										</div>
 									{/if}
@@ -246,7 +248,7 @@
 							{:else if state === BFlowNodeState.RUNNING || state === BFlowNodeState.WAITING_FOR_DATA}
 								<LoadingIndicator></LoadingIndicator>
 							{:else if state === BFlowNodeState.SUCCESS && nodeResult}
-								<div>
+								<div class="w-full overflow-x-auto">
 									<JsonView json={nodeResult} />
 								</div>
 							{:else if state === BFlowNodeState.FAILURE}
@@ -257,7 +259,7 @@
 									<p>Failed</p>
 								</div>
 								{#if nodeResult}
-									<div>
+									<div class="w-full overflow-x-auto">
 										<JsonView json={nodeResult} />
 									</div>
 								{/if}

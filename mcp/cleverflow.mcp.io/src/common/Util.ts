@@ -56,7 +56,7 @@ export function loadWebComponentByMimeType(mimeType: string) {
                     }
                 ]
             };
-        default:
+        case 'text/plain':
             buffer = fs.readFileSync(p.resolve(__dirname, '../web-components/dist-webcomponents/text-viewer.js'));
             return {
                 tag: 'text-viewer',
@@ -68,6 +68,8 @@ export function loadWebComponentByMimeType(mimeType: string) {
                     }
                 ]
             };
+        default:
+            return null;
     }
 
 }

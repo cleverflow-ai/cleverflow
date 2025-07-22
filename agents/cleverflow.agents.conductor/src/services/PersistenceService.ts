@@ -65,14 +65,15 @@ export default class PersistenceService {
             const instanceId = gitFileReference.hashedFileContent;
             const folderPath = path.dirname(gitFileReference.path);
             const fileNameWithoutExt = path.basename(gitFileReference.path, path.extname(gitFileReference.path));
-            callToolResult.resultLink = `${folderPath}/${fileNameWithoutExt}-${instanceId}-${session.id}-${nodeId}.json`;
+            const pathToSave = `${folderPath}/${fileNameWithoutExt}-${instanceId}-${session.id}-${nodeId}.json`;
+            callToolResult.resultLink = `${gitFileReference.getRepoAbsolutePath()}/${pathToSave}`;
             await McpIO.saveFileContents(
                 gitFileReference.url,
                 gitFileReference.token,
                 gitFileReference.branch,
                 gitFileReference.owner,
                 gitFileReference.repo,
-                callToolResult.resultLink,
+                pathToSave,
                 JSON.stringify(callToolResult),
             );
         } catch (exception) {

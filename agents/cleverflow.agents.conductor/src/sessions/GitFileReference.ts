@@ -26,4 +26,9 @@ export default class GitFileReference {
     setHashedFileContent(value: string) {
         this.hashedFileContent = value;
     }
+
+    getRepoAbsolutePath(): string {
+        let host = this.url.replace('/v1', '').replace('/api', '').replace(/\/$/, '');
+        return `${host}/${this.owner}/${this.repo}/src/branch/${this.branch}`;
+    }
 }
