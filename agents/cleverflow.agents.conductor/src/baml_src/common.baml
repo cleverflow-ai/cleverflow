@@ -176,10 +176,8 @@ function MatchNodeOutputsToToolInputs(upstreamResult: string, mcpTool: string) -
 }
 
 function WriteJSCode(taskDescription: string) -> string {
-    client Ollama_Tool
+    client Ollama_Code
     prompt #"
-        /no_think
-
         You are an AI that writes JavaScript code to be embedded and executed in a Node.js VM environment.
 
         Given the following task description and input data, generate ONLY the **self-contained JavaScript function body** — that is, only the inner contents of a function, without the function declaration.
@@ -474,6 +472,7 @@ test Test_WriteJSCode {
             - orderNumber (string)
             - positionInOrder (integer)
             - language (string)
+            - productVariant (string)
 
             Ignore entries that don't match the pattern.
         "#

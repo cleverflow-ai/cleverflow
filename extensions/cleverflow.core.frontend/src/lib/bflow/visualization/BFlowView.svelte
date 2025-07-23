@@ -48,29 +48,32 @@
 	);
 
 	onMount(() => {
-		_.forEach(bflowviz.edges, (edge: any) => {
-			edge.animated = false;
-		});
-		_.forEach(bflowviz.nodes, (runningNode) => {
-			if (
-				runningNode?.data?.state === BFlowNodeState.RUNNING ||
-				runningNode?.data?.state === BFlowNodeState.WAITING_FOR_DATA
-			) {
-				const edge = _.find(bflowviz.edges, (edge: any) => {
-					return (
-						edge.source === runningNode.parentNodeId &&
-						edge.target === runningNode.id
-					);
-				});
+		if (bflowviz) {
+			_.forEach(bflowviz.edges, (edge: any) => {
+				edge.animated = false;
+			});
+			_.forEach(bflowviz.nodes, (runningNode) => {
+				if (
+					runningNode?.data?.state === BFlowNodeState.RUNNING ||
+					runningNode?.data?.state === BFlowNodeState.WAITING_FOR_DATA
+				) {
+					const edge = _.find(bflowviz.edges, (edge: any) => {
+						return (
+							edge.source === runningNode.parentNodeId &&
+							edge.target === runningNode.id
+						);
+					});
 
-				if (edge) {
-					edge.animated = true;
+					if (edge) {
+						edge.animated = true;
+					}
 				}
-			}
-		});
+			});
 
-		nodes = writable(bflowviz.nodes);
-		edges = writable(bflowviz.edges);
+			nodes = writable(bflowviz.nodes);
+			edges = writable(bflowviz.edges);
+		}
+
 		isInitialize = true;
 
 		// for (const key in bflowRunResult) {
@@ -123,152 +126,171 @@
 
 {#if isInitialize}
 	<main class="relative w-full h-full">
-		<div class="w-full h-full">
-			<SvelteFlow {nodeTypes} {nodes} {edges} fitView>
-				<Controls />
-				<Background
-					patternColor="#aaa"
-					gap={16}
-					class="border border-surface-300"
-				/>
-			</SvelteFlow>
+		{#if bflowviz}
+			<div class="w-full h-full">
+				<SvelteFlow {nodeTypes} {nodes} {edges} fitView>
+					<Controls />
+					<Background
+						patternColor="#aaa"
+						gap={16}
+						class="border border-surface-300"
+					/>
+				</SvelteFlow>
 
-			<slot name="run-button"></slot>
+				<slot name="run-button"></slot>
 
-			<div
-				class="w-full py-10 flex flex-col justify-start items-start gap-4"
-			>
-				{#each [...bflowviz.nodes].reverse() as node}
-					{@const nodeResult = bflowRunResult[node.id]}
-					{@const content = _.find(
-						nodeResult.content,
-						(content: any) => {
-							return (
-								content &&
-								content.type === "resource" &&
-								content.resource
-							);
-						},
-					)}
+				<div
+					class="w-full py-10 flex flex-col justify-start items-start gap-4"
+				>
+					{#each [...bflowviz.nodes].reverse() as node}
+						{@const nodeResult = bflowRunResult[node.id]}
+						{@const content = _.find(
+							nodeResult.content,
+							(content: any) => {
+								return (
+									content &&
+									content.type === "resource" &&
+									content.resource
+								);
+							},
+						)}
 
-					{@const isActionNode = node.type === "ACTION"}
-					{@const state = node.data?.state}
-					{@const isIdleNode = !state}
+						{@const isActionNode = node.type === "ACTION"}
+						{@const state = node.data?.state}
+						{@const isIdleNode = !state}
 
-					{#if isActionNode && !isIdleNode}
-						<div
-							class="w-full card rounded-none bg-base-100 shadow-lg border border-surface-50-950 p-4 flex flex-col justify-start items-start gap-3"
-						>
-							{#if node.name}
-								<div
-									class="w-full flex justify-start items-center gap-2"
-								>
-									<span class="flex-1 font-bold"
-										>{node.name}</span
-									>
-									{#if state === BFlowNodeState.SUCCESS}
-										<span
-											class="badge-icon preset-filled-success-500"
-										>
-											<Check size={16} />
-										</span>
-									{:else if state === BFlowNodeState.FAILURE}
-										<span
-											class="badge-icon preset-filled-error-500"
-										>
-											<TriangleAlert size={16} />
-										</span>
-									{/if}
-								</div>
-							{/if}
-
-							{#if node.description}
-								<div class="text-xs text-surface-300">
-									{node.description}
-								</div>
-							{/if}
-
-							<!-- Datetime | resultLink -->
-							<div class="flex justify-start items-center gap-2">
-								{#if nodeResult && nodeResult.finishedAt}
+						{#if isActionNode && !isIdleNode}
+							<div
+								class="w-full card rounded-none bg-base-100 shadow-lg border border-surface-50-950 p-4 flex flex-col justify-start items-start gap-3"
+							>
+								{#if node.name}
 									<div
-										class="flex justify-start items-center gap-1"
+										class="w-full flex justify-start items-center gap-2"
 									>
-										<Clock size={16} />
-										<span
-											>{format(
-												new Date(nodeResult.finishedAt),
-												"Pp",
-												{ locale: enUS },
-											)}</span
+										<span class="flex-1 font-bold"
+											>{node.name}</span
 										>
+										{#if state === BFlowNodeState.SUCCESS}
+											<span
+												class="badge-icon preset-filled-success-500"
+											>
+												<Check size={16} />
+											</span>
+										{:else if state === BFlowNodeState.FAILURE}
+											<span
+												class="badge-icon preset-filled-error-500"
+											>
+												<TriangleAlert size={16} />
+											</span>
+										{/if}
 									</div>
-									{#if nodeResult.resultLink}
-										<div class="font-bold">|</div>
-									{/if}
 								{/if}
-								{#if nodeResult && nodeResult.resultLink}
-									<a
-										class="text-primary-500"
-										href={nodeResult.resultLink}
-										target="_blank">Result Link</a
-									>
-								{/if}
-							</div>
 
-							{#if nodeResult}
+								{#if node.description}
+									<div class="text-xs text-surface-300">
+										{node.description}
+									</div>
+								{/if}
+
+								<!-- Datetime | resultLink -->
 								<div
-									class="w-full mt-4 flex flex-col justify-start items-start gap-3"
+									class="flex justify-start items-center gap-2"
 								>
-									{#if content && content.resource?.dynamicComponent}
-										{@const dynamicComponent =
-											content.resource?.dynamicComponent}
-										<WebComponentLoader
-											tag={dynamicComponent?.tag}
-											scriptBase64={dynamicComponent?.scriptBase64}
-											propBindings={dynamicComponent?.propBindings}
-											bindingData={content.resource}
-										></WebComponentLoader>
-									{:else if state === BFlowNodeState.SUCCESS}
-										<div class="w-full overflow-x-auto">
-											<JsonView json={nodeResult} />
-										</div>
-									{:else if state === BFlowNodeState.FAILURE}
+									{#if nodeResult && nodeResult.finishedAt}
 										<div
-											class="w-full flex justify-start items-center gap-4 p-4"
+											class="flex justify-start items-center gap-1"
 										>
-											<TriangleAlert />
-											<p>{node.stateMessage}</p>
+											<Clock size={16} />
+											<span
+												>{format(
+													new Date(
+														nodeResult.finishedAt,
+													),
+													"Pp",
+													{ locale: enUS },
+												)}</span
+											>
 										</div>
-										<div class="w-full overflow-x-auto">
-											<JsonView json={nodeResult} />
-										</div>
+										{#if nodeResult.resultLink}
+											<div class="font-bold">|</div>
+										{/if}
+									{/if}
+									{#if nodeResult && nodeResult.resultLink}
+										<a
+											class="text-primary-500"
+											href={nodeResult.resultLink}
+											target="_blank">Result Link</a
+										>
 									{/if}
 								</div>
-							{:else if state === BFlowNodeState.RUNNING || state === BFlowNodeState.WAITING_FOR_DATA}
-								<LoadingIndicator></LoadingIndicator>
-							{:else if state === BFlowNodeState.SUCCESS && nodeResult}
-								<div class="w-full overflow-x-auto">
-									<JsonView json={nodeResult} />
-								</div>
-							{:else if state === BFlowNodeState.FAILURE}
-								<div
-									class="w-full flex justify-start items-center gap-4 p-4"
-								>
-									<TriangleAlert />
-									<p>Failed</p>
-								</div>
+
 								{#if nodeResult}
+									<div
+										class="w-full mt-4 flex flex-col justify-start items-start gap-3"
+									>
+										{#if content && content.resource?.dynamicComponent}
+											{@const dynamicComponent =
+												content.resource
+													?.dynamicComponent}
+											<WebComponentLoader
+												tag={dynamicComponent?.tag}
+												scriptBase64={dynamicComponent?.scriptBase64}
+												propBindings={dynamicComponent?.propBindings}
+												bindingData={content.resource}
+											></WebComponentLoader>
+										{:else if state === BFlowNodeState.SUCCESS}
+											<div class="w-full overflow-x-auto">
+												<JsonView json={nodeResult} />
+											</div>
+										{:else if state === BFlowNodeState.FAILURE}
+											<div
+												class="w-full flex justify-start items-center gap-4 p-4"
+											>
+												<TriangleAlert />
+												<p>{node.stateMessage}</p>
+											</div>
+											<div class="w-full overflow-x-auto">
+												<JsonView json={nodeResult} />
+											</div>
+										{/if}
+									</div>
+								{:else if state === BFlowNodeState.RUNNING || state === BFlowNodeState.WAITING_FOR_DATA}
+									<LoadingIndicator></LoadingIndicator>
+								{:else if state === BFlowNodeState.SUCCESS && nodeResult}
 									<div class="w-full overflow-x-auto">
 										<JsonView json={nodeResult} />
 									</div>
+								{:else if state === BFlowNodeState.FAILURE}
+									<div
+										class="w-full flex justify-start items-center gap-4 p-4"
+									>
+										<TriangleAlert />
+										<p>Failed</p>
+									</div>
+									{#if nodeResult}
+										<div class="w-full overflow-x-auto">
+											<JsonView json={nodeResult} />
+										</div>
+									{/if}
 								{/if}
-							{/if}
-						</div>
-					{/if}
-				{/each}
+							</div>
+						{/if}
+					{/each}
+				</div>
 			</div>
-		</div>
+		{:else}
+			<div class="w-full h-full">
+				<SvelteFlow {nodeTypes} {nodes} {edges} fitView>
+					<Controls />
+					<Background
+						patternColor="#aaa"
+						gap={16}
+						class="border border-surface-300"
+					/>
+				</SvelteFlow>
+				<slot name="run-button"></slot>
+			</div>
+		{/if}
 	</main>
 	<!-- <Drawer bind:this={drawerElement} position="right">
 		{#snippet modalContent()}

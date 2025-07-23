@@ -323,10 +323,12 @@
         <!-- Sticky button -->
         {#if tab === "editor"}
             <button
-                class="fixed bottom-5 left-1/2 -translate-x-1/2 transition btn preset-filled-primary-500"
-                onclick={switchToView}
+                class="fixed bottom-5 left-1/2 -translate-x-1/2 transition btn preset-filled-primary-500 {markdoc
+                    ? ''
+                    : 'disabled cursor-not-allowed'}"
+                onclick={markdoc ? switchToView : null}
             >
-                Render
+                Go to Viewer
             </button>
         {/if}
     </main>

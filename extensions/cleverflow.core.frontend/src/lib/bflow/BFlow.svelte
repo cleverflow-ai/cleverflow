@@ -27,7 +27,7 @@
 
 		if (text && controller.state === BFLowState.CONNECT_SUCCESS) {
 			// Connected and text is provided, start the BFlow process
-			await start();
+			await renderBFlow();
 		}
 	});
 
@@ -66,7 +66,7 @@
 		}
 	};
 
-	const start = async () => {
+	const renderBFlow = async () => {
 		try {
 			const isConnected = await controller.connect();
 			if (isConnected) {
@@ -77,7 +77,7 @@
 		}
 	};
 
-	const reload = async () => {
+	const rerenderBFlow = async () => {
 		await controller.ensureBFlow(text);
 	};
 </script>
@@ -85,18 +85,7 @@
 <svelte:element this={"style"}>{@html css}</svelte:element>
 <svelte:element this={"style"}>{@html xyflowCss}</svelte:element>
 
-{#snippet reloadBFlowButton()}
-	<button
-		type="button"
-		class="btn preset-filled-primary-500"
-		onclick={async () => await reload()}
-	>
-		<Zap class="w-5 h-5" />
-		BFlow changed. Reload
-	</button>
-{/snippet}
-
-{#snippet runBFlowState()}
+{#snippet renderRunBFlowState()}
 	{#if controller.state === BFLowState.RUN_BFLOW || controller.state === BFLowState.RUN_BFLOW_IN_PROGRESS}
 		<button class="btn preset-filled-warning-500">
 			<Flame class="animate-spin w-5 h-5" />
@@ -115,18 +104,6 @@
 	{/if}
 {/snippet}
 
-{#snippet runBFlowButton()}
-	{#if controller.state !== BFLowState.RUN_BFLOW && controller.state !== BFLowState.RUN_BFLOW_IN_PROGRESS}
-		<button
-			onclick={async () => await controller.executeBFlow()}
-			class="btn preset-filled-primary-500"
-		>
-			<Flame class="text-white-700 w-5 h-5" />
-			Run
-		</button>
-	{/if}
-{/snippet}
-
 {#key refreshKey}
 	<main data-theme={theme} class="px-4">
 		<div class="flex items-end justify-between gap-2 mb-2">
@@ -136,7 +113,7 @@
 			<div></div>
 			{#if controller.bflowviz}
 				<div class="flex justify-end items-center gap-2">
-					{@render runBFlowState()}
+					{@render renderRunBFlowState()}
 				</div>
 			{/if}
 		</div>
@@ -148,8 +125,8 @@
 					<CircleX class="text-red-700 w-10 h-10" />
 					<div>No URL or text provided</div>
 				</div>
-			{:else if controller.bflowviz}
-				<div class="w-full h-full">
+			{:else}
+				<div class="relative w-full h-full">
 					<BFlowView
 						bflowRunResult={controller.bflowRunResult}
 						bflowviz={controller.bflowviz}
@@ -157,61 +134,145 @@
 						<div slot="run-button">
 							<div class="w-full flex justify-center mt-4 mb-6">
 								{#if controller.isDocumentChanged(text)}
-									{@render reloadBFlowButton()}
-								{:else}
-									{@render runBFlowButton()}
+									<button
+										type="button"
+										class="btn preset-filled-primary-500"
+										onclick={async () =>
+											await rerenderBFlow()}
+									>
+										<Zap class="w-5 h-5" />
+										BFlow changed. Reload
+									</button>
+								{:else if controller.state == BFLowState.NONE || controller.state == BFLowState.CONNECT_SUCCESS}
+									<div
+										class="h-full w-full flex flex-col items-center justify-center gap-2"
+									>
+										<div>
+											{convertStateToMessage(
+												controller.state,
+											)}
+										</div>
+										<button
+											class="btn preset-filled-primary-500"
+											onclick={async () =>
+												await renderBFlow()}
+										>
+											Render BFlow
+										</button>
+									</div>
+								{:else if controller.state == BFLowState.CONVERT_BFLOW_TO_BFLOWVIZ_SUCCESS}
+									<div
+										class="h-full w-full flex flex-col items-center justify-center gap-2"
+									>
+										<div>
+											{convertStateToMessage(
+												controller.state,
+											)}
+										</div>
+										<div
+											class="w-full flex justify-center items-center gap-3"
+										>
+											<button
+												class="btn preset-outlined-primary-500"
+												onclick={async () =>
+													await renderBFlow()}
+											>
+												Re-Render BFlow
+											</button>
+											<button
+												class="btn preset-filled-primary-500"
+												onclick={async () =>
+													await controller.executeBFlow()}
+											>
+												Run BFlow
+											</button>
+										</div>
+									</div>
+								{:else if controller.state == BFLowState.RUN_BFLOW_SUCCESS || controller.state === BFLowState.RUN_BFLOW_FAILED}
+									<div
+										class="h-full w-full flex flex-col items-center justify-center gap-2"
+									>
+										<div>
+											{convertStateToMessage(
+												controller.state,
+											)}
+										</div>
+										<div
+											class="w-full flex justify-center items-center gap-3"
+										>
+											<button
+												class="btn preset-outlined-primary-500"
+												onclick={async () =>
+													await renderBFlow()}
+											>
+												Re-Render BFlow
+											</button>
+											<button
+												class="btn preset-filled-primary-500"
+												onclick={async () =>
+													await controller.executeBFlow()}
+											>
+												Re-Run BFlow
+											</button>
+										</div>
+									</div>
+								{:else if controller.isFailedState(controller.state)}
+									<div
+										class="h-full w-full flex flex-col items-center justify-center gap-2"
+									>
+										<CircleX
+											class="text-red-700 w-10 h-10"
+										/>
+										<div>
+											{convertStateToMessage(
+												controller.state,
+											)}
+										</div>
+										{#if controller.state === BFLowState.CONNECT_FAILED || controller.state === BFLowState.CONVERT_MARKDOC_ELEMENT_TO_BFLOW_FAILED || controller.state === BFLowState.CONVERT_BFLOW_TO_BFLOWVIZ_FAILED}
+											<button
+												class="btn preset-filled-primary-500"
+												onclick={async () =>
+													await rerenderBFlow()}
+											>
+												Re-Render BFlow
+											</button>
+										{:else}
+											<div
+												class="w-full flex justify-center items-center gap-3"
+											>
+												<button
+													class="btn preset-outlined-primary-500"
+													onclick={async () =>
+														await renderBFlow()}
+												>
+													Re-Render BFlow
+												</button>
+												<button
+													class="btn preset-filled-primary-500"
+													onclick={async () =>
+														await controller.executeBFlow()}
+												>
+													Re-Run BFlow
+												</button>
+											</div>
+										{/if}
+									</div>
 								{/if}
 							</div>
 						</div>
 					</BFlowView>
-				</div>
-			{:else if controller.state == BFLowState.NONE || controller.state == BFLowState.CONNECT_FAILED}
-				<div
-					class="h-full w-full flex flex-col items-center justify-center gap-2"
-				>
-					<div>{convertStateToMessage(controller.state)}</div>
-					<button
-						class="cursor-pointer"
-						onclick={async () => await start()}
-					>
-						<Network class="text-primary-500 w-10 h-10" />
-					</button>
-				</div>
-			{:else if controller.state == BFLowState.NONE || controller.isStateLoading(controller.state) || controller.isFinishedState(controller.state)}
-				<div
-					class="h-full w-full flex flex-col items-center justify-center gap-2"
-				>
-					<LoadingIndicator
-						message={convertStateToMessage(controller.state)}
-					/>
-				</div>
-			{:else if controller.isFailedState(controller.state)}
-				<div
-					class="h-full w-full flex flex-col items-center justify-center gap-2"
-				>
-					<CircleX class="text-red-700 w-10 h-10" />
-					<div>{convertStateToMessage(controller.state)}</div>
-					<button
-						class="cursor-pointer"
-						onclick={async () => await reload()}
-					>
-						<RefreshCcw class="text-red-700 w-10 h-10" />
-					</button>
-				</div>
-			{:else}
-				<div
-					class="h-full w-full flex flex-col items-center justify-center gap-2"
-				>
-					<div>
-						An error occurred. Please click the refresh button below
-						to try again. Thank you for your patience.
-					</div>
-					<button
-						class="cursor-pointer"
-						onclick={async () => await reload()}
-					>
-						<RefreshCcw class="text-red-700 w-10 h-10" />
-					</button>
+
+					{#if controller.isStateLoading(controller.state) && controller.state !== BFLowState.RUN_BFLOW_IN_PROGRESS}
+						<div
+							class="absolute top-0 left-0 h-full w-full flex flex-col items-center justify-center gap-2"
+						>
+							<LoadingIndicator
+								message={convertStateToMessage(
+									controller.state,
+								)}
+							/>
+						</div>
+					{/if}
 				</div>
 			{/if}
 		</div>
