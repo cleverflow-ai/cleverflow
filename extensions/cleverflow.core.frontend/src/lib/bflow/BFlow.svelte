@@ -134,15 +134,26 @@
 						<div slot="run-button">
 							<div class="w-full flex justify-center mt-4 mb-6">
 								{#if controller.isDocumentChanged(text)}
-									<button
-										type="button"
-										class="btn preset-filled-primary-500"
-										onclick={async () =>
-											await rerenderBFlow()}
+									<div
+										class="w-full flex justify-center items-center gap-3"
 									>
-										<Zap class="w-5 h-5" />
-										BFlow changed. Reload
-									</button>
+										<button
+											class="btn preset-outlined-primary-500"
+											onclick={async () =>
+												await renderBFlow()}
+										>
+											Markdoc changed. Re-Render BFlow
+										</button>
+										{#if controller.state == BFLowState.CONVERT_BFLOW_TO_BFLOWVIZ_SUCCESS || controller.state == BFLowState.CONVERT_BFLOW_TO_BFLOWVIZ_FAILED || controller.state == BFLowState.RUN_BFLOW_SUCCESS || controller.state == BFLowState.RUN_BFLOW_FAILED}
+											<button
+												class="btn preset-filled-primary-500"
+												onclick={async () =>
+													await controller.executeBFlow()}
+											>
+												Run BFlow
+											</button>
+										{/if}
+									</div>
 								{:else if controller.state == BFLowState.NONE || controller.state == BFLowState.CONNECT_SUCCESS}
 									<div
 										class="h-full w-full flex flex-col items-center justify-center gap-2"

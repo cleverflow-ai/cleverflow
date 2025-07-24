@@ -319,7 +319,12 @@ const runNode = async (session: Session, context: TaskContext, bflow: BFlow, use
                 for (const nodeId of node.inputs) {
                     // Get saved Output of required Node
                     const out = outs[nodeId];
+                    console.log(`>>>>>>>`);
+                    console.log(`>>>>>>>`);
+                    console.log(`>>>>>>>`);
+                    console.log(`>>>> node.inputs`);
                     if (out) {
+                        console.log(`>>>> nodeId: ${nodeId}`);
                         upstreamResults.push(out);
                     }
                 }
@@ -357,7 +362,7 @@ const runNode = async (session: Session, context: TaskContext, bflow: BFlow, use
     return node.state;
 }
 
-const runNodeWithMcpTool = async (session: Session, context: TaskContext, bflow: BFlow, userInput: Record<string, any>, outs: Record<string, any>, node: BFlowNode, upstreamResults: Record<string, any>, yieldUpdate: (taskStatus: TaskStatus) => void): Promise<BFlowNodeState> => {
+const runNodeWithMcpTool = async (session: Session, context: TaskContext, bflow: BFlow, userInput: Record<string, any>, outs: Record<string, any>, node: BFlowNode, upstreamResults: any[], yieldUpdate: (taskStatus: TaskStatus) => void): Promise<BFlowNodeState> => {
     const mcpClient = session.getMcpClientByToolName(node.tool.name);
     if (mcpClient) {
         const mcpTool = mcpClient.tools.find((tool) => tool.name === node.tool.name);
@@ -434,20 +439,35 @@ const runNodeWithMcpTool = async (session: Session, context: TaskContext, bflow:
             //     }
             // });
 
+            console.log('>>>>>>>>>>>>>>>>>>>>>> ');
+            console.log('>>>>>>>>>>>>>>>>>>>>>> ');
+            console.log('>>>>>>>>>>>>>>>>>>>>>> ');
+            console.log('>>>>>>>>>>>>>>>>>>>>>> ');
+            console.log('>>>> node.toolInput');
+            console.log(node.toolInput);
             const clientSession = extractClientSession(context);
             const extractedInputFromNodeContent = JSON.parse(node.toolInput ?? '{}');
             userInputForCurrentNode = { ...extractedInputFromNodeContent, ...userInputForCurrentNode };
 
             const canCallTool = isValidInput(requiredParameters || [], userInputForCurrentNode, upstreamResultsMapping)
             if (!canCallTool) {
-                const mpcPayload = await b.GenerateMcpToolPayload(
+                let mpcPayload = await b.GenerateMcpToolPayload(
                     JSON.stringify(mcpTool),
                     JSON.stringify(userInputForCurrentNode),
                     JSON.stringify(clientSession?.commonSettings ?? {}),
                     {
-                        clientRegistry: new Clients({ primary: Clients.OllamaDefault }).registry
+                        clientRegistry: new Clients({ primary: Clients.OllamaCode }).registry
                     }
                 );
+
+                if (mpcPayload) {
+                    mpcPayload = mpcPayload.replace('```json', '').replace('```', '').trim();
+                }
+
+                console.log('>>>>> GenerateMcpToolPayload');
+                console.log('>>>>> GenerateMcpToolPayload');
+                console.log('>>>>> GenerateMcpToolPayload');
+                console.log(mpcPayload);
 
                 userInputForCurrentNode = mpcPayload ? JSON.parse(mpcPayload) : userInputForCurrentNode;
 
@@ -600,7 +620,7 @@ const runNodeWithMcpTool = async (session: Session, context: TaskContext, bflow:
     return node.state;
 }
 
-const runNodeUsingLLMAndV8 = async (session: Session, bflow: BFlow, outs: Record<string, any>, node: BFlowNode, upstreamResults: Record<string, any>, yieldUpdate: (taskStatus: TaskStatus) => void): Promise<BFlowNodeState> => {
+const runNodeUsingLLMAndV8 = async (session: Session, bflow: BFlow, outs: Record<string, any>, node: BFlowNode, upstreamResults: any[], yieldUpdate: (taskStatus: TaskStatus) => void): Promise<BFlowNodeState> => {
     yieldUpdate({
         state: 'working',
         message: {
@@ -627,14 +647,41 @@ const runNodeUsingLLMAndV8 = async (session: Session, bflow: BFlow, outs: Record
     jsCode = jsCode.replaceAll('<think>', '').replaceAll('</think>', '');
     console.log(`>>>> jsCode`);
     console.log(jsCode);
+
+    console.log(`>>> upstreamResults: ${upstreamResults.length}`);
     // TODO
     let jsCodeInput: any = null;
     if (upstreamResults && upstreamResults.length > 0) {
-        const result = upstreamResults[0];
-        if (result.content && Array.isArray(result.content)) {
-            jsCodeInput = result.content[0].resource?.blob;
+        if (upstreamResults.length === 1) {
+            const result = upstreamResults[0];
+            if (result.content && Array.isArray(result.content)) {
+                const content = result.content[0];
+                if (content.type === 'text') {
+                    jsCodeInput = content.text;
+                } else if (content.type === 'resource') {
+                    jsCodeInput = content.resource?.blob
+                } else {
+                    jsCodeInput = content;
+                }
+            } else {
+                jsCodeInput = result;
+            }
         } else {
-            jsCodeInput = result;
+            jsCodeInput = [];
+            _.forEach(upstreamResults, (result) => {
+                if (result.content && Array.isArray(result.content)) {
+                    const content = result.content[0];
+                    if (content.type === 'text') {
+                        jsCodeInput.push(content.text);
+                    } else if (content.type === 'resource') {
+                        jsCodeInput.push(content.resource?.blob);
+                    } else {
+                        jsCodeInput.push(content);
+                    }
+                } else {
+                    jsCodeInput.push(result);
+                }
+            });
         }
     }
     console.log('>>>> jsCodeInput');

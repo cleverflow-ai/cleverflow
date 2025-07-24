@@ -79,8 +79,6 @@ function GenerateMcpToolPayload(mcpTool: string, userInputManually: string, comm
         - Fields from `userInputManually` should take precedence over those from `commonSettings`.
 
         4. If a required field in the input schema is not available from either source, leave it blank (e.g., an empty string `""`).
-
-        **Important: Return only the final result as a single-line JSON string using `JSON.stringify`. Do not include any explanation, formatting, or Markdown code block. Just return the JSON string ready to be passed into `JSON.parse`.**
         ---
 
         mcpTool:  
@@ -92,6 +90,7 @@ function GenerateMcpToolPayload(mcpTool: string, userInputManually: string, comm
         commonSettings:  
         {{ commonSettings }}
 
+        **Important: Return only the final result as a single-line JSON string using `JSON.stringify`. Do not include any explanation, formatting, or Markdown code block. Just return the JSON string ready to be passed into `JSON.parse`.**
     "#
 }
 
@@ -176,8 +175,10 @@ function MatchNodeOutputsToToolInputs(upstreamResult: string, mcpTool: string) -
 }
 
 function WriteJSCode(taskDescription: string) -> string {
-    client Ollama_Code
+    client Ollama_Tool
     prompt #"
+        /no_think
+
         You are an AI that writes JavaScript code to be embedded and executed in a Node.js VM environment.
 
         Given the following task description and input data, generate ONLY the **self-contained JavaScript function body** — that is, only the inner contents of a function, without the function declaration.
@@ -465,16 +466,27 @@ test Test_WriteJSCode {
     functions [WriteJSCode]
     args {
         taskDescription #"
-           Given an array of file paths as input, where each path follows the format:
-            "orders/{orderNumber}/Documentation/{positionInOrder}/{language}/{productVariant}/*.pdf"
+            Write a JavaScript function that takes an array of file paths. Each path follows this pattern:
 
-            Extract the following fields:
-            - orderNumber (string)
-            - positionInOrder (integer)
-            - language (string)
-            - productVariant (string)
+            orders/{orderNumber}/Documentation/{positionInOrder}/{language}/{productVariant}/{fileName}.pdf
 
-            Ignore entries that don't match the pattern.
+            The function should:
+
+            Use a regular expression with 5 capture groups to extract:
+
+                orderNumber (string)
+
+                positionInOrder (number)
+
+                language (string)
+
+                productVariant (string)
+
+                fileName (string, without .pdf)
+
+            Ignore paths that do not match the pattern.
+
+            Return an array of extracted objects.
         "#
     }
 }

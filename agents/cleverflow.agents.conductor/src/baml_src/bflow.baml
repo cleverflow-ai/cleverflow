@@ -88,6 +88,8 @@ function ParseMarkdocBFlowElementToBFlow(text: string, tools: BFlowNodeTool[]) -
             → "name": "Fetch Outline File"
             For a node describing Convert a steps file to glb
             → "name": "Convert Steps to GLB"
+        
+        Use the node's text content as the "description" field exactly as it appears — without rewriting, summarizing, reformatting, fixing grammar, or modifying it in any way. The content must be copied verbatim.
 
         Each node must have a unique id. If missing, generate one using the element name and its order of appearance.
 
@@ -96,8 +98,6 @@ function ParseMarkdocBFlowElementToBFlow(text: string, tools: BFlowNodeTool[]) -
         Nodes of type ACTION or CONDITION must be assigned a Tool from the provided list. If not sure, use a default tool.
 
         Analyze each node's text content to:
-
-        Keep node's content as its description, do not change it.
 
         Detect references to outputs from previous nodes, and include those node ids in the inputs array.
 

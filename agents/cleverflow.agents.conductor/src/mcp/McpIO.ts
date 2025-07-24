@@ -125,16 +125,7 @@ export default class McpIO {
                 throw new Error((callToolResult.error as { message?: string })?.message ?? "Unknown error");
             }
 
-            const content =
-                callToolResult.content &&
-                    Array.isArray(callToolResult.content) &&
-                    callToolResult.content.length > 0
-                    ? callToolResult.content[0]
-                    : null;
-
-            console.log(content);
-
-            return content;
+            return callToolResult;
 
         } finally {
             mcpClient?.close();
