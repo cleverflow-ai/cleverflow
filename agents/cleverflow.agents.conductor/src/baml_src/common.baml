@@ -207,6 +207,8 @@ function WriteJSCode(taskDescription: string) -> string {
 function ExecuteDynamicTask(prompt: string, input: string) -> string {
     client Ollama_Code
     prompt #"
+        /no_think
+
         {{prompt}}
 
         Input:

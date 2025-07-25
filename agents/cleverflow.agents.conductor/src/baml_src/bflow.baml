@@ -38,8 +38,8 @@ class BFlowNode {
   id string?
   name string?
   description string?
-  repeat bool
-  prompt bool
+  repeat bool?
+  prompt bool?
   config string?
   state BFlowNodeState?
   stateMessage string?
@@ -95,18 +95,22 @@ function ParseMarkdocBFlowElementToBFlow(text: string, tools: BFlowNodeTool[]) -
 
         Each node must have a unique id. If missing, generate one using the element name and its order of appearance.
 
-        Parse optional tag attributes:
-
-            repeat (default: false)
-
-            prompt (default: false)
+        For each node, parse the optional attributes repeat and prompt from the tag. If either attribute is not specified, default to:
+            repeat: false,
+            prompt: false
         
         If a node has children, assign them to its goto field.
 
-        Nodes of type ACTION or CONDITION must be assigned a Tool from the provided list. 
-        If prompt=true is set, then assign:
-            "tool": { "name": "LLM" }
-        If not sure, use a default tool.
+        Nodes of type ACTION or CONDITION must be assigned a tool from the provided list.
+        If prompt is true or no tool can be determined:
+            Force the tool to:
+            ```json
+                {
+                    "name": "execute_prompt",
+                    "description": "Executes a natural language prompt using a Large Language Model (LLM)".
+                    "inputSchema": {}
+                }
+            ```
 
         Analyze each node's text content to:
 

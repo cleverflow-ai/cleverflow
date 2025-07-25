@@ -56,6 +56,7 @@ export default class Clients {
                 // frequency_penalty: 1.5,
                 // presence_penalty: 0,
                 // repeat_penalty: 1.8,
+                max_token: 10000,
 
                 headers: {
                     "Api-Key": process.env.OLLAMA_API_KEY
@@ -77,6 +78,7 @@ export default class Clients {
                 // frequency_penalty: 1.5,
                 // presence_penalty: 0,
                 // repeat_penalty: 1.8,
+                max_token: 10000,
 
                 headers: {
                     "Api-Key": process.env.OLLAMA_API_KEY
@@ -98,6 +100,7 @@ export default class Clients {
                 // frequency_penalty: 1.5,
                 // presence_penalty: 0,
                 // repeat_penalty: 1.8,
+                max_token: 10000,
 
                 headers: {
                     "Api-Key": process.env.OLLAMA_API_KEY

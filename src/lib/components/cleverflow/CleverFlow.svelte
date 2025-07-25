@@ -174,7 +174,7 @@
 
 {#if initialized}
     <main class="w-full h-screen">
-        <div class="m-4">
+        <div class="mx-4 py-4">
             <Tabs
                 fluid
                 listBorder="border-b-surface-500 border-b-[1px]"

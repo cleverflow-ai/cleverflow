@@ -353,7 +353,14 @@ const runNode = async (session: Session, context: TaskContext, bflow: BFlow, use
         });
 
         if (node.tool) {
-            return await runNodeWithMcpTool(session, context, bflow, userInput, outs, node, upstreamResults, yieldUpdate);
+            // TODO: hardcode tool name
+            if (node.tool.name === 'execute_prompt') {
+                return await runNodeUsingLLM(session, bflow, outs, node, upstreamResults, yieldUpdate);
+            } else if (node.tool.name === 'execute_js') {
+                return await runNodeUsingLLMAndV8(session, bflow, outs, node, upstreamResults, yieldUpdate);
+            } else {
+                return await runNodeWithMcpTool(session, context, bflow, userInput, outs, node, upstreamResults, yieldUpdate);
+            }
         } else {
             return await runNodeUsingLLMAndV8(session, bflow, outs, node, upstreamResults, yieldUpdate);
         }
@@ -366,11 +373,6 @@ const runNodeWithMcpTool = async (session: Session, context: TaskContext, bflow:
     const mcpClient = session.getMcpClientByToolName(node.tool.name);
     if (mcpClient) {
         const mcpTool = mcpClient.tools.find((tool) => tool.name === node.tool.name);
-
-        // TODO: hardcode tool's name
-        if (mcpTool?.name === 'execute_js') {
-            return await runNodeUsingLLMAndV8(session, bflow, outs, node, upstreamResults, yieldUpdate);
-        }
 
         const requiredParameters = mcpTool.inputSchema?.required;
         let userInputForCurrentNode: any = userInput[node.id] || {};
@@ -745,6 +747,127 @@ const runNodeUsingLLMAndV8 = async (session: Session, bflow: BFlow, outs: Record
             });
         }
     }
+    return node.state;
+}
+
+const runNodeUsingLLM = async (session: Session, bflow: BFlow, outs: Record<string, any>, node: BFlowNode, upstreamResults: any[], yieldUpdate: (taskStatus: TaskStatus) => void): Promise<BFlowNodeState> => {
+
+    node.state = BFlowNodeState.RUNNING;
+
+    yieldUpdate({
+        state: 'working',
+        message: {
+            role: 'agent',
+            parts: [{
+                type: 'text',
+                text: 'Preparing prompt...'
+            }, {
+                type: 'data',
+                data: {
+                    bflow: bflow,
+                    outs: outs,
+                    createdAt: new Date(),
+                }
+            }]
+        }
+    });
+
+    // SMELL
+    const nodeOutput = {
+        nodeId: node.id,
+        content: [
+            {
+                type: "resource",
+                resource: {
+                    mimeType: 'text/plain',
+                    encoding: 'utf8',
+                    blob: [],
+                }
+            }
+        ],
+        finishedAt: new Date().toISOString(),
+    };
+
+    let upstreamData: any = null;
+    const result = upstreamResults && upstreamResults.length > 0 ? upstreamResults[0] : null;
+    console.log('>>>> get upstreamData');
+    if (result.content && Array.isArray(result.content)) {
+        const content = result.content[0];
+        if (content.type === 'text') {
+            upstreamData = content.text;
+        } else if (content.type === 'resource') {
+            upstreamData = content.resource?.blob;
+        }
+    }
+
+
+    if (node.repeat && Array.isArray(upstreamData)) {
+        for (let i = 0; i < upstreamData.length; i++) {
+            const promptInput = upstreamData[i];
+            node.stateMessage = `${i + 1}/${upstreamData.length} completed!`;
+            let result = await b.ExecuteDynamicTask(
+                node.description,
+                promptInput ? JSON.stringify(promptInput) : '',
+                {
+                    clientRegistry: new Clients({ primary: Clients.OllamaTool }).registry
+                }
+            );
+
+            nodeOutput.content[0].resource.blob.push(result);
+
+            outs[node.id] = nodeOutput;
+
+            yieldUpdate({
+                state: 'working',
+                message: {
+                    role: 'agent',
+                    parts: [{
+                        type: 'text',
+                        text: 'update'
+                    }, {
+                        type: 'data',
+                        data: {
+                            bflow: bflow,
+                            outs: outs,
+                            createdAt: new Date(),
+                        }
+                    }]
+                }
+            });
+        }
+    } else {
+        let result = await b.ExecuteDynamicTask(
+            node.description,
+            upstreamData ? JSON.stringify(upstreamData) : '',
+            {
+                clientRegistry: new Clients({ primary: Clients.OllamaTool }).registry
+            }
+        );
+        nodeOutput.content[0].resource.blob.push(result);
+    }
+
+    node.state = BFlowNodeState.SUCCESS;
+    outs[node.id] = nodeOutput;
+
+    await PersistenceService.saveRunBFlowNodeOutput(session, node.id, nodeOutput);
+
+    yieldUpdate({
+        state: 'working',
+        message: {
+            role: 'agent',
+            parts: [{
+                type: 'text',
+                text: 'update'
+            }, {
+                type: 'data',
+                data: {
+                    bflow: bflow,
+                    outs: outs,
+                    createdAt: new Date(),
+                }
+            }]
+        }
+    });
     return node.state;
 }
 

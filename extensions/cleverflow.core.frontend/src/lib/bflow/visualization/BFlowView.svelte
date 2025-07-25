@@ -21,6 +21,7 @@
 	import { JsonView } from "@zerodevx/svelte-json-view";
 	import { format } from "date-fns";
 	import { enUS } from "date-fns/locale";
+	import { Loader } from "lucide-svelte";
 
 	const channel = postal.channel("b-flow-view");
 
@@ -157,6 +158,7 @@
 
 						{@const isActionNode = node.type === "ACTION"}
 						{@const state = node.data?.state}
+						{@const stateMessage = node.data?.stateMessage}
 						{@const isIdleNode = !state}
 
 						{#if isActionNode && !isIdleNode}
@@ -182,6 +184,17 @@
 											>
 												<TriangleAlert size={16} />
 											</span>
+										{:else if nodeResult && (state === BFlowNodeState.RUNNING || state === BFlowNodeState.WAITING_FOR_DATA)}
+											<div
+												class="flex justify-start items-center gap-1"
+											>
+												{#if stateMessage}
+													<span>{stateMessage}</span>
+												{/if}
+												<Loader
+													class="animate-spin w-6 h-6"
+												/>
+											</div>
 										{/if}
 									</div>
 								{/if}
@@ -238,10 +251,10 @@
 												propBindings={dynamicComponent?.propBindings}
 												bindingData={content.resource}
 											></WebComponentLoader>
-										{:else if state === BFlowNodeState.SUCCESS}
+											<!-- {:else if state === BFlowNodeState.SUCCESS || state === BFlowNodeState.RUNNING}
 											<div class="w-full overflow-x-auto">
 												<JsonView json={nodeResult} />
-											</div>
+											</div> -->
 										{:else if state === BFlowNodeState.FAILURE}
 											<div
 												class="w-full flex justify-start items-center gap-4 p-4"
@@ -256,10 +269,6 @@
 									</div>
 								{:else if state === BFlowNodeState.RUNNING || state === BFlowNodeState.WAITING_FOR_DATA}
 									<LoadingIndicator></LoadingIndicator>
-								{:else if state === BFlowNodeState.SUCCESS && nodeResult}
-									<div class="w-full overflow-x-auto">
-										<JsonView json={nodeResult} />
-									</div>
 								{:else if state === BFlowNodeState.FAILURE}
 									<div
 										class="w-full flex justify-start items-center gap-4 p-4"
