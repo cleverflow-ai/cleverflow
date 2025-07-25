@@ -38,6 +38,8 @@ class BFlowNode {
   id string?
   name string?
   description string?
+  repeat bool
+  prompt bool
   config string?
   state BFlowNodeState?
   stateMessage string?
@@ -93,9 +95,18 @@ function ParseMarkdocBFlowElementToBFlow(text: string, tools: BFlowNodeTool[]) -
 
         Each node must have a unique id. If missing, generate one using the element name and its order of appearance.
 
+        Parse optional tag attributes:
+
+            repeat (default: false)
+
+            prompt (default: false)
+        
         If a node has children, assign them to its goto field.
 
-        Nodes of type ACTION or CONDITION must be assigned a Tool from the provided list. If not sure, use a default tool.
+        Nodes of type ACTION or CONDITION must be assigned a Tool from the provided list. 
+        If prompt=true is set, then assign:
+            "tool": { "name": "LLM" }
+        If not sure, use a default tool.
 
         Analyze each node's text content to:
 
@@ -158,15 +169,66 @@ test Test_ParseMarkdocBFlowElementToBFlow {
     functions [ParseMarkdocBFlowElementToBFlow]
     args {
         text #"
-            {% b-flow id="test-mcp-conversion" %}
+            {% b-flow id="analyze-selling-products-flow" %}
                 {% sequence %}     
-                    {% task id="action_1" %}
-                        Fetch PDF File from: https://gitea-atlascopco-integration.clevernow.com/clevernow/atlascopco-dasm/src/branch/main/orders/40009326/Documentation/4000/EN/89971.000001_Meter/89971.000001_EDM.pdf
-                    {% /task %}
                     
-                    {% task id="action_2" %}
-                        Convert the PDF Content from Previous Task to Text.
-                    {% /task %}	
+                    {% action id="action_1" %}
+                        Extract all file paths matching the pattern:  
+                        `orders/{orderNumber}/Documentation/{positionInOrder}/{language}/{productVariant}/*.pdf`
+                    {% /action %}
+                    
+                    {% action id="action_2" %}
+                        Analyze File Paths.
+
+                        Write a JavaScript function that takes an array of file paths that come from the previous action node. Each path follows this pattern:
+                            orders/{orderNumber}/Documentation/{positionInOrder}/{language}/{productVariant}/{fileName}.pdf
+
+                        The function should:
+                            Use a regular expression with 5 capture groups to extract:
+                                orderNumber (string)
+                                positionInOrder (number)
+                                language (string)
+                                productVariant (string)
+                                fileName (string, without .pdf)
+                            Ignore paths that do not match the pattern.
+                            Return an array of extracted objects.
+                    {% /action %}
+                    
+                    {% action id="action_3" %}
+                        Fetch the content of an Excel file from Gitea located at `general/ENSOTypenschlÃ¼ssel.xlsx`.
+                    {% /action %}
+                    
+                    {% action id="action_4" %}
+                        Convert the Excel content from the action node with `id="action_3"` to plain text.
+                    {% /action %}
+
+                    {% action id="action_5"%}
+                        Prepare product variant data. Take the `productVariants` array from the action node with `id="action_2"` and the explanation string from the action node with `id="action_4"`.
+                        
+                        Your task is to write a JavaScript code snippet that does only the following:
+
+                            - `data[0]` is an array of product variants.
+                            - `data[1]` is a string explanation.
+                            - Create a new array named `mapped`, where each element is an object in the format `{ productVariant: <variant>, explanation: <explanation> }`.
+                            - Return `mapped` at the end.
+
+                        Output only the function body (no function declaration, IIFE, or `console.log`).
+                    {% /action %}
+                    
+                    {% action id="action_6" repeat="true" prompt="true" %}
+                        Analyze selling Products. Take the data list from the action node with `id="action_5"`.
+
+                        Prompt:
+                            Using the information provided in explanation, which describes the structure and meaning of each token in a 			product designation, extract all relevant product features from the following type key: productVariant.
+
+                            Return the result as a structured list showing:
+                            The name of each feature
+                            The corresponding value from productVariant
+                            A short interpretation based on explanation
+
+                            If any token is unclear or undefined in explanation, label it as "unspecified" and note that interpretation is not available. Ensure output is complete, concise, and aligns with the explanation logic.		
+                    {% /action %}
+
                 {% /sequence %}
             {% /b-flow %}
         "#,
