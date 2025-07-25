@@ -661,7 +661,15 @@ const runNodeUsingLLMAndV8 = async (session: Session, bflow: BFlow, outs: Record
                 if (content.type === 'text') {
                     jsCodeInput = content.text;
                 } else if (content.type === 'resource') {
-                    jsCodeInput = content.resource?.blob
+                    if (content.resource?.encoding === 'base64' && content.resource?.mimeType === 'text/plain') {
+                        if (Array.isArray(content.resource?.blob)) {
+                            jsCodeInput = content.resource?.blob.map((data: any) => Buffer.from(data, 'base64').toString('utf-8'));
+                        } else {
+                            jsCodeInput = Buffer.from(content.resource?.blob, 'base64').toString('utf-8');
+                        }
+                    } else {
+                        jsCodeInput = content.resource?.blob;
+                    }
                 } else {
                     jsCodeInput = content;
                 }
@@ -676,7 +684,17 @@ const runNodeUsingLLMAndV8 = async (session: Session, bflow: BFlow, outs: Record
                     if (content.type === 'text') {
                         jsCodeInput.push(content.text);
                     } else if (content.type === 'resource') {
-                        jsCodeInput.push(content.resource?.blob);
+                        if (content.resource?.encoding === 'base64' && content.resource?.mimeType === 'text/plain') {
+                            if (Array.isArray(content.resource?.blob)) {
+                                const decoded = content.resource?.blob.map((data: any) => Buffer.from(data, 'base64').toString('utf-8'));
+                                jsCodeInput.push(decoded);
+                            } else {
+                                const decoded = Buffer.from(content.resource?.blob, 'base64').toString('utf-8');
+                                jsCodeInput.push(decoded);
+                            }
+                        } else {
+                            jsCodeInput.push(content.resource?.blob);
+                        }
                     } else {
                         jsCodeInput.push(content);
                     }
@@ -800,38 +818,105 @@ const runNodeUsingLLM = async (session: Session, bflow: BFlow, outs: Record<stri
         }
     }
 
-
     if (node.repeat && Array.isArray(upstreamData)) {
-        for (let i = 0; i < upstreamData.length; i++) {
-            const promptInput = upstreamData[i];
-            node.stateMessage = `${i + 1}/${upstreamData.length} completed!`;
-            let result = await b.ExecuteDynamicTask(
-                node.description,
-                promptInput ? JSON.stringify(promptInput) : '',
-                {
-                    clientRegistry: new Clients({ primary: Clients.OllamaTool }).registry
-                }
-            );
+        // for (let i = 0; i < upstreamData.length; i++) {
+        //     const promptInput = upstreamData[i];
+        //     node.stateMessage = `${i + 1}/${upstreamData.length} completed!`;
+        //     let result = await b.ExecuteDynamicTask(
+        //         node.description,
+        //         promptInput ? JSON.stringify(promptInput) : '',
+        //         {
+        //             clientRegistry: new Clients({ primary: Clients.OllamaTool }).registry
+        //         }
+        //     );
 
-            nodeOutput.content[0].resource.blob.push(result);
+        //     nodeOutput.content[0].resource.blob.push(result);
 
-            outs[node.id] = nodeOutput;
+        //     outs[node.id] = nodeOutput;
 
-            yieldUpdate({
-                state: 'working',
-                message: {
-                    role: 'agent',
-                    parts: [{
-                        type: 'text',
-                        text: 'update'
-                    }, {
+        //     yieldUpdate({
+        //         state: 'working',
+        //         message: {
+        //             role: 'agent',
+        //             parts: [{
+        //                 type: 'text',
+        //                 text: 'update'
+        //             }, {
+        //                 type: 'data',
+        //                 data: {
+        //                     bflow: bflow,
+        //                     outs: outs,
+        //                     createdAt: new Date(),
+        //                 }
+        //             }]
+        //         }
+        //     });
+        // }
+
+        outs[node.id] = nodeOutput;
+
+        node.stateMessage = `0/${upstreamData.length} completed!`;
+
+        yieldUpdate({
+            state: 'working',
+            message: {
+                role: 'agent',
+                parts: [
+                    { type: 'text', text: 'update' },
+                    {
                         type: 'data',
                         data: {
                             bflow: bflow,
                             outs: outs,
                             createdAt: new Date(),
                         }
-                    }]
+                    }
+                ]
+            }
+        });
+
+        const concurrency = 8;
+
+        for (let i = 0; i < upstreamData.length; i += concurrency) {
+            const batch = upstreamData.slice(i, i + concurrency);
+
+            const results = await Promise.all(
+                batch.map(promptInput =>
+                    b.ExecuteDynamicTask(
+                        node.description,
+                        promptInput ? JSON.stringify(promptInput) : '',
+                        {
+                            clientRegistry: new Clients({ primary: Clients.OllamaTool }).registry
+                        }
+                    )
+                )
+            );
+
+            _.forEach(results, (result) => {
+                nodeOutput.content[0].resource.blob.push(result);
+            });
+
+            outs[node.id] = nodeOutput;
+
+            node.stateMessage = `${i + concurrency}/${upstreamData.length} completed!`;
+
+            await PersistenceService.saveRunBFlowNodeOutput(session, node.id, nodeOutput);
+
+            yieldUpdate({
+                state: 'working',
+                message: {
+                    role: 'agent',
+                    parts: [
+                        { type: 'text', text: 'update' },
+                        {
+                            type: 'data',
+                            data: {
+                                bflow: bflow,
+                                outs: outs,
+                                createdAt: new Date(),
+                            }
+                        }
+                    ]
                 }
             });
         }
