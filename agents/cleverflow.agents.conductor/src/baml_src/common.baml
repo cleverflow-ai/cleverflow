@@ -65,23 +65,26 @@ function GenerateMcpToolPayload(mcpTool: string, userInputManually: string, comm
 
         Your task is to return a valid JSON object that satisfies the input schema of `mcpTool`.
 
-        Follow these steps strictly:
+        Instructions (follow strictly, no deviation):
 
-        1. Parse `commonSettings` as a JSON array.
-        - Find the **most relevant configuration object** whose `name` or `description` matches the purpose of `mcpTool` (e.g., for tools working with Gitea or GitHub, look for a setting mentioning "Git", "Gitea", or "GitHub").
-        - From the matched setting, map available fields (`url`, `token`, `branch`, `owner`, `repo`, etc.) to match the required fields in the input schema.
+        1. Parse `commonSettings` into a JSON array.
+        - Select the object whose `name` or `description` best matches the `mcpTool` purpose.
+        - From that object, extract relevant fields to fill required fields of the tool's `inputSchema`.
 
-        2. Parse `userInputManually` (if provided and valid JSON).
-        - Extract its fields and use them to **override or fill in** fields from step 1.
+        2. Parse `userInputManually` (if valid).
+        - Use its values to **override or fill in missing fields** from step 1.
 
-        3. Merge the data:
-        - Start with the config object from `commonSettings`.
-        - Apply values from `userInputManually` on top, overriding or filling any fields.
-        - If any required field from the schema is still missing or null, set it as an empty string `""`.
+        3. Merge: start with values from `commonSettings`, apply values from `userInputManually`, and ensure all required fields in `inputSchema.required` are present.  
+        - If a required field is still missing, fill it with `""`.
 
-        4. Make sure the final object strictly follows `mcpTool.inputSchema`, does not include any additional properties, and includes **all required fields**.
+        4. Construct the **final JSON object**. It must:
+        - Contain only fields defined in `inputSchema.required`
+        - Include all required fields
+        - Not contain any explanation, reasoning, or markdown
+        - Be output as **a single-line JSON string using `JSON.stringify(...)`**.
 
-        **Important: Return only the final result as a single-line JSON string using `JSON.stringify`. Do not include any explanation, formatting, or Markdown code block. Just return the JSON string ready to be passed into `JSON.parse`.**
+        ⚠️ **DO NOT explain anything. DO NOT format output. DO NOT return code blocks or markdown. ONLY return the single-line JSON string.**
+
     "#
 }
 
