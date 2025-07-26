@@ -116,7 +116,9 @@ function ParseMarkdocBFlowElementToBFlow(text: string, tools: BFlowNodeTool[]) -
 
         Detect references to outputs from previous nodes, and include those node ids in the inputs array.
 
-        For ACTION nodes, if the tool's inputSchema.required contains known keys (like url, apiKey, fileId, repo, etc.), extract values from the node text using natural language understanding and map them into a toolInput field as a JSON string, using the required keys of the tool as a guide.
+        For ACTION nodes, if the tool's inputSchema.required contains known keys (such as url, apiKey, fileId, repo, etc.), extract values only from the node's description using natural language understanding.
+            - Do not infer, assume, or fabricate any values beyond what is explicitly stated in the description.
+            - Use the required keys from the tool's inputSchema to guide which fields to extract and include them in a toolInput field as a JSON string.
 
         Example:
         If the node text is

@@ -66,7 +66,7 @@ function registerTools(server: McpServer) {
 
     server.tool(
         "get_file_contents",
-        "Fetches the content of a file from either Github or Gitea, given repository details and authentication.",
+        "Fetches the content of a file from either Github or Gitea, given repository details and authentication token.",
         {
             url: z.string(),
             token: z.string(),
