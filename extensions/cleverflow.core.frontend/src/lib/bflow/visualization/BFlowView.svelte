@@ -25,7 +25,7 @@
 
 	const channel = postal.channel("b-flow-view");
 
-	const { bflowRunResult, bflowviz } = $props();
+	const { bflow, bflowviz, bflowRunResult } = $props();
 
 	const nodeTypes = {
 		ENTRY: EntryNode,
@@ -143,6 +143,46 @@
 				<div
 					class="w-full py-10 flex flex-col justify-start items-start gap-4"
 				>
+					{#if bflowRunResult && bflowRunResult.resultLink}
+						<div
+							class="w-full card rounded-none bg-base-100 shadow-lg border border-surface-50-950 p-4 flex flex-col justify-start items-start gap-3"
+						>
+							<div
+								class="w-full flex justify-start items-center gap-2"
+							>
+								<span class="flex-1 font-bold">Run BFlow</span>
+								<span
+									class="badge-icon preset-filled-success-500"
+								>
+									<Check size={16} />
+								</span>
+							</div>
+							<div class="text-xs text-surface-300">
+								Successfully ran BFlow
+							</div>
+							<div class="flex justify-start items-center gap-2">
+								<div
+									class="flex justify-start items-center gap-1"
+								>
+									<Clock size={16} />
+									<span
+										>{format(
+											new Date(bflowRunResult.finishedAt),
+											"Pp",
+											{ locale: enUS },
+										)}</span
+									>
+								</div>
+								<div class="font-bold">|</div>
+								<a
+									class="text-primary-500"
+									href={bflowRunResult.resultLink}
+									target="_blank">Result Link</a
+								>
+							</div>
+						</div>
+					{/if}
+
 					{#each [...bflowviz.nodes].reverse() as node}
 						{@const nodeResult = bflowRunResult[node.id]}
 						{@const content = _.find(
@@ -285,6 +325,91 @@
 							</div>
 						{/if}
 					{/each}
+
+					{#if bflowviz && bflowviz.resultLink}
+						<div
+							class="w-full card rounded-none bg-base-100 shadow-lg border border-surface-50-950 p-4 flex flex-col justify-start items-start gap-3"
+						>
+							<div
+								class="w-full flex justify-start items-center gap-2"
+							>
+								<span class="flex-1 font-bold"
+									>Convert BFlow to BFlowViz</span
+								>
+								<span
+									class="badge-icon preset-filled-success-500"
+								>
+									<Check size={16} />
+								</span>
+							</div>
+							<div class="text-xs text-surface-300">
+								Successfully converted BFlow to BFlowViz
+							</div>
+							<div class="flex justify-start items-center gap-2">
+								<div
+									class="flex justify-start items-center gap-1"
+								>
+									<Clock size={16} />
+									<span
+										>{format(
+											new Date(bflowviz.finishedAt),
+											"Pp",
+											{ locale: enUS },
+										)}</span
+									>
+								</div>
+								<div class="font-bold">|</div>
+								<a
+									class="text-primary-500"
+									href={bflowviz.resultLink}
+									target="_blank">Result Link</a
+								>
+							</div>
+						</div>
+					{/if}
+
+					{#if bflow && bflow.resultLink}
+						<div
+							class="w-full card rounded-none bg-base-100 shadow-lg border border-surface-50-950 p-4 flex flex-col justify-start items-start gap-3"
+						>
+							<div
+								class="w-full flex justify-start items-center gap-2"
+							>
+								<span class="flex-1 font-bold"
+									>Convert Markdoc Custom Element to BFlow</span
+								>
+								<span
+									class="badge-icon preset-filled-success-500"
+								>
+									<Check size={16} />
+								</span>
+							</div>
+							<div class="text-xs text-surface-300">
+								Successfully converted Markdoc Custom Element to
+								BFlow
+							</div>
+							<div class="flex justify-start items-center gap-2">
+								<div
+									class="flex justify-start items-center gap-1"
+								>
+									<Clock size={16} />
+									<span
+										>{format(
+											new Date(bflow.finishedAt),
+											"Pp",
+											{ locale: enUS },
+										)}</span
+									>
+								</div>
+								<div class="font-bold">|</div>
+								<a
+									class="text-primary-500"
+									href={bflow.resultLink}
+									target="_blank">Result Link</a
+								>
+							</div>
+						</div>
+					{/if}
 				</div>
 			</div>
 		{:else}

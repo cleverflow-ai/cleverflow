@@ -552,7 +552,6 @@ const runNodeWithMcpTool = async (session: Session, context: TaskContext, bflow:
                     if (node.id) {
                         callToolResult.nodeId = node.id;
 
-                        callToolResult.finishedAt = new Date().toISOString();
                         await PersistenceService.saveRunBFlowNodeOutput(session, node.id, callToolResult);
 
                         outs[node.id] = callToolResult;
@@ -741,7 +740,6 @@ const runNodeUsingLLMAndV8 = async (session: Session, bflow: BFlow, outs: Record
             callToolResult.nodeId = node.id;
             callToolResult.jsCode = jsCode;
 
-            callToolResult.finishedAt = new Date().toISOString();
             await PersistenceService.saveRunBFlowNodeOutput(session, node.id, callToolResult);
 
             outs[node.id] = callToolResult;

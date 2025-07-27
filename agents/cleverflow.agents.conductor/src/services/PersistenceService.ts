@@ -15,6 +15,7 @@ export default class PersistenceService {
 
             const pathToSaveBFlow = `${folderPath}/${fileNameWithoutExt}-${instanceId}.bflow.json`;
             bflow.resultLink = `${gitFileReference.getRepoAbsolutePath()}/${pathToSaveBFlow}`;
+            bflow.finishedAt = new Date().toISOString();
             await McpIO.saveFileContents(
                 gitFileReference.url,
                 gitFileReference.token,
@@ -27,6 +28,7 @@ export default class PersistenceService {
 
             const pathToSaveBFlowViz = `${folderPath}/${fileNameWithoutExt}-${instanceId}.bflowviz.json`;
             bflowviz.resultLink = `${gitFileReference.getRepoAbsolutePath()}/${pathToSaveBFlowViz}`;
+            bflowviz.finishedAt = new Date().toISOString();
             await McpIO.saveFileContents(
                 gitFileReference.url,
                 gitFileReference.token,
@@ -50,6 +52,7 @@ export default class PersistenceService {
             const fileNameWithoutExt = path.basename(gitFileReference.path, path.extname(gitFileReference.path));
             const pathToSave = `${folderPath}/${fileNameWithoutExt}-${instanceId}-${session.id}.bflowrun.json`;
             outs.resultLink = `${gitFileReference.getRepoAbsolutePath()}/${pathToSave}`;
+            outs.finishedAt = new Date().toISOString();
             await McpIO.saveFileContents(
                 gitFileReference.url,
                 gitFileReference.token,
@@ -72,6 +75,7 @@ export default class PersistenceService {
             const fileNameWithoutExt = path.basename(gitFileReference.path, path.extname(gitFileReference.path));
             const pathToSave = `${folderPath}/${fileNameWithoutExt}-${instanceId}-${session.id}-${nodeId}.json`;
             callToolResult.resultLink = `${gitFileReference.getRepoAbsolutePath()}/${pathToSave}`;
+            callToolResult.finishedAt = new Date().toISOString();
             await McpIO.saveFileContents(
                 gitFileReference.url,
                 gitFileReference.token,

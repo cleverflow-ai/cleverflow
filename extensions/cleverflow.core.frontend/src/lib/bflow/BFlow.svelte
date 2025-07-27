@@ -128,8 +128,9 @@
 			{:else}
 				<div class="relative w-full h-full">
 					<BFlowView
-						bflowRunResult={controller.bflowRunResult}
+						bflow={controller.bflow}
 						bflowviz={controller.bflowviz}
+						bflowRunResult={controller.bflowRunResult}
 					>
 						<div slot="run-button">
 							<div class="w-full flex justify-center mt-4 mb-6">
