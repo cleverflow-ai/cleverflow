@@ -13,23 +13,27 @@ export default class PersistenceService {
             const folderPath = path.dirname(gitFileReference.path);
             const fileNameWithoutExt = path.basename(gitFileReference.path, path.extname(gitFileReference.path));
 
+            const pathToSaveBFlow = `${folderPath}/${fileNameWithoutExt}-${instanceId}.bflow.json`;
+            bflow.resultLink = `${gitFileReference.getRepoAbsolutePath()}/${pathToSaveBFlow}`;
             await McpIO.saveFileContents(
                 gitFileReference.url,
                 gitFileReference.token,
                 gitFileReference.branch,
                 gitFileReference.owner,
                 gitFileReference.repo,
-                `${folderPath}/${fileNameWithoutExt}-${instanceId}.bflow.json`,
+                pathToSaveBFlow,
                 JSON.stringify(bflow),
             );
 
+            const pathToSaveBFlowViz = `${folderPath}/${fileNameWithoutExt}-${instanceId}.bflowviz.json`;
+            bflowviz.resultLink = `${gitFileReference.getRepoAbsolutePath()}/${pathToSaveBFlowViz}`;
             await McpIO.saveFileContents(
                 gitFileReference.url,
                 gitFileReference.token,
                 gitFileReference.branch,
                 gitFileReference.owner,
                 gitFileReference.repo,
-                `${folderPath}/${fileNameWithoutExt}-${instanceId}.bflowviz.json`,
+                pathToSaveBFlowViz,
                 JSON.stringify(bflowviz),
             );
 
@@ -44,14 +48,15 @@ export default class PersistenceService {
             const instanceId = gitFileReference.hashedFileContent;
             const folderPath = path.dirname(gitFileReference.path);
             const fileNameWithoutExt = path.basename(gitFileReference.path, path.extname(gitFileReference.path));
-
+            const pathToSave = `${folderPath}/${fileNameWithoutExt}-${instanceId}-${session.id}.bflowrun.json`;
+            outs.resultLink = `${gitFileReference.getRepoAbsolutePath()}/${pathToSave}`;
             await McpIO.saveFileContents(
                 gitFileReference.url,
                 gitFileReference.token,
                 gitFileReference.branch,
                 gitFileReference.owner,
                 gitFileReference.repo,
-                `${folderPath}/${fileNameWithoutExt}-${instanceId}-${session.id}.bflowrun.json`,
+                pathToSave,
                 JSON.stringify(outs),
             );
         } catch (exception) {
