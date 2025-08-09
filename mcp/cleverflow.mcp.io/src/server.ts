@@ -160,7 +160,7 @@ function registerTools(server: McpServer) {
             owner: z.string(),
             repo: z.string(),
             path: z.string(),
-            content: z.string(),
+            content: z.any(),
         },
         async ({ url, token, branch, owner, repo, path, content }, extra) => {
 
@@ -181,7 +181,7 @@ function registerTools(server: McpServer) {
             }
 
             try {
-                const isSuccessful = await git.saveFileContent(branch, owner, repo, path, content, '');
+                const isSuccessful = await git.saveFileContent(branch, owner, repo, path, cleanText(typeof content === 'string' ? content : JSON.stringify(content)), '');
                 return {
                     isError: !isSuccessful,
                     content: [
@@ -313,4 +313,28 @@ function registerTools(server: McpServer) {
         }
     );
 
+}
+
+function cleanText(text: string) {
+    return text
+        // Remove control characters (except \n \r \t)
+        .replace(/[\x00-\x08\x0B\x0C\x0E-\x1F\x7F]/g, '')
+
+        // Remove invisible and no-break space characters
+        .replace(/[\u00A0\u1680\u180E\u2000-\u200F\u202F\u205F\u2060\u3000\uFEFF]/g, '')
+
+        // Remove zero-width characters: ZWSP, ZWNJ, ZWJ
+        .replace(/[\u200B-\u200D]/g, '')
+
+        // Remove emojis and extended pictographic symbols (requires Node 16+)
+        .replace(/[\p{Emoji_Presentation}\p{Extended_Pictographic}]/gu, '')
+
+        // Remove other invisible formatting Unicode characters
+        .replace(/\p{Cf}/gu, '')  // Includes various invisible formatting characters
+
+        // Remove private-use and unassigned Unicode characters
+        .replace(/\p{Co}|\p{Cn}/gu, '')
+
+        // Trim leading and trailing whitespace
+        .trim();
 }

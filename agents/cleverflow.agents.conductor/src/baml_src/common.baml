@@ -113,55 +113,72 @@ function DetectFieldEncodings(mcpTool: string) -> FieldEncoding[] {
 
 function MatchNodeOutputsToToolInputs(upstreamResult: string, mcpTool: string) -> OutputInputMatch[] {
     client Ollama_Tool
-    prompt #"
-        /no_think
-
+    prompt #"/no_think
         You are an expert in extracting matching values from JSON structures.
 
         You are given:
 
-        - `upstreamResult`: the input JSON object for a MCP tool.
-        - `mcpTool`: the full JSON Schema definition of the MCP tool, including its input schema.
+            upstreamResult: the input JSON object for a MCP tool.
 
-        ### JSONata syntax examples:
+            mcpTool: the full JSON Schema definition of the MCP tool, including its input schema.
 
-        - Access a field: `object.property`
-        - Extract list of values from array (returns array): `array[].property`  
-        → e.g., `content[].resource.blob` returns all `blob` values from each `content` item
-        - Extract single value: `a.b.c`
-        - Access specific array element: `array[0].property`
-        - Filter array (if needed): `array[field="value"].target`
+        JSONata syntax examples:
+            Access a field: object.property
 
-        ### Rules:
+            Extract list of values from array (returns array): array[].property
+            → e.g., content[].resource.blob returns all blob values from each content item
 
-        - The expression must always start from the root of `upstreamResult`.
-        - Do not use optional chaining (`?`, `?.`, `[]?`) or JavaScript-like constructs.
-        - Do not prefix expressions with variables like `$upstreamResult`.
-        - The expression must clearly and precisely indicate the path to the correct data in `upstreamResult`, even if not fully valid JSONata.
-        - Matching accuracy is top priority.
-        - If `isFieldArray` is `true`, the `query` must return an array.
-        - If `isFieldArray` is `false`, the `query` must return a single object or value.
-        - Only include required fields in the output — i.e., fields listed in `mcpTool.inputSchema.required`.
-        - Do not include any fields that are not in the required list.
-        - All output objects must have `isFieldRequired: true`.
+            Extract single value: a.b.c
 
-        ### Your task:
+            Access specific array element: array[0].property
 
-        For each input field listed in the `"required"` array of `mcpTool.inputSchema`, generate an object with the following structure:
+            Filter array (if needed): array[field="value"].target
 
-        - `field`: the name of the required input field.
-        - `isFieldArray`: `true` if the input field's type in the schema is `"array"` (i.e., `mcpTool.inputSchema.properties[field].type === "array"`), otherwise `false`.
-        - `isFieldRequired`: always `true`, because you are only including fields listed in `mcpTool.inputSchema.required`. (If the field is not in the `required` array, it must not be included in the output at all.)
-        - `query`: a best-effort JSONata-like expression that extracts the corresponding value from `upstreamResult`, respecting the rules above.
-        - `queryLanguage`: always `"jsonata"`
+        Rules:
+            The expression must always start from the root of upstreamResult.
+
+            Do not use optional chaining (?, ?., []?) or JavaScript-like constructs.
+
+            Do not prefix expressions with variables like $upstreamResult.
+
+            The expression must clearly and precisely indicate the path to the correct data in upstreamResult, even if not fully valid JSONata.
+
+            Matching accuracy is the top priority.
+
+            If isFieldArray is true, the query must return an array.
+
+            If isFieldArray is false, the query must return a single object or value.
+
+            Only include required fields in the output — i.e., fields listed in mcpTool.inputSchema.required.
+
+            Do not include any fields that are not in the required list.
+
+            All output objects must have isFieldRequired: true.
+
+            Each field must have a distinct and accurate query that specifically points to its value in upstreamResult. Do not reuse the same query for multiple fields unless they genuinely share the exact same data source.
+
+            If the corresponding value for a field cannot be found in upstreamResult, set query to an empty string "".
+
+        Your task:
+            For each input field listed in the "required" array of mcpTool.inputSchema, generate an object with the following structure:
+
+            field: the name of the required input field.
+
+            isFieldArray: true if the input field's type in the schema is "array" (i.e., mcpTool.inputSchema.properties[field].type === "array"), otherwise false.
+
+            isFieldRequired: always true, because you are only including fields listed in mcpTool.inputSchema.required.
+
+            query: a best-effort JSONata-like expression that extracts the corresponding value from upstreamResult, respecting the rules above.
+
+            queryLanguage: always "jsonata"
 
         Inputs:
 
-        - `upstreamResult`:  
-        {{upstreamResult}}
+            upstreamResult:
+            {{upstreamResult}}
 
-        - `mcpTool`:  
-        {{mcpTool}}
+            mcpTool:
+            {{mcpTool}}
 
         ---
         {{ ctx.output_format }}

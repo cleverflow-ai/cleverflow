@@ -94,7 +94,7 @@ export default class Session {
     getMcpClientTools(): BFlowNodeTool[] {
         return this.mcpClients.flatMap((c) => c.tools.map((tool) => ({
             name: tool.name,
-            description: `Tool ${tool.name} from MCP client`,
+            description: tool.description ?? `Tool ${tool.name} from MCP client`,
             inputSchema: {
                 required: tool.inputSchema?.required ?? []
             }

@@ -1,4 +1,4 @@
-import { CallToolResultSchema, CompatibilityCallToolResultSchema, ListToolsResultSchema } from "@modelcontextprotocol/sdk/types.js";
+import { CallToolResultSchema, CompatibilityCallToolResultSchema, ListToolsResultSchema, Progress } from "@modelcontextprotocol/sdk/types.js";
 import { TaskContext, TaskYieldUpdate } from '@cleverflow-ai/cleverflow.agents/server';
 import { Task, TaskStatus, DataPart } from "@cleverflow-ai/cleverflow.agents/schema";
 import _, { create } from 'lodash';
@@ -392,9 +392,15 @@ const runNodeWithMcpTool = async (session: Session, context: TaskContext, bflow:
 
                 for (let i = 0; i < mappingInputOutput.length; i++) {
                     const item: OutputInputMatch = mappingInputOutput[i];
-                    if (item.queryLanguage === 'jsonata') {
-                        const expression = jsonata(item.query);
-                        upstreamResultsMapping[item.field] = await expression.evaluate(upstreamResults);
+                    if (item.queryLanguage === 'jsonata' && item.query) {
+                        try {
+                            const expression = jsonata(item.query);
+                            const expressionData = await expression.evaluate(upstreamResults);
+                            if (expressionData) {
+                                upstreamResultsMapping[item.field] = expressionData;
+                            }
+                        } catch (exception) {
+                        }
                     }
                 }
             }
@@ -441,14 +447,8 @@ const runNodeWithMcpTool = async (session: Session, context: TaskContext, bflow:
             //     }
             // });
 
-            console.log('>>>>>>>>>>>>>>>>>>>>>> ');
-            console.log('>>>>>>>>>>>>>>>>>>>>>> ');
-            console.log('>>>>>>>>>>>>>>>>>>>>>> ');
-            console.log('>>>>>>>>>>>>>>>>>>>>>> ');
-            console.log('>>>> node.toolInput');
-            console.log(node.toolInput);
             const clientSession = extractClientSession(context);
-            const extractedInputFromNodeContent = JSON.parse(node.toolInput ?? '{}');
+            const extractedInputFromNodeContent = JSON.parse(node.toolInputJson ?? '{}');
             userInputForCurrentNode = { ...extractedInputFromNodeContent, ...userInputForCurrentNode };
 
             const canCallTool = isValidInput(requiredParameters || [], userInputForCurrentNode, upstreamResultsMapping)
@@ -512,11 +512,40 @@ const runNodeWithMcpTool = async (session: Session, context: TaskContext, bflow:
 
             try {
 
+                mcpClient.client.setNotificationHandler(z.object({
+                    method: z.literal("notifications/message"),
+                    params: z.object({
+                        level: z.string(),
+                        message: z.string()
+                    }).optional()
+                }), (notification) => {
+                    outs[node.id] = {};
+                    node.stateMessage = notification.params?.message ?? 'Received notification from MCP Tool';
+                    yieldUpdate({
+                        state: 'working',
+                        message: {
+                            role: 'agent',
+                            parts: [
+                                { type: 'text', text: 'update' },
+                                {
+                                    type: 'data',
+                                    data: {
+                                        bflow: bflow,
+                                        outs: outs,
+                                        createdAt: new Date(),
+                                    }
+                                }
+                            ]
+                        }
+                    });
+                });
                 const callToolResult = await mcpClient.client.callTool(
                     inputForCallTool,
                     z.any(),
                     {
-                        timeout: 3600 * 1000,
+                        timeout: 1 * 60 * 60 * 1000,
+                        resetTimeoutOnProgress: true,
+                        maxTotalTimeout: 1 * 60 * 60 * 1000,
                     },
                 );
 
@@ -817,39 +846,6 @@ const runNodeUsingLLM = async (session: Session, bflow: BFlow, outs: Record<stri
     }
 
     if (node.repeat && Array.isArray(upstreamData)) {
-        // for (let i = 0; i < upstreamData.length; i++) {
-        //     const promptInput = upstreamData[i];
-        //     node.stateMessage = `${i + 1}/${upstreamData.length} completed!`;
-        //     let result = await b.ExecuteDynamicTask(
-        //         node.description,
-        //         promptInput ? JSON.stringify(promptInput) : '',
-        //         {
-        //             clientRegistry: new Clients({ primary: Clients.OllamaTool }).registry
-        //         }
-        //     );
-
-        //     nodeOutput.content[0].resource.blob.push(result);
-
-        //     outs[node.id] = nodeOutput;
-
-        //     yieldUpdate({
-        //         state: 'working',
-        //         message: {
-        //             role: 'agent',
-        //             parts: [{
-        //                 type: 'text',
-        //                 text: 'update'
-        //             }, {
-        //                 type: 'data',
-        //                 data: {
-        //                     bflow: bflow,
-        //                     outs: outs,
-        //                     createdAt: new Date(),
-        //                 }
-        //             }]
-        //         }
-        //     });
-        // }
 
         outs[node.id] = nodeOutput;
 
@@ -959,6 +955,7 @@ const isValidInput = (required: Record<string, any>, userInput: Record<string, a
         ...userInput,
         ...upstreamResults,
     };
+
     return required.every(key => {
         const value = mergedInput[key];
         return value !== undefined && value !== null && value !== '';
@@ -1040,7 +1037,17 @@ const createSkeleton = (obj: any): any => {
     } else if (obj && typeof obj === 'object') {
         const result = {};
         for (const key in obj) {
-            result[key] = createSkeleton(obj[key]);
+            if (['blob'].includes(key)) {
+                if (Array.isArray(obj[key])) {
+                    result[key] = [];
+                } else if (typeof obj[key] === 'object') {
+                    result[key] = {};
+                } else {
+                    result[key] = 'dummy';
+                }
+            } else {
+                result[key] = createSkeleton(obj[key]);
+            }
         }
         return result;
     } else {

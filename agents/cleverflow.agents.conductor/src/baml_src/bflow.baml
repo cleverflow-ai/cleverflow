@@ -45,7 +45,7 @@ class BFlowNode {
   stateMessage string?
   goto BFlowNode[]?
   tool BFlowNodeTool?
-  toolInput string?
+  toolInputJson string?
   inputs string[]?
   output BFlowNodeOutput?
 }
@@ -73,7 +73,8 @@ class BFlowViz {
 
 function ParseMarkdocBFlowElementToBFlow(text: string, tools: BFlowNodeTool[]) -> BFlow {
     client Ollama_Code
-    prompt #"
+    prompt #"/no_think
+
         You are an expert in Markdoc and Behavior Trees.
 
         ## Task: Convert Markdoc to JSON Tree
@@ -101,31 +102,38 @@ function ParseMarkdocBFlowElementToBFlow(text: string, tools: BFlowNodeTool[]) -
         
         If a node has children, assign them to its goto field.
 
-        Nodes of type ACTION or CONDITION must be assigned a tool from the provided list.
-        If prompt is true or no tool can be determined:
-            Force the tool to:
-            ```json
+        For nodes of type ACTION or CONDITION:
+            Assign the most appropriate tool to the node by comparing the node's description text with the name and description fields of each tool in the provided list of MCP tools.
+            Matching must be based on clear, explicit evidence in the node's description (e.g., keywords, function purpose, context) that corresponds to the tool's name or description.
+            If the node's prompt property is true OR no matching tool can be confidently determined, then assign exactly:
                 {
                     "name": "execute_prompt",
-                    "description": "Executes a natural language prompt using a Large Language Model (LLM)".
+                    "description": "Executes a natural language prompt using a Large Language Model (LLM)",
                     "inputSchema": {}
                 }
-            ```
+            Do not guess, infer, or fabricate matches.
+            Do not create or modify tool definitions — only select from the provided tool list or use execute_prompt as specified.
+            Always output the assigned tool object exactly as defined, with correct field names and values.
 
         Analyze each node's text content to:
+            Detect references to outputs from previous nodes, and include those node ids in the inputs array.
+            For creating the toolInputJson property of an ACTION node:
+                The tool's inputSchema.required defines the list of required keys (e.g., url, apiKey, fileId, repo, path, etc.).
+                Extract only the values for these keys from the node's description using natural language understanding.
+                Do not infer, assume, guess, or fabricate any value. If a required key is not explicitly stated in the description, omit that key from the output.
+                If no required keys have matching values in the description, output {}.
+                The toolInputJson must be a single-line JSON string, properly escaped if needed.
+                Only include keys present in inputSchema.required and found in the description.
+                Examples:
+                    Description: "Fetching a gitea file from url https://example.com/api with key abc123"
+                    Required keys: baseUrl, apiKey
+                    Output: "toolInputJson": "{ \"baseUrl\": \"https://example.com/api\", \"apiKey\": \"abc123\" }"
 
-        Detect references to outputs from previous nodes, and include those node ids in the inputs array.
+                    Description: "Save the result from the previous task into the Gitea repository at given path \general/terminology.json`" Required keys:path Output:"toolInputJson": "{ "path": "general/terminology.json" }"`
 
-        For ACTION nodes, if the tool's inputSchema.required contains known keys (such as url, apiKey, fileId, repo, etc.), extract values only from the node's description using natural language understanding.
-            - Do not infer, assume, or fabricate any values beyond what is explicitly stated in the description.
-            - Use the required keys from the tool's inputSchema to guide which fields to extract and include them in a toolInput field as a JSON string.
-
-        Example:
-        If the node text is
-        Fetching a gitea file from url https://example.com/api with key abc123
-        and the tool requires baseUrl, apiKey, then
-
-        "toolInput": "{ \"baseUrl\": \"https://example.com/api\", \"apiKey\": \"abc123\" }"
+                    Description: "Download the file"
+                    Required keys: url, fileId
+                    Output: "toolInputJson": "{}"
         
         Return only the final JSON result — no extra explanations.
 
@@ -141,7 +149,8 @@ function ParseMarkdocBFlowElementToBFlow(text: string, tools: BFlowNodeTool[]) -
 
 function ParseBFlowToBFlowViz(bflow: string) -> BFlowViz {
     client Ollama_Code
-    prompt #"
+    prompt #"/no_think
+
         You are an expert in Markdoc, Behavior Tree, and JSON processing.
 
         ## Task 1: Flatten JSON Tree into Node Array
@@ -175,66 +184,15 @@ test Test_ParseMarkdocBFlowElementToBFlow {
     functions [ParseMarkdocBFlowElementToBFlow]
     args {
         text #"
-            {% b-flow id="analyze-selling-products-flow" %}
+            {% b-flow id="bflow-crawl-terminology" %}
                 {% sequence %}     
+                    {% task id="action_1" %}
+                        Crawl terminology data from MemoQWeb
+                    {% /task %}
                     
-                    {% action id="action_1" %}
-                        Extract all file paths matching the pattern:  
-                        `orders/{orderNumber}/Documentation/{positionInOrder}/{language}/{productVariant}/*.pdf`
-                    {% /action %}
-                    
-                    {% action id="action_2" %}
-                        Analyze File Paths.
-
-                        Write a JavaScript function that takes an array of file paths that come from the previous action node. Each path follows this pattern:
-                            orders/{orderNumber}/Documentation/{positionInOrder}/{language}/{productVariant}/{fileName}.pdf
-
-                        The function should:
-                            Use a regular expression with 5 capture groups to extract:
-                                orderNumber (string)
-                                positionInOrder (number)
-                                language (string)
-                                productVariant (string)
-                                fileName (string, without .pdf)
-                            Ignore paths that do not match the pattern.
-                            Return an array of extracted objects.
-                    {% /action %}
-                    
-                    {% action id="action_3" %}
-                        Fetch the content of an Excel file from Gitea located at `general/ENSOTypenschlÃ¼ssel.xlsx`.
-                    {% /action %}
-                    
-                    {% action id="action_4" %}
-                        Convert the Excel content from the action node with `id="action_3"` to plain text.
-                    {% /action %}
-
-                    {% action id="action_5"%}
-                        Prepare product variant data. Take the `productVariants` array from the action node with `id="action_2"` and the explanation string from the action node with `id="action_4"`.
-                        
-                        Your task is to write a JavaScript code snippet that does only the following:
-
-                            - `data[0]` is an array of product variants.
-                            - `data[1]` is a string explanation.
-                            - Create a new array named `mapped`, where each element is an object in the format `{ productVariant: <variant>, explanation: <explanation> }`.
-                            - Return `mapped` at the end.
-
-                        Output only the function body (no function declaration, IIFE, or `console.log`).
-                    {% /action %}
-                    
-                    {% action id="action_6" repeat="true" prompt="true" %}
-                        Analyze selling Products. Take the data list from the action node with `id="action_5"`.
-
-                        Prompt:
-                            Using the information provided in explanation, which describes the structure and meaning of each token in a 			product designation, extract all relevant product features from the following type key: productVariant.
-
-                            Return the result as a structured list showing:
-                            The name of each feature
-                            The corresponding value from productVariant
-                            A short interpretation based on explanation
-
-                            If any token is unclear or undefined in explanation, label it as "unspecified" and note that interpretation is not available. Ensure output is complete, concise, and aligns with the explanation logic.		
-                    {% /action %}
-
+                    {% task id="action_2" %}
+                        Save the result from the previous task into the Gitea repository at given path `general/terminology.json`
+                    {% /task %}		
                 {% /sequence %}
             {% /b-flow %}
         "#,
