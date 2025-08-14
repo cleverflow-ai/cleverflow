@@ -19,8 +19,11 @@ accelerator_options = AcceleratorOptions(
 )
 pipeline_options = PdfPipelineOptions()
 pipeline_options.accelerator_options = accelerator_options
+
 pipeline_options.do_ocr = True
 pipeline_options.do_table_structure = True
+pipeline_options.generate_page_images = True
+
 pipeline_options.table_structure_options.do_cell_matching = True
 
 # See also: https://github.com/docling-project/docling/blob/5d98bcea1bd03aff426f903211c931620ff8fcc1/docling/datamodel/base_models.py#L45

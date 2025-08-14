@@ -31,22 +31,21 @@ async def get_text_chunks(file_path: str):
             raw_bytes = f.read()
         encoded = base64.b64encode(raw_bytes).decode("ascii")
 
-        results = await client.call_tool("convert_doc_files_into_text_chunks", {
-            "chunk_size": 64,
+        response = await client.call_tool("convert_doc_files_into_text_chunks", {
+            "chunk_size": 512,
             "payloads": [
                 encoded
             ]
         })
 
-        # print(dir(results[0]))
+        print(dir(response))
 
-        # If results is a list of Pydantic models
-        serializable = [r.model_dump() for r in results]
+        # Directly dump results object to JSON
+        out_path = f"{file_path}.json"
+        with open(out_path, "w", encoding="utf-8") as f:
+            json.dump(response, f, indent=2, ensure_ascii=False, default=str)
 
-        with open("{file_path}.txt".format(file_path=file_path), "w", encoding="utf-8") as f:
-            json.dump(serializable, f, indent=2, ensure_ascii=False)
-        
-        print(f"Results saved to {file_path}.txt")
+        print(f"Results saved to {out_path}")
 
 async def test():
     await asyncio.gather(
