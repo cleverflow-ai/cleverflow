@@ -1,1 +1,68 @@
-"CallToolResult(content=[TextContent(type='text', text='{\"data\":[{\"file_size_bytes\":37153,\"header_hex\":\"504b0304140000000800\",\"text\":{\"text\":\"# Planet History\\\\n\\\\n## Formation of the Solar System\\\\n\\\\nAround 4.6 billion years ago, the Solar System formed from a cloud of gas and dust.\\\\n\\\\n## Accretion of Planetary Bodies\\\\n\\\\nPlanetesimals collided and stuck together, forming the early planets.\\\\n\\\\n## The Hadean Eon\\\\n\\\\nThe Earth was extremely hot with a molten surface and frequent asteroid impacts.\\\\n\\\\n## Formation of the Moon\\\\n\\\\nA Mars-sized body collided with Earth, and debris formed the Moon.\\\\n\\\\n## The Archean Eon\\\\n\\\\nThe Earth\\'s crust cooled and oceans formed; early microbial life appeared.\\\\n\\\\n## The Proterozoic Eon\\\\n\\\\nOxygen started to accumulate in the atmosphere; more complex life forms evolved.\\\\n\\\\n## The Phanerozoic Eon\\\\n\\\\nMajor diversification of life occurred, including the Cambrian Explosion.\\\\n\\\\n## Age of Dinosaurs\\\\n\\\\nDinosaurs dominated the planet during the Mesozoic era.\\\\n\\\\n## Mass Extinction Events\\\\n\\\\nEarth experienced several mass extinctions that reshaped life.\\\\n\\\\n## Rise of Mammals and Humans\\\\n\\\\nAfter the dinosaurs, mammals thrived, eventually leading to the rise of humans.\",\"pageNumbers\":[],\"pageImages\":[]},\"text_chunks\":[{\"text\":\"Planet History\\\\nFormation of the Solar System\\\\nAround 4.6 billion years ago, the Solar System formed from a cloud of gas and dust.\",\"pageNumbers\":[],\"pageImages\":[]},{\"text\":\"Planet History\\\\nAccretion of Planetary Bodies\\\\nPlanetesimals collided and stuck together, forming the early planets.\",\"pageNumbers\":[],\"pageImages\":[]},{\"text\":\"Planet History\\\\nThe Hadean Eon\\\\nThe Earth was extremely hot with a molten surface and frequent asteroid impacts.\",\"pageNumbers\":[],\"pageImages\":[]},{\"text\":\"Planet History\\\\nFormation of the Moon\\\\nA Mars-sized body collided with Earth, and debris formed the Moon.\",\"pageNumbers\":[],\"pageImages\":[]},{\"text\":\"Planet History\\\\nThe Archean Eon\\\\nThe Earth\\'s crust cooled and oceans formed; early microbial life appeared.\",\"pageNumbers\":[],\"pageImages\":[]},{\"text\":\"Planet History\\\\nThe Proterozoic Eon\\\\nOxygen started to accumulate in the atmosphere; more complex life forms evolved.\",\"pageNumbers\":[],\"pageImages\":[]},{\"text\":\"Planet History\\\\nThe Phanerozoic Eon\\\\nMajor diversification of life occurred, including the Cambrian Explosion.\",\"pageNumbers\":[],\"pageImages\":[]},{\"text\":\"Planet History\\\\nAge of Dinosaurs\\\\nDinosaurs dominated the planet during the Mesozoic era.\",\"pageNumbers\":[],\"pageImages\":[]},{\"text\":\"Planet History\\\\nMass Extinction Events\\\\nEarth experienced several mass extinctions that reshaped life.\",\"pageNumbers\":[],\"pageImages\":[]},{\"text\":\"Planet History\\\\nRise of Mammals and Humans\\\\nAfter the dinosaurs, mammals thrived, eventually leading to the rise of humans.\",\"pageNumbers\":[],\"pageImages\":[]}],\"duration\":[0.025362375017721206]}]}', annotations=None, meta=None)], structured_content={'data': [{'file_size_bytes': 37153, 'header_hex': '504b0304140000000800', 'text': {'text': \"# Planet History\\n\\n## Formation of the Solar System\\n\\nAround 4.6 billion years ago, the Solar System formed from a cloud of gas and dust.\\n\\n## Accretion of Planetary Bodies\\n\\nPlanetesimals collided and stuck together, forming the early planets.\\n\\n## The Hadean Eon\\n\\nThe Earth was extremely hot with a molten surface and frequent asteroid impacts.\\n\\n## Formation of the Moon\\n\\nA Mars-sized body collided with Earth, and debris formed the Moon.\\n\\n## The Archean Eon\\n\\nThe Earth's crust cooled and oceans formed; early microbial life appeared.\\n\\n## The Proterozoic Eon\\n\\nOxygen started to accumulate in the atmosphere; more complex life forms evolved.\\n\\n## The Phanerozoic Eon\\n\\nMajor diversification of life occurred, including the Cambrian Explosion.\\n\\n## Age of Dinosaurs\\n\\nDinosaurs dominated the planet during the Mesozoic era.\\n\\n## Mass Extinction Events\\n\\nEarth experienced several mass extinctions that reshaped life.\\n\\n## Rise of Mammals and Humans\\n\\nAfter the dinosaurs, mammals thrived, eventually leading to the rise of humans.\", 'pageNumbers': [], 'pageImages': []}, 'text_chunks': [{'text': 'Planet History\\nFormation of the Solar System\\nAround 4.6 billion years ago, the Solar System formed from a cloud of gas and dust.', 'pageNumbers': [], 'pageImages': []}, {'text': 'Planet History\\nAccretion of Planetary Bodies\\nPlanetesimals collided and stuck together, forming the early planets.', 'pageNumbers': [], 'pageImages': []}, {'text': 'Planet History\\nThe Hadean Eon\\nThe Earth was extremely hot with a molten surface and frequent asteroid impacts.', 'pageNumbers': [], 'pageImages': []}, {'text': 'Planet History\\nFormation of the Moon\\nA Mars-sized body collided with Earth, and debris formed the Moon.', 'pageNumbers': [], 'pageImages': []}, {'text': \"Planet History\\nThe Archean Eon\\nThe Earth's crust cooled and oceans formed; early microbial life appeared.\", 'pageNumbers': [], 'pageImages': []}, {'text': 'Planet History\\nThe Proterozoic Eon\\nOxygen started to accumulate in the atmosphere; more complex life forms evolved.', 'pageNumbers': [], 'pageImages': []}, {'text': 'Planet History\\nThe Phanerozoic Eon\\nMajor diversification of life occurred, including the Cambrian Explosion.', 'pageNumbers': [], 'pageImages': []}, {'text': 'Planet History\\nAge of Dinosaurs\\nDinosaurs dominated the planet during the Mesozoic era.', 'pageNumbers': [], 'pageImages': []}, {'text': 'Planet History\\nMass Extinction Events\\nEarth experienced several mass extinctions that reshaped life.', 'pageNumbers': [], 'pageImages': []}, {'text': 'Planet History\\nRise of Mammals and Humans\\nAfter the dinosaurs, mammals thrived, eventually leading to the rise of humans.', 'pageNumbers': [], 'pageImages': []}], 'duration': [0.025362375017721206]}]}, data={'data': [{'file_size_bytes': 37153, 'header_hex': '504b0304140000000800', 'text': {'text': \"# Planet History\\n\\n## Formation of the Solar System\\n\\nAround 4.6 billion years ago, the Solar System formed from a cloud of gas and dust.\\n\\n## Accretion of Planetary Bodies\\n\\nPlanetesimals collided and stuck together, forming the early planets.\\n\\n## The Hadean Eon\\n\\nThe Earth was extremely hot with a molten surface and frequent asteroid impacts.\\n\\n## Formation of the Moon\\n\\nA Mars-sized body collided with Earth, and debris formed the Moon.\\n\\n## The Archean Eon\\n\\nThe Earth's crust cooled and oceans formed; early microbial life appeared.\\n\\n## The Proterozoic Eon\\n\\nOxygen started to accumulate in the atmosphere; more complex life forms evolved.\\n\\n## The Phanerozoic Eon\\n\\nMajor diversification of life occurred, including the Cambrian Explosion.\\n\\n## Age of Dinosaurs\\n\\nDinosaurs dominated the planet during the Mesozoic era.\\n\\n## Mass Extinction Events\\n\\nEarth experienced several mass extinctions that reshaped life.\\n\\n## Rise of Mammals and Humans\\n\\nAfter the dinosaurs, mammals thrived, eventually leading to the rise of humans.\", 'pageNumbers': [], 'pageImages': []}, 'text_chunks': [{'text': 'Planet History\\nFormation of the Solar System\\nAround 4.6 billion years ago, the Solar System formed from a cloud of gas and dust.', 'pageNumbers': [], 'pageImages': []}, {'text': 'Planet History\\nAccretion of Planetary Bodies\\nPlanetesimals collided and stuck together, forming the early planets.', 'pageNumbers': [], 'pageImages': []}, {'text': 'Planet History\\nThe Hadean Eon\\nThe Earth was extremely hot with a molten surface and frequent asteroid impacts.', 'pageNumbers': [], 'pageImages': []}, {'text': 'Planet History\\nFormation of the Moon\\nA Mars-sized body collided with Earth, and debris formed the Moon.', 'pageNumbers': [], 'pageImages': []}, {'text': \"Planet History\\nThe Archean Eon\\nThe Earth's crust cooled and oceans formed; early microbial life appeared.\", 'pageNumbers': [], 'pageImages': []}, {'text': 'Planet History\\nThe Proterozoic Eon\\nOxygen started to accumulate in the atmosphere; more complex life forms evolved.', 'pageNumbers': [], 'pageImages': []}, {'text': 'Planet History\\nThe Phanerozoic Eon\\nMajor diversification of life occurred, including the Cambrian Explosion.', 'pageNumbers': [], 'pageImages': []}, {'text': 'Planet History\\nAge of Dinosaurs\\nDinosaurs dominated the planet during the Mesozoic era.', 'pageNumbers': [], 'pageImages': []}, {'text': 'Planet History\\nMass Extinction Events\\nEarth experienced several mass extinctions that reshaped life.', 'pageNumbers': [], 'pageImages': []}, {'text': 'Planet History\\nRise of Mammals and Humans\\nAfter the dinosaurs, mammals thrived, eventually leading to the rise of humans.', 'pageNumbers': [], 'pageImages': []}], 'duration': [0.025362375017721206]}]}, is_error=False)"
+{
+  "data": [
+    {
+      "file_size": 37153,
+      "header_hex": "504b0304140000000800",
+      "text": {
+        "text": "# Planet History\n\n## Formation of the Solar System\n\nAround 4.6 billion years ago, the Solar System formed from a cloud of gas and dust.\n\n## Accretion of Planetary Bodies\n\nPlanetesimals collided and stuck together, forming the early planets.\n\n## The Hadean Eon\n\nThe Earth was extremely hot with a molten surface and frequent asteroid impacts.\n\n## Formation of the Moon\n\nA Mars-sized body collided with Earth, and debris formed the Moon.\n\n## The Archean Eon\n\nThe Earth's crust cooled and oceans formed; early microbial life appeared.\n\n## The Proterozoic Eon\n\nOxygen started to accumulate in the atmosphere; more complex life forms evolved.\n\n## The Phanerozoic Eon\n\nMajor diversification of life occurred, including the Cambrian Explosion.\n\n## Age of Dinosaurs\n\nDinosaurs dominated the planet during the Mesozoic era.\n\n## Mass Extinction Events\n\nEarth experienced several mass extinctions that reshaped life.\n\n## Rise of Mammals and Humans\n\nAfter the dinosaurs, mammals thrived, eventually leading to the rise of humans.",
+        "pageNumbers": [],
+        "pageImages": []
+      },
+      "text_chunks": [
+        {
+          "text": "Planet History\nFormation of the Solar System\nAround 4.6 billion years ago, the Solar System formed from a cloud of gas and dust.",
+          "pageNumbers": [],
+          "pageImages": []
+        },
+        {
+          "text": "Planet History\nAccretion of Planetary Bodies\nPlanetesimals collided and stuck together, forming the early planets.",
+          "pageNumbers": [],
+          "pageImages": []
+        },
+        {
+          "text": "Planet History\nThe Hadean Eon\nThe Earth was extremely hot with a molten surface and frequent asteroid impacts.",
+          "pageNumbers": [],
+          "pageImages": []
+        },
+        {
+          "text": "Planet History\nFormation of the Moon\nA Mars-sized body collided with Earth, and debris formed the Moon.",
+          "pageNumbers": [],
+          "pageImages": []
+        },
+        {
+          "text": "Planet History\nThe Archean Eon\nThe Earth's crust cooled and oceans formed; early microbial life appeared.",
+          "pageNumbers": [],
+          "pageImages": []
+        },
+        {
+          "text": "Planet History\nThe Proterozoic Eon\nOxygen started to accumulate in the atmosphere; more complex life forms evolved.",
+          "pageNumbers": [],
+          "pageImages": []
+        },
+        {
+          "text": "Planet History\nThe Phanerozoic Eon\nMajor diversification of life occurred, including the Cambrian Explosion.",
+          "pageNumbers": [],
+          "pageImages": []
+        },
+        {
+          "text": "Planet History\nAge of Dinosaurs\nDinosaurs dominated the planet during the Mesozoic era.",
+          "pageNumbers": [],
+          "pageImages": []
+        },
+        {
+          "text": "Planet History\nMass Extinction Events\nEarth experienced several mass extinctions that reshaped life.",
+          "pageNumbers": [],
+          "pageImages": []
+        },
+        {
+          "text": "Planet History\nRise of Mammals and Humans\nAfter the dinosaurs, mammals thrived, eventually leading to the rise of humans.",
+          "pageNumbers": [],
+          "pageImages": []
+        }
+      ],
+      "duration": [
+        0.035315375000209315
+      ]
+    }
+  ]
+}

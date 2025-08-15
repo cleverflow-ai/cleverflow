@@ -15,15 +15,15 @@ app = typer.Typer()
 mcp = FastMCP("CLEVER°FLOW | Conversion MCP")
 
 
-@mcp.tool()
-def convert_doc_files_into_text_chunks(
+@mcp.tool
+def extract_texts_and_text_trunks(
     payloads: list[
-        Annotated[str, {"media_type": "application/octet-stream", "description": "Base64-encoded document data"}]
+        Annotated[str, {"media_type": "application/octet-stream", "description": "Base64-encoded document or file data"}]
     ],
     chunk_size: Annotated[int, {"default": 512, "description": "Size of each chunk in bytes"}] = 512
 ) -> dict:
     """
-    Convert uploaded document files (PDF, Images, DOCX, PPTX, HTML) into structured JSON with
+    Convert uploaded document files into structured JSON with
     complete text, per-page images, and accurate page number tracking via Docling provenance.
 
     **Features**
@@ -49,47 +49,54 @@ def convert_doc_files_into_text_chunks(
     This ensures that each chunk’s `pageNumbers` array is accurate and directly corresponds to
     the original document pages.
 
-    **Input**
-    ---------
+    **Allowed Input Formats**
+    -------------------------
+    Base64-encoded binary data for one of the following:
+      - **PDF** (`application/pdf`)
+      - **DOCX** (Microsoft Word)
+      - **PPTX** (Microsoft PowerPoint)
+      - **HTML** (`text/html`)
+      - **Image** (PNG, JPEG, etc.)
+      - **AsciiDoc** (`.adoc`)
+      - **Markdown** (`.md`)
+      - **CSV** (`text/csv`)
+      - **XLSX** (Microsoft Excel)
+      - **XML_USPTO** (USPTO patent format)
+      - **XML_JATS** (JATS XML for scholarly articles)
+      - **JSON_DOCLING** (Docling JSON serialization)
+      - **AUDIO** (supported audio formats for transcription)
+
+    **Parameters**
+    --------------
     payloads : list[str]
-        Base64-encoded binary document data.
-        Accepted formats:
-          - PDF
-          - DOCX (Microsoft Word)
-          - PPTX (Microsoft PowerPoint)
-          - HTML
-          - Image (PNG, JPEG, etc.)
+        Base64-encoded binary document data (must be one of the allowed formats).
 
     chunk_size : int, optional
         Target chunk size in tokens (default = 512).
 
-    **Output**
-    ----------
-    A JSON object in MCP-compliant format:
+    **Output Format**
+    -----------------
+    Returns an **MCP-compliant JSON object**:
     ```json
     {
       "data": [
         {
-          "file_size_bytes": 24583,
-          "header_hex": "255044462d312e34",
+          "file_size": <int>,                 // original file size in bytes
+          "header_hex": "<hex>",              // magic number / header bytes in hex
           "text": {
-            "text": "# Document Title\\nFull document in markdown...",
-            "pageNumbers": [1, 2, 3],
-            "pageImages": ["iVBORw0KGgoAAAANSUhEUg...", "..."]
+            "text": "<markdown>",             // full document in Markdown
+            "pageNumbers": [1, 2, ...],       // list of all page numbers
+            "pageImages": ["<b64>", ...]      // per-page PNG images as base64
           },
           "text_chunks": [
             {
-              "text": "This is chunk 1...",
-              "pageNumbers": [1],
-              "pageImages": ["iVBORw0KGgoAAAANSUhEUg..."]
+              "text": "<chunk text>",
+              "pageNumbers": [<int>, ...],    // pages covered by this chunk
+              "pageImages": ["<b64>", ...]    // corresponding page images
             },
-            {
-              "text": "This is chunk 2...",
-              "pageNumbers": [2],
-              "pageImages": ["iVBORw0KGgoAAAANSUhEUg..."]
-            }
+            ...
           ],
-          "duration": 0.326
+          "duration": <float>                 // processing time in seconds
         }
       ]
     }
@@ -101,6 +108,7 @@ def convert_doc_files_into_text_chunks(
     - Page images are generated at the detected page count from the Docling `doc.pages` property.
     - If a page image cannot be generated, `None` will be placed in that position.
     """
+
     results = []
     chunker = HybridChunker(max_tokens=chunk_size)
 
@@ -158,7 +166,7 @@ def convert_doc_files_into_text_chunks(
 
         results.append(
             {
-                "file_size_bytes": file_size,
+                "file_size": file_size,
                 "header_hex": header_bytes,
                 "text": {
                     "text": markdown_text,
