@@ -1,7 +1,6 @@
 import { Client } from "@modelcontextprotocol/sdk/client/index.js";
 import { StreamableHTTPClientTransport } from "@modelcontextprotocol/sdk/client/streamableHttp.js";
-import { v4 as uuidv4 } from 'uuid';
-import z from "zod";
+import { LoggingMessageNotificationSchema } from "@modelcontextprotocol/sdk/types.js";
 
 export type McpClientOptions = Partial<{
     mcpSessionId: string;
@@ -23,17 +22,17 @@ export async function createMcpClient(
         version: version,
     });
 
-    // Enable Notifications 
-    const notificationSchema = z.object({
-        method: z.literal("notifications/message"),
-        params: z.object({
-            level: z.string(),
-            message: z.string()
-        }).optional()
-    });
-    client.setNotificationHandler(notificationSchema, (notification) => {
-        console.log("Received notification:", notification);
-    });
+    // Use the real MCP schema with correct typing
+    client.setNotificationHandler<typeof LoggingMessageNotificationSchema>(
+        LoggingMessageNotificationSchema,
+        (notification) => {
+            const { level, logger, data } = notification.params;
+            console.log(
+                `[${level}]${logger ? ` [${logger}]` : ""}`,
+                data
+            );
+        }
+    );
 
     // Setup the transport i.e. Streamable HTTP for the MCP client
     const baseUrl = new URL(serverUrl);
