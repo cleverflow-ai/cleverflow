@@ -63,7 +63,6 @@ function registerResources(server: McpServer) {
 }
 
 function registerTools(server: McpServer) {
-
     server.tool(
         "get_file_contents",
         "Fetches the content of a file from either Github or Gitea, given repository details and authentication token.",
@@ -76,7 +75,14 @@ function registerTools(server: McpServer) {
             path: z.string(),
         },
         async ({ url, token, branch, owner, repo, path, }, extra) => {
-
+            console.log('>>>  get_file_contents', {
+                url,
+                token,
+                branch,
+                owner,
+                repo,
+                path,
+            });
             await extra.sendNotification({
                 method: "notifications/message",
                 params: {
@@ -109,12 +115,16 @@ function registerTools(server: McpServer) {
                 }
 
                 if (Array.isArray(result)) {
-                    // TODO
+                    // If result is an array, return a resource with a text/plain mimeType and JSON stringified array
                     return {
                         content: [
                             {
                                 type: "resource",
-                                resource: result
+                                resource: {
+                                    mimeType: "text/plain",
+                                    encoding: ContentEncoding.Utf8,
+                                    blob: JSON.stringify(result),
+                                }
                             }
                         ],
                     };

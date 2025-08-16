@@ -12,16 +12,14 @@
   "license": "AGPL-3.0-only",
   "description": "Provides the base implementation of the Model Context Protocol (MCP) for working with files stored in Github, Gitea, Outline and other Source Version Control or Wiki Systems.",
   "devDependencies": {
-    "@types/node": "^22.15.18",
-    "npx": "^10.2.2",
-    "typescript": "^5.8.3"
+    "@types/node": "^24.3.0",
+    "typescript": "^5.9.2"
   },
   "dependencies": {
     "@cleverflow-ai/cleverflow.mcp": "file:../cleverflow.mcp",
-    "@modelcontextprotocol/sdk": "^1.15.0",
+    "@modelcontextprotocol/sdk": "^1.17.3",
     "file-type": "^21.0.0",
-    "ts-node": "^10.9.2",
     "uuid": "^11.1.0",
-    "zod": "^3.25.74"
+    "zod": "^4.0.17"
   }
 }

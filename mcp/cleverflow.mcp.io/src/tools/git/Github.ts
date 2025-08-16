@@ -1,5 +1,5 @@
 import { Client } from "@modelcontextprotocol/sdk/client/index.js";
-import { CompatibilityCallToolResultSchema, } from "@modelcontextprotocol/sdk/types.js";
+import { LoggingMessageNotificationSchema, CompatibilityCallToolResultSchema, } from "@modelcontextprotocol/sdk/types.js";
 import { z } from "zod";
 import { StreamableHTTPClientTransport } from "@modelcontextprotocol/sdk/client/streamableHttp.js";
 import * as p from 'path';
@@ -159,17 +159,17 @@ export default class Github extends Git {
             version: version,
         });
 
-        const notificationSchema = z.object({
-            method: z.literal("notifications/message"),
-            params: z.object({
-                level: z.string(),
-                message: z.string()
-            }).optional()
-        });
-
-        client.setNotificationHandler(notificationSchema, (notification) => {
-            console.log("Received notification:", notification);
-        });
+        // Use the real MCP schema with correct typing
+        client.setNotificationHandler<typeof LoggingMessageNotificationSchema>(
+        LoggingMessageNotificationSchema,
+            (notification) => {
+                const { level, logger, data } = notification.params;
+                console.log(
+                    `[${level}]${logger ? ` [${logger}]` : ""}`,
+                    data
+                );
+            }
+        );
 
         const baseUrl = new URL(serverUrl);
         const transport = new StreamableHTTPClientTransport(baseUrl, {
