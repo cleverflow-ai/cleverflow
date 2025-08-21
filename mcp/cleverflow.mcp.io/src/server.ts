@@ -1,13 +1,14 @@
 import { McpServer, ResourceTemplate } from "@modelcontextprotocol/sdk/server/mcp.js";
 import Outline from "./tools/Outline.js";
 import Gitea from "./tools/git/Gitea.js";
-import z from "zod";
+import z from "zod/v3";
 import Github from "./tools/git/Github.js";
 import { Content, ContentEncoding } from "./tools/Content.js";
 import { loadWebComponentByMimeType } from "./common/Util.js";
 import Git from "./tools/git/Git.js";
 import GitFilesBrowser from "./tools/GitFilesBrowser.js";
 import { executeJS } from "./tools/ExecuteJS.js";
+import path from "path";
 
 export function createServer() {
     const server = new McpServer({
@@ -29,60 +30,24 @@ export function createServer() {
 }
 
 function registerResources(server: McpServer) {
-
-    // server.resource(
-    //     "web-components",
-    //     new ResourceTemplate("web-components://{name}", {
-    //         list: async () => ({
-    //             resources: [
-    //                 {
-    //                     name: "glb-viewer",
-    //                     uri: "web-components://glb-viewer",
-    //                     description: "Web component that renders GLB 3D models from a URL or base64 data.",
-    //                 },
-    //                 {
-    //                     name: "pdf-viewer",
-    //                     uri: "web-components://pdf-viewer",
-    //                     description: "Web component for viewing PDF file contents.",
-    //                 }
-    //             ]
-    //         })
-    //     }),
-    //     async (uri, { name }) => {
-    //         const filePath = path.join("web-components", name as string);
-    //         const buffer = fs.readFileSync(filePath);
-    //         const base64Data = buffer.toString('base64');
-    //         return {
-    //             content: [{
-    //                 uri: uri.href,
-    //                 data: base64Data,
-    //             }]
-    //         };
-    //     }
-    // );
 }
 
 function registerTools(server: McpServer) {
-    server.tool(
+    server.registerTool(
         "get_file_contents",
-        "Fetches the content of a file from either Github or Gitea, given repository details and authentication token.",
         {
-            url: z.string(),
-            token: z.string(),
-            branch: z.string(),
-            owner: z.string(),
-            repo: z.string(),
-            path: z.string(),
+            title: "Fetch File Content",
+            description: "Fetches the content of a file from either Github or Gitea, given repository details and authentication token.",
+            inputSchema: {
+                url: z.string().describe("The base URL of the repository (Github or Gitea)."),
+                token: z.string().describe("Authentication token for the repository."),
+                branch: z.string().describe("The branch name to fetch the file from."),
+                owner: z.string().describe("The owner of the repository."),
+                repo: z.string().describe("The name of the repository."),
+                path: z.string().describe("The path to the file within the repository.")
+            }
         },
-        async ({ url, token, branch, owner, repo, path, }, extra) => {
-            console.log('>>>  get_file_contents', {
-                url,
-                token,
-                branch,
-                owner,
-                repo,
-                path,
-            });
+        async ({ url, token, branch, owner, repo, path }, extra) => {
             await extra.sendNotification({
                 method: "notifications/message",
                 params: {
@@ -160,20 +125,22 @@ function registerTools(server: McpServer) {
         }
     );
 
-    server.tool(
+    server.registerTool(
         "save_file_contents",
-        "Saves or updates the content of a file in either Github or Gitea, given repository details and authentication.",
         {
-            url: z.string(),
-            token: z.string(),
-            branch: z.string(),
-            owner: z.string(),
-            repo: z.string(),
-            path: z.string(),
-            content: z.any(),
+            title: "Update File Content",
+            description: "Updates the content of a file in either Github or Gitea, given repository details and authentication token.",
+            inputSchema: {
+                url: z.string().describe("The base URL of the repository (Github or Gitea)."),
+                token: z.string().describe("Authentication token for the repository."),
+                branch: z.string().describe("The branch name to update the file in."),
+                owner: z.string().describe("The owner of the repository."),
+                repo: z.string().describe("The name of the repository."),
+                path: z.string().describe("The path to the file within the repository."),
+                content: z.any().describe("The content to be saved in the file. Can be a string or an object."),
+            }
         },
         async ({ url, token, branch, owner, repo, path, content }, extra) => {
-
             await extra.sendNotification({
                 method: "notifications/message",
                 params: {
@@ -215,13 +182,16 @@ function registerTools(server: McpServer) {
         }
     );
 
-    server.tool(
+    server.registerTool(
         "fetch_outline_text_file",
-        "Fetches the content of a file from Outline using its file ID, given authentication.",
         {
-            baseUrl: z.string(),
-            apiKey: z.string(),
-            fileId: z.string(),
+            title: "Fetch Outline File Content",
+            description: "Fetches the content of an outline file from a specified URL using an API key for authentication.",
+            inputSchema:{
+                baseUrl: z.string().describe("The base URL of the outline service."),
+                apiKey: z.string().describe("API key for authentication with the outline service."),
+                fileId: z.string().describe("The ID of the file to fetch content for."),
+            }
         },
         async ({ fileId, baseUrl, apiKey }, extra) => {
             await extra.sendNotification({
@@ -253,19 +223,21 @@ function registerTools(server: McpServer) {
         }
     );
 
-    server.tool(
+    server.registerTool(
         "list_repository_files",
-        "Lists all files in a specified repository that match a given pattern. This tool works with both Github and Gitea repositories. To use it, provide the repository URL, authentication token, branch name, owner, repository name, and a pattern (such as a glob or file extension) to filter the files. The tool will return a list of file paths that match the pattern.",
         {
-            url: z.string(),
-            token: z.string(),
-            branch: z.string(),
-            owner: z.string(),
-            repo: z.string(),
-            pattern: z.string(),
+            title: "List Repository Files",
+            description: "Lists all files in a specified repository that match a given pattern. This tool works with both Github and Gitea repositories. To use it, provide the repository URL, authentication token, branch name, owner, repository name, and a pattern (such as a glob or file extension) to filter the files. The tool will return a list of file paths that match the pattern.",
+            inputSchema: {
+                url: z.string().describe("The base URL of the repository (Github or Gitea)."),
+                token: z.string().describe("Authentication token for the repository."),
+                branch: z.string().describe("The branch name to list files from."),
+                owner: z.string().describe("The owner of the repository."),
+                repo: z.string().describe("The name of the repository."),
+                pattern: z.string().describe("A pattern to filter files (e.g., '*.js' for JavaScript files). This can be a glob pattern or a specific file extension.")
+            }
         },
         async ({ url, token, branch, owner, repo, pattern }, extra) => {
-
             await extra.sendNotification({
                 method: "notifications/message",
                 params: {
@@ -291,12 +263,15 @@ function registerTools(server: McpServer) {
         }
     );
 
-    server.tool(
+    server.registerTool(
         "execute_js",
-        "Executes a JavaScript snippet with a given input object in a secure sandbox using the V8 engine. The JavaScript code should return a value based on the input. This tool is useful for dynamic logic evaluation, templating, and configurable behavior. The input object is available as `data` inside the JavaScript code.",
         {
-            jsCode: z.string().describe("JavaScript code to execute. Use the variable `data` to access input."),
-            input: z.any().describe("An input object that will be passed into the JavaScript code as `data`."),
+            title: "Execute JavaScript Code",
+            description: "Executes a JavaScript code snippet with the provided input data. The code can access the input data through the variable `data`. The result will be returned as a text/plain resource.",
+            inputSchema: {
+                jsCode: z.string().describe("JavaScript code to execute. Use the variable `data` to access input."),
+                input: z.any().describe("An input object that will be passed into the JavaScript code as `data`."),
+            }
         },
         async ({ jsCode, input }, extra) => {
             await extra.sendNotification({
@@ -322,7 +297,6 @@ function registerTools(server: McpServer) {
             };
         }
     );
-
 }
 
 function cleanText(text: string) {

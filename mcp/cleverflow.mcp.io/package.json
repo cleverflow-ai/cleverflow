@@ -20,6 +20,6 @@
     "@modelcontextprotocol/sdk": "^1.17.3",
     "file-type": "^21.0.0",
     "uuid": "^11.1.0",
-    "zod": "^4.0.17"
+    "zod": "^3.25.76"
   }
 }
