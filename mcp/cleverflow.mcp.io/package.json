@@ -17,7 +17,7 @@
   },
   "dependencies": {
     "@cleverflow-ai/cleverflow.mcp": "file:../cleverflow.mcp",
-    "@modelcontextprotocol/sdk": "^1.17.3",
+    "@modelcontextprotocol/sdk": "^1.17.4",
     "file-type": "^21.0.0",
     "uuid": "^11.1.0",
     "zod": "^3.25.76"

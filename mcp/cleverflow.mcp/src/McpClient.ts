@@ -27,10 +27,7 @@ export async function createMcpClient(
         LoggingMessageNotificationSchema,
         (notification) => {
             const { level, logger, data } = notification.params;
-            console.log(
-                `[${level}]${logger ? ` [${logger}]` : ""}`,
-                data
-            );
+            console.log(`[${level} | ${logger ? `${logger}` : "no dedicated logger"}]: `, data ? JSON.stringify(data) : "");
         }
     );
 

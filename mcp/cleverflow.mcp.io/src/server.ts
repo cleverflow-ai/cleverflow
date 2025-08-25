@@ -32,7 +32,10 @@ export function createServer() {
 function registerResources(server: McpServer) {
 }
 
+
 function registerTools(server: McpServer) {
+    // @ts-ignore
+    // To void error TS2589: Type instantiation is excessively deep and possibly infinite.
     server.registerTool(
         "get_file_contents",
         {
@@ -52,7 +55,10 @@ function registerTools(server: McpServer) {
                 method: "notifications/message",
                 params: {
                     level: "info",
-                    message: "Fetching file content...",
+                    data: {
+                        tool: "get_file_contents",
+                        message: "Fetching file content..."
+                    }
                 }
             });
 
@@ -125,6 +131,8 @@ function registerTools(server: McpServer) {
         }
     );
 
+    // @ts-ignore
+    // To void error TS2589: Type instantiation is excessively deep and possibly infinite.
     server.registerTool(
         "save_file_contents",
         {
@@ -145,7 +153,11 @@ function registerTools(server: McpServer) {
                 method: "notifications/message",
                 params: {
                     level: "info",
-                    message: "Updating file content...",
+                    data: {
+                        tool: "save_file_contents",
+                        message: "Updating file content..."
+                    }
+                    
                 }
             });
 
@@ -182,6 +194,8 @@ function registerTools(server: McpServer) {
         }
     );
 
+    // @ts-ignore
+    // To void error TS2589: Type instantiation is excessively deep and possibly infinite.
     server.registerTool(
         "fetch_outline_text_file",
         {
@@ -198,7 +212,10 @@ function registerTools(server: McpServer) {
                 method: "notifications/message",
                 params: {
                     level: "info",
-                    message: "Fetching outline file content...",
+                    data: {
+                        tool: "fetch_outline_text_file",
+                        message: "Fetching outline file content..."
+                    }
                 }
             });
 
@@ -223,6 +240,8 @@ function registerTools(server: McpServer) {
         }
     );
 
+    // @ts-ignore
+    // To void error TS2589: Type instantiation is excessively deep and possibly infinite.
     server.registerTool(
         "list_repository_files",
         {
@@ -242,7 +261,10 @@ function registerTools(server: McpServer) {
                 method: "notifications/message",
                 params: {
                     level: "info",
-                    message: "Listing repository files...",
+                    data: {
+                        tool: "list_repository_files",
+                        message: "Listing repository files..."
+                    }
                 }
             });
 
@@ -263,6 +285,8 @@ function registerTools(server: McpServer) {
         }
     );
 
+    // @ts-ignore
+    // To void error TS2589: Type instantiation is excessively deep and possibly infinite.
     server.registerTool(
         "execute_js",
         {
@@ -278,7 +302,10 @@ function registerTools(server: McpServer) {
                 method: "notifications/message",
                 params: {
                     level: "info",
-                    message: "Executing JavaScript code...",
+                    data: {
+                        tool: "execute_js",
+                        message: "Executing JavaScript code..."
+                    }
                 }
             });
 
