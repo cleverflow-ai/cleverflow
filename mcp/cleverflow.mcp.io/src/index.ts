@@ -2,7 +2,7 @@ import McpHost from "@cleverflow-ai/cleverflow.mcp/dist/McpHost.js";
 import ExpressMcpHost from "@cleverflow-ai/cleverflow.mcp/dist/ExpressMcpHost.js";
 import { createServer } from "./server.js";
 
-const host: McpHost = new ExpressMcpHost("/mcp", 4000, "stateful", createServer);
+const host: McpHost = new ExpressMcpHost("/mcp", 8032, "stateful", createServer);
 
 await host.start();
 
