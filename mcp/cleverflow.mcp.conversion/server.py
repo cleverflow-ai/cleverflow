@@ -1,187 +1,203 @@
-import base64
-from fastmcp import FastMCP
+# ----------------------------------------------------------------------
+# fastmcp_tool.py - FastMCP wrapper that streams progress to the client
+# ----------------------------------------------------------------------
+from fastmcp import FastMCP, Context
 import typer
 from typing_extensions import Annotated, Any
-from io import BytesIO
-from PIL import Image  # Pillow for image encoding
-from docling.datamodel.base_models import DocumentStream
-from docling.chunking import HybridChunker
-from converters.DoclingConverter import converter
+from dotenv import load_dotenv
+import asyncio
 
-# Create a Typer application
+# ----------------------------------------------------------------------
+# Import the *new* converter (the file you saved in the previous answer)
+# ----------------------------------------------------------------------
+from converters.SemanticDoclingConverter import (
+    SemanticDoclingConverter,
+    ConverterConfig,
+    ConverterInput,
+)
+
+# ----------------------------------------------------------------------
+# Load environment variables (e.g. API keys, defaults, etc.)
+# ----------------------------------------------------------------------
+load_dotenv()
+
+# ----------------------------------------------------------------------
+# Typer CLI (optional - keeps the original CLI behaviour)
+# ----------------------------------------------------------------------
 app = typer.Typer()
 
-# Create an MCP server
+# ----------------------------------------------------------------------
+# Initialise the MCP server
+# ----------------------------------------------------------------------
 mcp = FastMCP("CLEVER°FLOW | Conversion MCP")
 
 
+# ----------------------------------------------------------------------
+# MCP tool definition
+# ----------------------------------------------------------------------
 @mcp.tool
-def extract_texts_and_text_trunks(
-    payloads: list[
-        Annotated[str, {"media_type": "application/octet-stream", "description": "Base64-encoded document or file data"}]
-    ],
-    chunk_size: Annotated[int, {"default": 512, "description": "Size of each chunk in bytes"}] = 512
-) -> dict:
+async def convert(
+    config: Annotated[
+        ConverterConfig,
+        {"description": "Converter configuration (optional - overrides env defaults)"},
+    ] = None,
+    input: Annotated[
+        ConverterInput, 
+        {"description": "Input payload"}
+    ] = None,
+    ctx: Context = None
+) -> Any:
     """
-    Convert uploaded document files into structured JSON with
-    complete text, per-page images, and accurate page number tracking via Docling provenance.
+    FastMCP‑exposed conversion tool for converting documents (allowed formats:
+    PDF, DOCX, PPTX, HTML, etc.) into structured representations using the
+    ``SemanticDoclingConverter``.  The tool chunks the text and extracts tables
+    and figures.  The output can be returned as JSON, CBOR, MessagePack, or
+    Protobuf and is streamed to the MCP client.
 
-    **Features**
-    ------------
-    - Extracts **full document text** in Markdown format (lossy: no page numbers in this view).
-    - Splits content into **contextual text chunks** using HybridChunker.
-    - Resolves **exact page numbers** for each chunk from Docling `prov.page_no` metadata.
-    - Generates **per-page images** as base64 PNGs for visual reference.
-    - Provides **file metadata** (size, magic number hex header).
-    - Records **processing duration** from Docling’s pipeline timings.
+    **LinkML schema (for tooling / LLMs)**
 
-    **Page Number Handling**
-    ------------------------
-    Page numbers are **not guessed**—they are retrieved from the provenance of each `DocItem`:
-    ```python
-    page_nums = sorted({
-        prov.page_no
-        for item in chunk.meta.doc_items
-        for prov in getattr(item, "prov", [])
-        if hasattr(prov, "page_no") and prov.page_no is not None
-    })
-    ```
-    This ensures that each chunk’s `pageNumbers` array is accurate and directly corresponds to
-    the original document pages.
+    ------------------------------------------------------------------
+    Input – configuration (partial, all fields optional)
+    ------------------------------------------------------------------
+    class ConverterMcpConfig:
+        \"\"\"Subset of ``ConverterConfig`` that can be supplied by the client.
+        Missing fields are filled from environment variables or library defaults.\"\"\"
 
-    **Allowed Input Formats**
-    -------------------------
-    Base64-encoded binary data for one of the following:
-      - **PDF** (`application/pdf`)
-      - **DOCX** (Microsoft Word)
-      - **PPTX** (Microsoft PowerPoint)
-      - **HTML** (`text/html`)
-      - **Image** (PNG, JPEG, etc.)
-      - **AsciiDoc** (`.adoc`)
-      - **Markdown** (`.md`)
-      - **CSV** (`text/csv`)
-      - **XLSX** (Microsoft Excel)
-      - **XML_USPTO** (USPTO patent format)
-      - **XML_JATS** (JATS XML for scholarly articles)
-      - **JSON_DOCLING** (Docling JSON serialization)
-      - **AUDIO** (supported audio formats for transcription)
+        use_gpu: boolean = false
+        num_threads: integer = 8
+        max_chunk_sizes: integer[] = [256, 512, 1024]
+        chunk_overlap: integer = 50
+        tokenizer_name: string = "cl100k_base"
+        vlm_api_url: string = "https://oai.endpoints.kepler.ai.cloud.ovh.net/v1/chat/completions"
+        vlm_api_key: string?          # secret – keep out of logs
+        vlm_model: string = "Mistral-Small-3.2-24B-Instruct-2506"
+        vlm_max_tokens: integer = 512
+        vlm_temperature: float = 0.2
+        vlm_timeout: integer = 120
 
-    **Parameters**
-    --------------
-    payloads : list[str]
-        Base64-encoded binary document data (must be one of the allowed formats).
+    ------------------------------------------------------------------
+    Input – document payload
+    ------------------------------------------------------------------
+    class ConverterMcpInput:
+        \"\"\"Payload sent by the MCP client to the tool.\"\"\"
 
-    chunk_size : int, optional
-        Target chunk size in tokens (default = 512).
+        payload: string                # Base‑64‑encoded document (required)
+        url?: string                  # Optional source URL – used only for naming
+        iri?: string                  # Optional base IRI for generated identifiers
+        from_page?: integer           # 1‑based inclusive start page
+        to_page?: integer             # 1‑based inclusive end page
+        conversion_output_format?: string = "json"
+            # Allowed values: "json", "cbor", "msgpack", "protobuf"
 
-    **Output Format**
-    -----------------
-    Returns an **MCP-compliant JSON object**:
-    ```json
-    {
-      "data": [
-        {
-          "file_size": <int>,                 // original file size in bytes
-          "header_hex": "<hex>",              // magic number / header bytes in hex
-          "text": {
-            "text": "<markdown>",             // full document in Markdown
-            "pageNumbers": [1, 2, ...],       // list of all page numbers
-            "pageImages": ["<b64>", ...]      // per-page PNG images as base64
-          },
-          "text_chunks": [
-            {
-              "text": "<chunk text>",
-              "pageNumbers": [<int>, ...],    // pages covered by this chunk
-              "pageImages": ["<b64>", ...]    // corresponding page images
-            },
-            ...
-          ],
-          "duration": <float>                 // processing time in seconds
-        }
-      ]
-    }
-    ```
+    ------------------------------------------------------------------
+    Output – what the MCP client receives
+    ------------------------------------------------------------------
+    class ConverterMcpResult:
+        \"\"\"Wrapper returned by the MCP server.  ``data`` is already encoded
+        according to the requested format.  For ``json`` it is a JSON object;
+        for the other three it is a raw ``bytes`` blob.\"\"\"
 
-    **Notes**
-    ---------
-    - Markdown output is for human-readable purposes only; it does not carry page metadata.
-    - Page images are generated at the detected page count from the Docling `doc.pages` property.
-    - If a page image cannot be generated, `None` will be placed in that position.
+        data: any                     # dict for JSON, bytes for binary formats
+
+        # When ``conversion_output_format`` == "json", ``data`` expands to:
+        class JsonResult:
+            text: string
+            markdown: string
+            pages: Page[]
+            chunks: Chunk[]
+            figures: Figure[]
+            tables: Table[]
+
+        class Page:
+            id: string
+            iri: string?
+            text: string
+            image?: string               # base64‑encoded PNG
+            metadata:
+                ref?: string
+                pageNumbers: integer[]
+                provenance: ProvReference[]
+
+        class Chunk:
+            id: string
+            iri: string?
+            text: string
+            metadata:
+                ref?: string
+                pageNumbers: integer[]
+                chunker: string
+                maxTokens: integer
+                headings: string[]
+                provenance: ProvReference[]
+
+        class Figure:
+            id: string
+            iri: string?
+            image: string                # base64‑encoded PNG
+            caption?: string
+            annotation?: string
+            metadata:
+                ref?: string
+                pageNumbers: integer[]
+
+        class Table:
+            id: string
+            iri: string?
+            text: string
+            caption?: string
+            csv: string
+            metadata:
+                ref?: string
+                pageNumbers: integer[]
+
+        class ProvReference:
+            ref?: string
+            pageNumbers: integer[]
     """
 
-    results = []
-    chunker = HybridChunker(max_tokens=chunk_size)
+    # Build the effective configuration
+    effective_cfg = ConverterConfig()          # starts from ENV defaults
 
-    for payload_index, payload in enumerate(payloads):
-        decoded = base64.b64decode(payload)
-        file_size = len(decoded)
-        header_bytes = decoded[:10].hex()
+    if config is not None:                     # user supplied a partial config
+        # ``config`` is a dataclass - copy only the fields that are not None
+        for fld, val in config.__dict__.items():
+            if val is not None:
+                setattr(effective_cfg, fld, val)
+    
+    
+    # Build the SemanticDoclingConverter with the reporter
+    async def async_progress(progress: float, total: float | None, message: str | None) -> None:
+        await ctx.report_progress(progress, total)
+        print(f"Streamed: {progress} of {total or ''} - {message or ''}")
 
-        buf = BytesIO(decoded)
-        source = DocumentStream(name=f"doc_{payload_index}", stream=buf)
-        result = converter.convert(source)
-        doc = result.document
+    # Wrap the async progress function in a synchronous callable
+    def sync_progress(progress: float, total: float | None, message: str | None) -> None:
+        # Check if an event loop is already running
+        try:
+            loop = asyncio.get_running_loop()
+        except RuntimeError:
+            loop = None
 
-        # Export markdown text (lossy: no page numbers, but still useful)
-        markdown_text = doc.export_to_markdown()
+        if loop and loop.is_running():
+            # Schedule the async function in the current event loop
+            asyncio.create_task(async_progress(progress, total, message))
+        else:
+            # Run the async function in a new event loop
+            asyncio.run(async_progress(progress, total, message))
 
-        # Pre-generate all page images
-        all_page_images_b64 = []
-        for page_num in range(len(doc.pages)):
-            try:
-                page_img = doc.page_images[page_num]
-                if not isinstance(page_img, Image.Image):
-                    page_img = Image.open(BytesIO(page_img))
-                img_buf = BytesIO()
-                page_img.save(img_buf, format="PNG")
-                all_page_images_b64.append(
-                    base64.b64encode(img_buf.getvalue()).decode("utf-8")
-                )
-            except Exception as e:
-                print(f"Could not get image for page {page_num+1}: {e}")
-                all_page_images_b64.append(None)
+    # Pass the synchronous wrapper to the converter
+    converter = SemanticDoclingConverter(
+        config=effective_cfg,
+        progress=sync_progress
+    )
 
-        # Build chunks with proper page numbers from provenance
-        chunks_data = []
-        for chunk in chunker.chunk(dl_doc=doc):
-            enriched_text = chunker.contextualize(chunk=chunk)
+    # Run the conversion - result is already encoded
+    result = converter.convert(input)
 
-            # Extract page numbers from provenance metadata
-            page_nums = sorted({
-                prov.page_no
-                for item in chunk.meta.doc_items
-                for prov in getattr(item, "prov", [])
-                if hasattr(prov, "page_no") and prov.page_no is not None
-            })
-
-            chunks_data.append({
-                "text": enriched_text,
-                "pageNumbers": page_nums,
-                "pageImages": [
-                    all_page_images_b64[p - 1]  # page_no is 1-based
-                    for p in page_nums
-                    if 1 <= p <= len(all_page_images_b64)
-                ]
-            })
-
-        results.append(
-            {
-                "file_size": file_size,
-                "header_hex": header_bytes,
-                "text": {
-                    "text": markdown_text,
-                    "pageNumbers": list(range(1, len(doc.pages) + 1)),
-                    "pageImages": all_page_images_b64
-                },
-                "text_chunks": chunks_data,
-                "duration": result.timings["pipeline_total"].times
-            }
-        )
-
-    # Return MCP-compliant JSON
-    return {
-        "data": results
-    }
+    # Return an MCP-compliant payload.
+    # For JSON the result is a dict; for the other three formats it is
+    # raw bytes.  MCP will forward the object unchanged to the client.
+    return {"data": result}
 
 
 @app.command()
