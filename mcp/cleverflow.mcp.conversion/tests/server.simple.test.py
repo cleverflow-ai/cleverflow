@@ -90,7 +90,12 @@ async def convert_doc(file_path: str):
         out_path = path_obj.with_suffix(path_obj.suffix + ".out.json")
         out_path = out_path.with_name(out_path.name.replace(".json", ".json"))
         out_path.write_text(
-            json.dumps(result, indent=2, ensure_ascii=False, default=str),
+            json.dumps(
+                result,
+                indent=2,
+                ensure_ascii=False,   # keep Unicode characters as‑is
+                default=str,          # keep your fallback for non‑serialisable objects
+            ),
             encoding="utf-8",
         )
         print(f"✅  JSON result written to {out_path}")
@@ -102,7 +107,9 @@ async def convert_doc(file_path: str):
 async def test():
     await asyncio.gather(
         ping(),
-        convert_doc("./tests/data/planet_history.pdf"),
+        convert_doc("/Users/lanluu/Documents/TitanShark/Git/clevernow/customers/atlascopco/atlascopco-dasm/orders/30028416/Documentation/1000/EN/89971.000001_Meter EDM.P0-30_040-0071-CWL1/MAN_98900.100107_Multibox Type 107_EN_02.pdf"),
+        
+        # convert_doc("./tests/data/planet_history.pdf"),
         # convert_doc("./tests/data/planet_history.docx"),
         # convert_doc("./tests/data/planet_history.pptx"),
     )

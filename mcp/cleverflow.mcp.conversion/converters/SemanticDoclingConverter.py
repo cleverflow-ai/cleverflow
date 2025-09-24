@@ -16,6 +16,7 @@ import requests
 from collections import defaultdict
 from urllib.parse import urljoin
 import hashlib
+import uuid
 
 # ----------------------------------------------------------------------
 # Third-party
@@ -39,10 +40,16 @@ from docling.datamodel.base_models import DocumentStream
 from docling.document_converter import DocumentConverter, PdfFormatOption
 from docling.datamodel.accelerator_options import AcceleratorDevice, AcceleratorOptions
 from docling.datamodel.base_models import InputFormat
-from docling.datamodel.pipeline_options import PdfPipelineOptions, PictureDescriptionApiOptions, TableFormerMode
+from docling.datamodel.pipeline_options import PdfPipelineOptions, PictureDescriptionApiOptions, TableFormerMode, VlmPipelineOptions
 from docling_core.types.doc.document import PictureItem, NodeItem, TableItem, TextItem, RefItem, PictureDescriptionData, SectionHeaderItem
 from docling.datamodel.settings import PageRange, DEFAULT_PAGE_RANGE
 from docling.chunking import HybridChunker, HierarchicalChunker
+from docling.pipeline.vlm_pipeline import VlmPipeline
+
+# ----------------------------------------------------------------------
+# Converter for SVG
+# ----------------------------------------------------------------------
+from .RasterToVectorConverter import RasterToVectorConverterSettings, RasterToVectorConverter
 
 
 def _maybe_int(value: str | None, fallback: Any = None) -> Any:
@@ -260,7 +267,10 @@ class SemanticDoclingConverter:
                 InputFormat.AUDIO,
             ],
             format_options={
-                InputFormat.PDF: PdfFormatOption(pipeline_options=pipeline_options)
+                InputFormat.PDF: PdfFormatOption(
+                    # pipeline_cls=VlmPipeline, # See also: https://huggingface.co/ibm-granite/granite-docling-258M
+                    pipeline_options=pipeline_options
+                )
             },
         )
 
@@ -288,13 +298,13 @@ class SemanticDoclingConverter:
         text = doc.export_to_text()
         markdown = doc.export_to_markdown()
 
-        self.progress(1, 7, "doc_conversion")
+        self.progress(1, 6, "Raw document converted; text and markdown extracted")
 
         # --------------------------------------------------------------
         # Extract Pages' Data (text + image)
         # --------------------------------------------------------------
         pages_data = self._extract_pages(doc, input_data)
-        self.progress(2, 7, "pages")
+        self.progress(2, 6, "Pages' data (text + images) extracted")
 
         # --------------------------------------------------------------
         # Extract semantic entities
@@ -302,19 +312,18 @@ class SemanticDoclingConverter:
         # headings = self._extract_headings(doc, input_data)
         figures = self._extract_figures(doc, input_data)
         tables = self._extract_tables(doc, input_data)
-        self.progress(3, 7, "extraction")
+        self.progress(3, 6, "Figures and tables extracted")
 
         # --------------------------------------------------------------
         # Chunk the plain-text (token-based, multi-scale)
         # --------------------------------------------------------------
         chunks = self._chunk_document(doc, input_data)
-        self.progress(4, 7, "chunking")
+        self.progress(4, 6, "Document chunked into token-based segments")
 
         # --------------------------------------------------------------
         # Link each chunk to the entities that share its page
         # --------------------------------------------------------------
         # self._link_entities(chunks, figures, tables)
-        # self.progress(5, 7, "linking")
 
         # --------------------------------------------------------------
         # Assemble final payload (only non-empty sections are kept)
@@ -334,14 +343,16 @@ class SemanticDoclingConverter:
             result["figures"] = figures
         if tables:
             result["tables"] = tables
+        
+        self.progress(5, 6, "Payload assembled with non-empty sections")
 
         # --------------------------------------------------------------
         # Serialize to the requested format
         # --------------------------------------------------------------
         serialized = self._serialize_output(result,
                                             input_data.conversion_output_format)
-        self.progress(6, 7, "serialization")
-        self.progress(7, 7, "done")
+        
+        self.progress(6, 6, "Output serialized in requested format")
 
         return serialized
 
@@ -397,7 +408,7 @@ class SemanticDoclingConverter:
         return pages_data
 
     # ------------------------------------------------------------------
-    # Figure extraction (incl. VLM captioning)
+    # Figure extraction
     # ------------------------------------------------------------------
     def _extract_figures(self, doc, input_data: ConverterInput) -> List[Dict[str, Any]]:
         figures: List[Dict[str, Any]] = []
@@ -406,27 +417,47 @@ class SemanticDoclingConverter:
 
         # Traverse all items in the document
         for element, _level in doc.iterate_items():
-            # Check if the element is a figure/picture
             if isinstance(element, PictureItem):
-                # Attempt to retrieve the image
                 image = element.get_image(doc)
                 if image is None:
-                    continue  # Skip elements without images
+                    continue
 
-                # Unique ID
                 id = f"figure_{figure_counter}"
 
                 # Encode image as Base64
                 buffer = BytesIO()
                 image.save(buffer, format="PNG")
-                image_base64 = base64.b64encode(buffer.getvalue()).decode("utf-8")
+                image_bytes = buffer.getvalue()
+                image_base64 = base64.b64encode(image_bytes).decode("utf-8")
+
+                # Convert PNG to SVG using VTracer
+                temp_guid = str(uuid.uuid4())
+                temp_png_path = f"{temp_guid}.png"
+                temp_svg_path = f"{temp_guid}.svg"
+
+                # Save the PNG to disk
+                with open(temp_png_path, "wb") as f:
+                    f.write(image_bytes)
+
+                # Call the VTracer converter
+                settings = RasterToVectorConverterSettings(colormode="binary")
+                converter = RasterToVectorConverter(settings=settings)
+                converter.convert(temp_png_path, temp_svg_path)
+
+                # Load SVG string
+                with open(temp_svg_path, "r", encoding="utf-8") as f:
+                    svg = f.read()
+
+                # Optionally, clean up temporary PNG file
+                os.remove(temp_png_path)
+                os.remove(temp_svg_path)
 
                 # Extract page numbers robustly
                 page_numbers = self._extract_page_numbers(element)
 
                 # Annotations
                 annotations = []
-                for annotation in element.get_annotations():  # No need to pass 'doc' here
+                for annotation in element.get_annotations():
                     if isinstance(annotation, PictureDescriptionData):
                         annotations.append(annotation.text)
 
@@ -438,6 +469,7 @@ class SemanticDoclingConverter:
                     "id": id,
                     "iri": input_data.generate_iri("Figure", id),
                     "image": image_base64,
+                    "svg": svg,
                     "caption": caption,
                     "annotation": "\n".join(annotations),
                     "metadata": {

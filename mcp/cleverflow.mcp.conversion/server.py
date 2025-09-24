@@ -48,7 +48,7 @@ async def convert(
     ctx: Context = None
 ) -> Any:
     """
-    FastMCP‑exposed conversion tool for converting documents (allowed formats:
+    FastMCP-exposed conversion tool for converting documents (allowed formats:
     PDF, DOCX, PPTX, HTML, etc.) into structured representations using the
     ``SemanticDoclingConverter``.  The tool chunks the text and extracts tables
     and figures.  The output can be returned as JSON, CBOR, MessagePack, or
@@ -57,7 +57,7 @@ async def convert(
     **LinkML schema (for tooling / LLMs)**
 
     ------------------------------------------------------------------
-    Input – configuration (partial, all fields optional)
+    Input - configuration (partial, all fields optional)
     ------------------------------------------------------------------
     class ConverterMcpConfig:
         \"\"\"Subset of ``ConverterConfig`` that can be supplied by the client.
@@ -69,28 +69,28 @@ async def convert(
         chunk_overlap: integer = 50
         tokenizer_name: string = "cl100k_base"
         vlm_api_url: string = "https://oai.endpoints.kepler.ai.cloud.ovh.net/v1/chat/completions"
-        vlm_api_key: string?          # secret – keep out of logs
+        vlm_api_key: string?          # secret - keep out of logs
         vlm_model: string = "Mistral-Small-3.2-24B-Instruct-2506"
         vlm_max_tokens: integer = 512
         vlm_temperature: float = 0.2
         vlm_timeout: integer = 120
 
     ------------------------------------------------------------------
-    Input – document payload
+    Input - document payload
     ------------------------------------------------------------------
     class ConverterMcpInput:
         \"\"\"Payload sent by the MCP client to the tool.\"\"\"
 
-        payload: string                # Base‑64‑encoded document (required)
-        url?: string                  # Optional source URL – used only for naming
+        payload: string                # Base-64-encoded document (required)
+        url?: string                  # Optional source URL - used only for naming
         iri?: string                  # Optional base IRI for generated identifiers
-        from_page?: integer           # 1‑based inclusive start page
-        to_page?: integer             # 1‑based inclusive end page
+        from_page?: integer           # 1-based inclusive start page
+        to_page?: integer             # 1-based inclusive end page
         conversion_output_format?: string = "json"
             # Allowed values: "json", "cbor", "msgpack", "protobuf"
 
     ------------------------------------------------------------------
-    Output – what the MCP client receives
+    Output - what the MCP client receives
     ------------------------------------------------------------------
     class ConverterMcpResult:
         \"\"\"Wrapper returned by the MCP server.  ``data`` is already encoded
@@ -112,7 +112,7 @@ async def convert(
             id: string
             iri: string?
             text: string
-            image?: string               # base64‑encoded PNG
+            image?: string               # base64-encoded PNG
             metadata:
                 ref?: string
                 pageNumbers: integer[]
@@ -133,7 +133,8 @@ async def convert(
         class Figure:
             id: string
             iri: string?
-            image: string                # base64‑encoded PNG
+            image: string                # base64-encoded PNG
+            svg?: string                 # vectorized SVG representation of the figure
             caption?: string
             annotation?: string
             metadata:
