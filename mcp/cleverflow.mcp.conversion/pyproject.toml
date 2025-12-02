@@ -5,18 +5,18 @@ description = "Convert Document to Chunks and structured Data."
 readme = "README.md"
 requires-python = ">=3.12"
 dependencies = [
-    "cbor2>=5.7.0",
-    "docling>=2.39.0",
-    "fastmcp>=2.10.3",
-    "mcp[cli]>=1.10.1",
-    "msgpack>=1.1.1",
-    "pandas>=2.3.1",
-    "protobuf>=6.32.1",
-    "pymupdf>=1.26.4",
-    "requests>=2.32.5",
-    "tiktoken>=0.11.0",
-    "typer>=0.16.0",
-    "vtracer>=0.6.11",
+    "cbor2==5.7.1",
+    "docling==2.63.0",
+    "fastmcp==2.13.2",
+    "mcp[cli]==1.22.0",
+    "msgpack==1.1.2",
+    "pandas==2.3.3",
+    "protobuf==6.33.1",
+    "pymupdf==1.26.6",
+    "requests==2.32.5",
+    "tiktoken==0.12.0",
+    "typer==0.19.2",
+    "vtracer==0.6.11",
 ]
 
 [tool.uv]

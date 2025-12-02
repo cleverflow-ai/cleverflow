@@ -149,9 +149,9 @@ class ConverterInput:
 
         sha1_hash = hashlib.sha1(name.encode("utf-8")).hexdigest()
 
-        if self.iri is None or len(self.iri.strip()) == 0:    
-            # header_bytes = decoded[:10].hex()
-            self.iri = f"https://cleverflow.ai/ontology/Data/{sha1_hash}/"
+        if self.iri is None or len(self.iri.strip()) == 0:
+            base_iri = os.getenv("DEFAULT_IRI", "https://cleverflow.ai/ontology/Data")
+            self.iri = f"{base_iri}/{sha1_hash}/"
 
         return DocumentStream(name=name, stream=buf)
 
