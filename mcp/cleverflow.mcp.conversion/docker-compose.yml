@@ -7,12 +7,12 @@ services:
       - "8031:8031"
     networks:
       - conversionmcp_network
-    deploy:
-      resources:
-        reservations:
-          devices:
-            - capabilities: [gpu]
-    runtime: nvidia
+    # deploy:
+    #   resources:
+    #     reservations:
+    #       devices:
+    #         - capabilities: [gpu]
+    # runtime: nvidia
 
 networks:
   conversionmcp_network:

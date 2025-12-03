@@ -10,18 +10,20 @@ import time
 import json
 from dataclasses import dataclass, field
 from typing import List, Optional, Dict, Any, Callable
-from collections import defaultdict
 from io import BytesIO
 import requests
 from collections import defaultdict
 from urllib.parse import urljoin
 import hashlib
 import uuid
+from enum import Enum
 
 # ----------------------------------------------------------------------
 # Third-party
 # ----------------------------------------------------------------------
 from PIL import Image
+from baml_py import ClientRegistry, Image as BamlImage
+from baml_client.sync_client import b as baml
 import pandas as pd                 # pip install pandas
 import tiktoken                     # pip install tiktoken
 import cbor2                        # pip install cbor2
@@ -40,17 +42,26 @@ from docling.datamodel.base_models import DocumentStream
 from docling.document_converter import DocumentConverter, PdfFormatOption
 from docling.datamodel.accelerator_options import AcceleratorDevice, AcceleratorOptions
 from docling.datamodel.base_models import InputFormat
-from docling.datamodel.pipeline_options import PdfPipelineOptions, PictureDescriptionApiOptions, TableFormerMode, VlmPipelineOptions
+from docling.datamodel.pipeline_options import PdfPipelineOptions, PictureDescriptionApiOptions, TableFormerMode, VlmPipelineOptions, OcrOptions
+from docling.datamodel.pipeline_options_vlm_model import ApiVlmOptions, ResponseFormat
 from docling_core.types.doc.document import PictureItem, NodeItem, TableItem, TextItem, RefItem, PictureDescriptionData, SectionHeaderItem
 from docling.datamodel.settings import PageRange, DEFAULT_PAGE_RANGE
 from docling.chunking import HybridChunker, HierarchicalChunker
 from docling.pipeline.vlm_pipeline import VlmPipeline
+from docling.backend.pypdfium2_backend import PyPdfiumDocumentBackend
 
 # ----------------------------------------------------------------------
 # Converter for SVG
 # ----------------------------------------------------------------------
 from .RasterToVectorConverter import RasterToVectorConverterSettings, RasterToVectorConverter
 
+# ----------------------------------------------------------------------
+# Mode enumeration
+# ----------------------------------------------------------------------
+class Mode(Enum):
+    PARSING = "parsing"
+    VISIONING = "visioning"
+    HYBRID = "hybrid"
 
 def _maybe_int(value: str | None, fallback: Any = None) -> Any:
     """
@@ -68,11 +79,14 @@ def _maybe_int(value: str | None, fallback: Any = None) -> Any:
 @dataclass
 class ConverterConfig:
     # -------------------- General --------------------
+    mode: Mode = field(
+        default_factory=lambda: Mode(os.getenv("MODE", "parsing"))
+    )
     use_gpu: bool = field(
         default_factory=lambda: os.getenv("USE_GPU", "False").lower() == "true"
     )
     num_threads: int = field(
-        default_factory=lambda: _maybe_int(os.getenv("NUM_THREADS"), fallback=8)
+        default_factory=lambda: _maybe_int(os.getenv("NUM_THREADS"), 8)
     )
     max_chunk_sizes: List[int] = field(
         default_factory=lambda: list(
@@ -81,7 +95,7 @@ class ConverterConfig:
     )
     # overlap between successive token-chunks
     chunk_overlap: int = field(
-        default_factory=lambda: _maybe_int(os.getenv("CHUNK_OVERLAP"), fallback=50)
+        default_factory=lambda: _maybe_int(os.getenv("CHUNK_OVERLAP"), 50)
     )
 
     # -------------------- Tokeniser --------------------
@@ -93,23 +107,29 @@ class ConverterConfig:
     vlm_api_url: str = field(
         default_factory=lambda: os.getenv(
             "VLM_API_URL",
-            "https://oai.endpoints.kepler.ai.cloud.ovh.net/v1/chat/completions",
+            "",
         )
     )
     vlm_api_key: str = field(default_factory=lambda: os.getenv("VLM_API_KEY", ""))
     vlm_model: str = field(
         default_factory=lambda: os.getenv(
-            "VLM_MODEL", "Mistral-Small-3.2-24B-Instruct-2506"
+            "VLM_MODEL", ""
         )
     )
     vlm_max_tokens: int = field(
-        default_factory=lambda: _maybe_int(os.getenv("VLM_MAX_TOKENS"), fallback=512)
+        default_factory=lambda: _maybe_int(os.getenv("VLM_MAX_TOKENS"), 4096)
     )
     vlm_temperature: float = field(
-        default_factory=lambda: float(os.getenv("VLM_TEMPERATURE", 0.2))
+        default_factory=lambda: float(os.getenv("VLM_TEMPERATURE", 0.1))
     )
     vlm_timeout: int = field(
-        default_factory=lambda: _maybe_int(os.getenv("VLM_TIMEOUT"), fallback=120)
+        default_factory=lambda: _maybe_int(os.getenv("VLM_TIMEOUT"), 120)
+    )
+    vlm_prompt: str = field(
+        default_factory=lambda: os.getenv(
+            "VLM_PROMPT",
+            'Extract all text from this image exactly as it appears, preserving the original layout and sequence. Ensure all extracted characters are Latin alphabet letters, numbers, and common punctuation. Transcribe any non-Latin characters to closest Latin equivalents where possible, and make the text readable. Provide the plain text, markdown formatted text, and a summary of up to 5 sentences. Return in JSON format with keys "plain_text", "markdown", and "summary".',
+        )
     )
 
 # ----------------------------------------------------------------------
@@ -150,7 +170,7 @@ class ConverterInput:
         sha1_hash = hashlib.sha1(name.encode("utf-8")).hexdigest()
 
         if self.iri is None or len(self.iri.strip()) == 0:
-            base_iri = os.getenv("DEFAULT_IRI", "https://cleverflow.ai/ontology/Data")
+            base_iri = os.getenv("IRI", "https://cleverflow.ai/ontology/Data")
             self.iri = f"{base_iri}/{sha1_hash}/"
 
         return DocumentStream(name=name, stream=buf)
@@ -192,6 +212,45 @@ class SemanticDoclingConverter:
             for max_chunk_size in self.cfg.max_chunk_sizes
         }
 
+        # Initialize BAML client registry for hybrid mode
+        if self.cfg.mode == Mode.HYBRID:
+            self.cr = ClientRegistry()
+            self.cr.add_llm_client(
+                "VlmClient",
+                "openai-generic",
+                {
+                    "base_url": self.cfg.vlm_api_url,
+                    "api_key": self.cfg.vlm_api_key,
+                    "model": self.cfg.vlm_model,
+                    "temperature": self.cfg.vlm_temperature
+                },
+            )
+            self.cr.set_primary("VlmClient")
+        else:
+            self.cr = None
+
+    def _create_openai_compatible_vlm_options(self) -> ApiVlmOptions:
+        """Create ApiVlmOptions using the configured VLM settings."""
+        headers = {}
+        if self.cfg.vlm_api_key:
+            headers["Authorization"] = f"Bearer {self.cfg.vlm_api_key}"
+
+        full_url = self.cfg.vlm_api_url.rstrip('/') + '/chat/completions'
+
+        return ApiVlmOptions(
+            url=full_url,
+            params=dict(
+                model=self.cfg.vlm_model,
+                max_tokens=self.cfg.vlm_max_tokens,
+                temperature=self.cfg.vlm_temperature,
+            ),
+            headers={**headers, "Content-Type": "application/json"},
+            prompt=self.cfg.vlm_prompt,
+            timeout=self.cfg.vlm_timeout,
+            scale=2.0,
+            response_format=ResponseFormat.DOCTAGS
+        )
+
     # ------------------------------------------------------------------
     # Docling initialisation
     # ------------------------------------------------------------------
@@ -201,54 +260,54 @@ class SemanticDoclingConverter:
             device=AcceleratorDevice.CUDA if self.cfg.use_gpu else AcceleratorDevice.CPU,
         )
 
-        # Annotate images via VLM (if configured)
-        images_annotation = bool(
-            self.cfg.vlm_api_url and self.cfg.vlm_api_key and
-            len(self.cfg.vlm_api_url.strip()) > 0 and len(self.cfg.vlm_api_key.strip()) > 0
-        )
+        print(f"Setting up Docling converter in {self.cfg.mode} mode...")
 
-        pipeline_options = PdfPipelineOptions(
-            enable_remote_services=images_annotation  # It is required to annotate images via VLM
-        )
+        if self.cfg.mode == Mode.VISIONING:
+            print("Using VLM pipeline for visioning mode...")
+            vlm_options = self._create_openai_compatible_vlm_options()
+            pipeline_options = VlmPipelineOptions(
+                enable_remote_services=True,
+                vlm_options=vlm_options,
+            )
+            format_options = {
+                InputFormat.PDF: PdfFormatOption(
+                    pipeline_options=pipeline_options,
+                    pipeline_cls=VlmPipeline,
+                    backend=PyPdfiumDocumentBackend, # See also: https://github.com/docling-project/docling/issues/2536
+                )
+            }
+        else:  # parsing or hybrid - use standard pipeline with image generation for VLM processing
+            print("Using standard Docling pipeline for parsing/hybrid mode...")
+            pipeline_options = PdfPipelineOptions()
+            # See also: https://docling-project.github.io/docling/usage/advanced_options/#control-pdf-table-extraction-options
+            pipeline_options.do_table_structure = True
+            pipeline_options.table_structure_options.do_cell_matching = False
+            pipeline_options.table_structure_options.mode = TableFormerMode.ACCURATE  # use more accurate TableFormer model
 
-        pipeline_options.do_picture_description = images_annotation
-        pipeline_options.picture_description_options = PictureDescriptionApiOptions(
-            url=self.cfg.vlm_api_url,
-            params=dict(
-                model_id=self.cfg.vlm_model,
-                parameters=dict(
-                    temperature=self.cfg.vlm_temperature,
-                    max_tokens=self.cfg.vlm_max_tokens,
-                ),
-            ),
-            headers={
-                "Content-Type": "application/json",
-                "Authorization": f"Bearer {self.cfg.vlm_api_key}",
-            },
-            prompt="Describe the technical image with maximum precision. Use no more than 5 concise, information-rich sentences. Focus on structure, components, labels, and relationships. Avoid generalities, filler, or stylistic language. No verbosity.",
-            timeout=self.cfg.vlm_timeout,
-        )
+            pipeline_options.accelerator_options = accelerator_options
 
-        # See also: https://docling-project.github.io/docling/usage/advanced_options/#control-pdf-table-extraction-options
-        pipeline_options.do_table_structure = True
-        pipeline_options.table_structure_options.do_cell_matching = False
-        pipeline_options.table_structure_options.mode = TableFormerMode.ACCURATE  # use more accurate TableFormer model
+            # Force OCR for reading Text-based Images
+            pipeline_options.do_ocr = True
 
-        pipeline_options.accelerator_options = accelerator_options
-        # pipeline_options.do_ocr = True
+            # Screenshots of each page - essential for VLM processing in hybrid mode
+            pipeline_options.generate_page_images = True
+            pipeline_options.images_scale = 2
 
-        # Screenshots of each page
-        # scale=1 correspond of a standard 72 DPI image
-        pipeline_options.generate_page_images = True
-        pipeline_options.images_scale = 2
+            # Perform formula, code enrichment and classification of pictures (if applicable)
+            # The picture classification step classifies the PictureItem elements in the document with the DocumentFigureClassifier model.
+            # This model is specialized to understand the classes of pictures found in documents, e.g. different chart types, flow diagrams, logos, signatures, etc.
+            pipeline_options.do_formula_enrichment = True
+            pipeline_options.do_code_enrichment = True
+            pipeline_options.generate_picture_images = True
+            pipeline_options.do_picture_classification = True  # Marks images as contentful
+            pipeline_options.do_picture_description = False    # Optional: disable alt-text generation
 
-        # Perform formula, code enrichment and classification of pictures (if applicable)
-        # The picture classification step classifies the PictureItem elements in the document with the DocumentFigureClassifier model. 
-        # This model is specialized to understand the classes of pictures found in documents, e.g. different chart types, flow diagrams, logos, signatures, etc.
-        pipeline_options.do_formula_enrichment = True
-        pipeline_options.do_code_enrichment = True
-        pipeline_options.generate_picture_images = True
-        pipeline_options.do_picture_classification = True
+            format_options = {
+                InputFormat.PDF: PdfFormatOption(
+                    pipeline_options=pipeline_options,
+                    backend=PyPdfiumDocumentBackend, # See also: https://github.com/docling-project/docling/issues/2536
+                )
+            }
 
         self.converter = DocumentConverter(
             allowed_formats=[
@@ -266,12 +325,7 @@ class SemanticDoclingConverter:
                 InputFormat.JSON_DOCLING,
                 InputFormat.AUDIO,
             ],
-            format_options={
-                InputFormat.PDF: PdfFormatOption(
-                    # pipeline_cls=VlmPipeline, # See also: https://huggingface.co/ibm-granite/granite-docling-258M
-                    pipeline_options=pipeline_options
-                )
-            },
+            format_options=format_options,
         )
 
     # ------------------------------------------------------------------
@@ -295,8 +349,7 @@ class SemanticDoclingConverter:
 
         doc = conversation_result.document
 
-        text = doc.export_to_text()
-        markdown = doc.export_to_markdown()
+        
 
         self.progress(1, 6, "Raw document converted; text and markdown extracted")
 
@@ -330,8 +383,8 @@ class SemanticDoclingConverter:
         # --------------------------------------------------------------
         result: Dict[str, Any] = {}
         
-        result["text"] = text
-        result["markdown"] = markdown
+        result["text"] = doc.export_to_text()
+        result["markdown"] = doc.export_to_markdown()
         
         if pages_data:
             result["pages"] = pages_data
@@ -407,11 +460,26 @@ class SemanticDoclingConverter:
 
         return pages_data
 
+    def _calls_vlm_for_hybrid_via_baml(self, image_base64: str) -> Dict[str, Any]:
+        """Call VLM via BAML to extract text and summary from image."""
+        try:
+            img = BamlImage.from_base64("image/png", image_base64)
+            result = baml.Scan(img, baml_options={
+                "client_registry": self.cr
+            })
+
+            return {"plain_text": result.plain_text, "markdown": result.markdown, "summary": result.summary}
+        except Exception as e:
+            print(f"Error calling VLM via BAML: {e}")
+            return {"plain_text": "", "markdown": "", "summary": ""}
+
     # ------------------------------------------------------------------
     # Figure extraction
     # ------------------------------------------------------------------
     def _extract_figures(self, doc, input_data: ConverterInput) -> List[Dict[str, Any]]:
         figures: List[Dict[str, Any]] = []
+
+        print(f"Total number of pictures in document: {len(doc.pictures)}")
 
         figure_counter = 0
 
@@ -429,6 +497,51 @@ class SemanticDoclingConverter:
                 image.save(buffer, format="PNG")
                 image_bytes = buffer.getvalue()
                 image_base64 = base64.b64encode(image_bytes).decode("utf-8")
+
+                # For hybrid mode, call VLM and inject extracted text into doc
+                extracted = {"plain_text": "", "markdown": "", "summary": ""}
+
+                if self.cfg.mode == Mode.HYBRID:
+                    extracted = self._calls_vlm_for_hybrid_via_baml(image_base64)
+                    
+                    # Choose markdown if available, otherwise plain_text
+                    text_for_doc = extracted.get("markdown") or extracted.get("plain_text")
+
+                    if text_for_doc:
+                        # 1️⃣ Create the new TextItem
+                        new_index = len(doc.texts)
+                        new_text_item = TextItem(
+                            self_ref=f"#/texts/{new_index}",
+                            text=text_for_doc,
+                            label="text",
+                            orig=text_for_doc,
+                            prov=element.prov,
+                            parent=None  # temporarily None
+                        )
+                        doc.texts.append(new_text_item)
+
+                        # 2️⃣ Determine parent container
+                        parent_node = element.parent.resolve(doc) if getattr(element, "parent", None) else doc.body
+
+                        # 3️⃣ Create RefItem for the new TextItem
+                        new_ref = RefItem(cref=new_text_item.self_ref)
+                        new_text_item.parent = (
+                            RefItem(cref=parent_node.self_ref)
+                            if hasattr(parent_node, "self_ref")
+                            else None
+                        )
+
+                        # 4️⃣ Insert RefItem immediately after the image
+                        idx = -1
+                        for i, child_ref in enumerate(getattr(parent_node, "children", [])):
+                            if getattr(child_ref, "cref", None) == element.self_ref:
+                                idx = i
+                                break
+
+                        if idx >= 0:
+                            parent_node.children.insert(idx + 1, new_ref)
+                        else:
+                            parent_node.children.append(new_ref)
 
                 # Convert PNG to SVG using VTracer
                 temp_guid = str(uuid.uuid4())
@@ -472,6 +585,9 @@ class SemanticDoclingConverter:
                     "svg": svg,
                     "caption": caption,
                     "annotation": "\n".join(annotations),
+                    "plain_text": extracted["plain_text"],
+                    "markdown": extracted["markdown"],
+                    "summary": extracted["summary"],
                     "metadata": {
                         "ref": getattr(element, "self_ref", None),
                         "pageNumbers": page_numbers,

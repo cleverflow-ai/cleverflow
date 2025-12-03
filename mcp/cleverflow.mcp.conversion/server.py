@@ -22,15 +22,9 @@ from converters.SemanticDoclingConverter import (
 load_dotenv()
 
 # ----------------------------------------------------------------------
-# Typer CLI (optional - keeps the original CLI behaviour)
-# ----------------------------------------------------------------------
-app = typer.Typer()
-
-# ----------------------------------------------------------------------
 # Initialise the MCP server
 # ----------------------------------------------------------------------
-mcp = FastMCP("CLEVER°FLOW | Conversion MCP")
-
+mcp = FastMCP("CLEVER°FLOW | Conversion MCP | V0.2.0", version="0.2.0")
 
 # ----------------------------------------------------------------------
 # MCP tool definition
@@ -48,6 +42,7 @@ async def convert(
     ctx: Context = None
 ) -> Any:
     """
+    CLEVER°FLOW | Conversion MCP | V0.2.0
     FastMCP-exposed conversion tool for converting documents (allowed formats:
     PDF, DOCX, PPTX, HTML, etc.) into structured representations using the
     ``SemanticDoclingConverter``.  The tool chunks the text and extracts tables
@@ -63,17 +58,19 @@ async def convert(
         \"\"\"Subset of ``ConverterConfig`` that can be supplied by the client.
         Missing fields are filled from environment variables or library defaults.\"\"\"
 
+        mode: Mode = PARSING  # Mode enum: PARSING, VISIONING, or HYBRID
         use_gpu: boolean = false
         num_threads: integer = 8
-        max_chunk_sizes: integer[] = [256, 512, 1024]
-        chunk_overlap: integer = 50
-        tokenizer_name: string = "cl100k_base"
-        vlm_api_url: string = "https://oai.endpoints.kepler.ai.cloud.ovh.net/v1/chat/completions"
-        vlm_api_key: string?          # secret - keep out of logs
-        vlm_model: string = "Mistral-Small-3.2-24B-Instruct-2506"
-        vlm_max_tokens: integer = 512
-        vlm_temperature: float = 0.2
-        vlm_timeout: integer = 120
+        max_chunk_sizes: integer[] = [256, 512, 1024]  # Token counts for chunking
+        chunk_overlap: integer = 50  # Token overlap between chunks
+        tokenizer_name: string = "cl100k_base"  # Tokenizer for tokenization
+        vlm_api_url: string  # URL for VLM service (required for visioning/hybrid)
+        vlm_api_key: string?  # Secret key for VLM authentication
+        vlm_model: string  # VLM model identifier
+        vlm_max_tokens: integer = 4096  # Max tokens for VLM response
+        vlm_temperature: float = 0.1  # Temperature for VLM generation
+        vlm_timeout: integer = 120  # Timeout for VLM requests in seconds
+        vlm_prompt: string  # Prompt template for VLM processing
 
     ------------------------------------------------------------------
     Input - document payload
@@ -81,81 +78,83 @@ async def convert(
     class ConverterMcpInput:
         \"\"\"Payload sent by the MCP client to the tool.\"\"\"
 
-        payload: string                # Base-64-encoded document (required)
-        url?: string                  # Optional source URL - used only for naming
-        iri?: string                  # Optional base IRI for generated identifiers
-        from_page?: integer           # 1-based inclusive start page
-        to_page?: integer             # 1-based inclusive end page
+        payload: string (required)       # Base-64-encoded document bytes
+        url?: string                    # Optional source URL for document naming
+        iri?: string                    # Optional base IRI for generated identifiers
         conversion_output_format?: string = "json"
-            # Allowed values: "json", "cbor", "msgpack", "protobuf"
+            # One of: "json", "cbor", "msgpack", "protobuf"
+        from_page?: integer             # 1-based inclusive start page
+        to_page?: integer               # 1-based inclusive end page
 
     ------------------------------------------------------------------
     Output - what the MCP client receives
     ------------------------------------------------------------------
     class ConverterMcpResult:
         \"\"\"Wrapper returned by the MCP server.  ``data`` is already encoded
-        according to the requested format.  For ``json`` it is a JSON object;
-        for the other three it is a raw ``bytes`` blob.\"\"\"
+        according to the requested format.  For ``json`` it is a dict;
+        for the other three it is a Base64-encoded bytes string.\"\"\"
 
-        data: any                     # dict for JSON, bytes for binary formats
+        data: any                     # dict for JSON, base64 string for binary formats
 
         # When ``conversion_output_format`` == "json", ``data`` expands to:
         class JsonResult:
-            text: string
-            markdown: string
-            pages: Page[]
-            chunks: Chunk[]
-            figures: Figure[]
-            tables: Table[]
+            text: string  # Plain text content of the entire document
+            markdown: string  # Markdown formatted content
+            pages: Page[]  # Array of page objects (if present)
+            chunks: Chunk[]  # Array of token-based chunks (if present)
+            figures: Figure[]  # Array of figures/images (if present)
+            tables: Table[]  # Array of tables (if present)
 
         class Page:
-            id: string
-            iri: string?
-            text: string
-            image?: string               # base64-encoded PNG
-            metadata:
-                ref?: string
-                pageNumbers: integer[]
-                provenance: ProvReference[]
+            id: string  # Unique page identifier (e.g., "page_1")
+            iri?: string  # Optional IRI reference
+            text: string  # Extracted text content from the page
+            image?: string  # Base64-encoded PNG of the page image (if available)
+            metadata: object
+                ref?: string  # Reference to document element
+                pageNumbers: integer[]  # Array of page numbers
+                provenance: ProvReference[]  # Provenance tracking
 
         class Chunk:
-            id: string
-            iri: string?
-            text: string
-            metadata:
-                ref?: string
-                pageNumbers: integer[]
-                chunker: string
-                maxTokens: integer
-                headings: string[]
-                provenance: ProvReference[]
+            id: string  # Unique chunk identifier
+            iri?: string  # Optional IRI reference
+            text: string  # Token-based chunked text with context
+            metadata: object
+                ref?: string  # Reference to document element
+                pageNumbers: integer[]  # Pages this chunk spans
+                chunker: string  # Chunker type (e.g., "HybridChunker")
+                maxTokens: integer  # Maximum token count for this chunk
+                headings: string[]  # Associated headings
+                provenance: ProvReference[]  # Detailed provenance
 
         class Figure:
-            id: string
-            iri: string?
-            image: string                # base64-encoded PNG
-            svg?: string                 # vectorized SVG representation of the figure
-            caption?: string
-            annotation?: string
-            metadata:
-                ref?: string
-                pageNumbers: integer[]
+            id: string  # Unique figure identifier
+            iri?: string  # Optional IRI reference
+            image: string  # Base64-encoded PNG of the figure
+            svg?: string  # Vectorized SVG representation (if available)
+            caption?: string  # Figure caption text
+            annotation?: string  # Additional annotations
+            plain_text?: string  # VLM-extracted plain text (hybrid mode only)
+            markdown?: string  # VLM-extracted markdown (hybrid mode only)
+            summary?: string  # VLM-generated summary (hybrid mode only)
+            metadata: object
+                ref?: string  # Reference to document element
+                pageNumbers: integer[]  # Pages where figure appears
 
         class Table:
-            id: string
-            iri: string?
-            text: string
-            caption?: string
-            csv: string
-            metadata:
-                ref?: string
-                pageNumbers: integer[]
+            id: string  # Unique table identifier
+            iri?: string  # Optional IRI reference
+            text: string  # Markdown-formatted table representation
+            caption?: string  # Table caption text
+            csv: string  # CSV format of table data
+            metadata: object
+                ref?: string  # Reference to document element
+                pageNumbers: integer[]  # Pages where table appears
 
         class ProvReference:
-            ref?: string
-            pageNumbers: integer[]
+            ref?: string  # Document element reference
+            pageNumbers: integer[]  # Relevant page numbers
     """
-
     # Build the effective configuration
     effective_cfg = ConverterConfig()          # starts from ENV defaults
 
@@ -164,12 +163,11 @@ async def convert(
         for fld, val in config.__dict__.items():
             if val is not None:
                 setattr(effective_cfg, fld, val)
-    
-    
+
     # Build the SemanticDoclingConverter with the reporter
     async def async_progress(progress: float, total: float | None, message: str | None) -> None:
         await ctx.report_progress(progress, total)
-        print(f"Streamed: {progress} of {total or ''} - {message or ''}")
+        await ctx.info(f"Streamed: {progress} of {total or ''} - {message or ''}")
 
     # Wrap the async progress function in a synchronous callable
     def sync_progress(progress: float, total: float | None, message: str | None) -> None:
@@ -200,16 +198,5 @@ async def convert(
     # raw bytes.  MCP will forward the object unchanged to the client.
     return {"data": result}
 
-
-@app.command()
-def serve(
-    transport: Annotated[str, typer.Option(help="Transport protocol (http, sse, stdio)")] = "http",
-    host: Annotated[str, typer.Option(help="Host address")] = "0.0.0.0",
-    port: Annotated[int, typer.Option(help="Port for MCP server")] = 8031,
-    path: Annotated[str, typer.Option(help="Path for MCP server")] = "/mcp"
-) -> None:
-    mcp.run(transport=transport, host=host, port=port, path=path)
-
-
-if __name__ == "__main__":
-    app()
+# Create ASGI application
+app = mcp.http_app(transport="http", path="/mcp")

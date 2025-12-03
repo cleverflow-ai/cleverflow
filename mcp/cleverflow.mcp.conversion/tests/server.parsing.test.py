@@ -53,7 +53,7 @@ async def ping():
 
 
 # ----------------------------------------------------------------------
-# Core test – send ONE document to the “convert” tool
+# Core test – send ONE document to the "convert" tool
 # ----------------------------------------------------------------------
 async def convert_doc(file_path: str):
     """
@@ -71,9 +71,10 @@ async def convert_doc(file_path: str):
         payload_b64 = base64.b64encode(payload_bytes).decode("ascii")
 
         request_body = {
-            # An *empty* object is a valid config – the server will fill in
-            # defaults from environment variables.
-            "config": {},
+            # Config with parsing mode
+            "config": {
+                "mode": "parsing"
+            },
 
             # Mandatory input block
             "input": {
@@ -87,7 +88,7 @@ async def convert_doc(file_path: str):
         response = await client.call_tool("convert", request_body, progress_handler=progress_handler)
         result = response.structured_content["data"]
 
-        out_path = path_obj.with_suffix(path_obj.suffix + ".out.json")
+        out_path = path_obj.with_suffix(path_obj.suffix + ".parsing.json")
         out_path = out_path.with_name(out_path.name.replace(".json", ".json"))
         out_path.write_text(
             json.dumps(
@@ -107,11 +108,7 @@ async def convert_doc(file_path: str):
 async def test():
     await asyncio.gather(
         ping(),
-        convert_doc("/Users/lanluu/Documents/TitanShark/Git/clevernow/customers/atlascopco/atlascopco-dasm/orders/30028416/Documentation/1000/EN/89971.000001_Meter EDM.P0-30_040-0071-CWL1/MAN_98900.100107_Multibox Type 107_EN_02.pdf"),
-        
-        # convert_doc("./tests/data/planet_history.pdf"),
-        # convert_doc("./tests/data/planet_history.docx"),
-        # convert_doc("./tests/data/planet_history.pptx"),
+        convert_doc("./tests/data/dgx_spark_mixed_content.pdf"),
     )
 
 

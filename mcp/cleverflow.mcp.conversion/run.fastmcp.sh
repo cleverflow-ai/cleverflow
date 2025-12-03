@@ -1,0 +1,1 @@
+uv run fastmcp run server.py:mcp --transport http --host 0.0.0.0 --port 8031 --path /mcp

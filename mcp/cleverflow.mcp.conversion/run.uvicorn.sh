@@ -1,0 +1,1 @@
+uv run uvicorn server.py:app --host 0.0.0.0 --port 8031 --reload
