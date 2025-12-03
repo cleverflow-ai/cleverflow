@@ -27,5 +27,8 @@ RUN uv venv && \
 # Copy source code
 COPY . .
 
+# Run baml-cli generate at build time (optional)
+RUN uv run baml-cli generate
+
 # Run server using uvicorn via uv
 CMD ["uv", "run", "uvicorn", "server:app", "--host", "0.0.0.0", "--port", "8031"]
