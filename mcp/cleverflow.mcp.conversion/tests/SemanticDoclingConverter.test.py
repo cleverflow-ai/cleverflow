@@ -119,6 +119,6 @@ def test_hybrid_conversion():
 # Run the tests
 # ----------------------------------------------------------------------
 if __name__ == "__main__":
-    test_parsing_conversion()
+    # test_parsing_conversion()
     # test_visioning_conversion()
     test_hybrid_conversion()

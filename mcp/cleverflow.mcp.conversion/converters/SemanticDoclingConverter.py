@@ -42,7 +42,7 @@ from docling.datamodel.base_models import DocumentStream
 from docling.document_converter import DocumentConverter, PdfFormatOption
 from docling.datamodel.accelerator_options import AcceleratorDevice, AcceleratorOptions
 from docling.datamodel.base_models import InputFormat
-from docling.datamodel.pipeline_options import PdfPipelineOptions, PictureDescriptionApiOptions, TableFormerMode, VlmPipelineOptions, OcrOptions
+from docling.datamodel.pipeline_options import PdfPipelineOptions, PictureDescriptionApiOptions, TableFormerMode, VlmPipelineOptions, OcrOptions, TesseractCliOcrOptions
 from docling.datamodel.pipeline_options_vlm_model import ApiVlmOptions, ResponseFormat
 from docling_core.types.doc.document import PictureItem, NodeItem, TableItem, TextItem, RefItem, PictureDescriptionData, SectionHeaderItem
 from docling.datamodel.settings import PageRange, DEFAULT_PAGE_RANGE
@@ -286,8 +286,10 @@ class SemanticDoclingConverter:
 
             pipeline_options.accelerator_options = accelerator_options
 
-            # Force OCR for reading Text-based Images
+            # Setup Tesseract OCR for major Latin script languages
+            ocr_options = TesseractCliOcrOptions(lang=["deu", "eng", "fra", "spa", "ita", "por", "nld"])
             pipeline_options.do_ocr = True
+            pipeline_options.ocr_options = ocr_options
 
             # Screenshots of each page - essential for VLM processing in hybrid mode
             pipeline_options.generate_page_images = True
