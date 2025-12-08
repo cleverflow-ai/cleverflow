@@ -4,11 +4,13 @@ FROM nvidia/cuda:13.0.2-runtime-ubuntu22.04
 # In case CUDA is not needed, you can use a lighter base image
 # FROM python:3.12-slim
 
-# Install Python, pip, uv, and system dependencies for OpenCV
+# Install Python, pip, uv, and system dependencies for OpenCV and Tesseract OCR
 RUN apt-get update && apt-get install -y \
     python3 python3-pip python3-venv curl build-essential \
     libgl1 \
     libglib2.0-0 \
+    tesseract-ocr tesseract-ocr-deu tesseract-ocr-eng tesseract-ocr-fra \
+    tesseract-ocr-spa tesseract-ocr-ita tesseract-ocr-por tesseract-ocr-nld \
     && pip3 install uv \
     && apt-get clean && rm -rf /var/lib/apt/lists/*
 
