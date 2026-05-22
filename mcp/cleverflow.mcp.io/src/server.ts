@@ -39,21 +39,16 @@ function registerTools(server: McpServer) {
         "get_file_contents",
         {
             title: "Fetch File Content",
-            description: "Fetches the content of a file from either Github or Gitea, given repository details and authentication token.",
+            description: "Fetches the content of a file from either Github or Gitea, given the git setting id and file path.",
             inputSchema: {
-                url: z.string().describe("The base URL of the repository (Github or Gitea)."),
-                token: z.string().describe("Authentication token for the repository."),
-                branch: z.string().describe("The branch name to fetch the file from."),
-                owner: z.string().describe("The owner of the repository."),
-                repo: z.string().describe("The name of the repository."),
+                id: z.string().describe("The id of the git setting from GitSettings.yaml."),
                 path: z.string().describe("The path to the file within the repository.")
             }
         },
-        async (body, extra) => {
+        async ({ id, path }, extra) => {
 
-            console.log('>>>> Received: ', body);
+            console.log('>>>> Received: ', { id, path });
 
-            const { url, token, branch, owner, repo, path } = body;
             await extra.sendNotification({
                 method: "notifications/message",
                 params: {
@@ -65,16 +60,10 @@ function registerTools(server: McpServer) {
                 }
             });
 
-            let git: Git;
-
-            if (url === Github.McpServerUrl) {
-                git = new Github(url, token);
-            } else {
-                git = new Gitea(url, token);
-            }
+            const gitea = new Gitea();
 
             try {
-                const result = await git.fetchFileContent(branch, owner, repo, path);
+                const result = await gitea.fetchFileContent(id, path);
 
                 console.log('>>> result');
                 console.log(result);
@@ -144,18 +133,15 @@ function registerTools(server: McpServer) {
         "save_file_contents",
         {
             title: "Update File Content",
-            description: "Updates the content of a file in either Github or Gitea, given repository details and authentication token.",
+            description: "Updates the content of a file in either Github or Gitea, given the git setting id and file path.",
             inputSchema: {
-                url: z.string().describe("The base URL of the repository (Github or Gitea)."),
-                token: z.string().describe("Authentication token for the repository."),
-                branch: z.string().describe("The branch name to update the file in."),
-                owner: z.string().describe("The owner of the repository."),
-                repo: z.string().describe("The name of the repository."),
+                id: z.string().describe("The id of the git setting from GitSettings.yaml."),
                 path: z.string().describe("The path to the file within the repository."),
                 content: z.any().describe("The content to be saved in the file. Can be a string or an object."),
+                message: z.string().optional().describe("The commit message. Defaults to 'Not given'."),
             }
         },
-        async ({ url, token, branch, owner, repo, path, content }, extra) => {
+        async ({ id, path, content, message }, extra) => {
             await extra.sendNotification({
                 method: "notifications/message",
                 params: {
@@ -168,16 +154,10 @@ function registerTools(server: McpServer) {
                 }
             });
 
-            let git: Git;
-
-            if (url === Github.McpServerUrl) {
-                git = new Github(url, token);
-            } else {
-                git = new Gitea(url, token);
-            }
+            const gitea = new Gitea();
 
             try {
-                const isSuccessful = await git.saveFileContent(branch, owner, repo, path, cleanText(typeof content === 'string' ? content : JSON.stringify(content)), '');
+                const isSuccessful = await gitea.saveFileContent(id, path, cleanText(typeof content === 'string' ? content : JSON.stringify(content)), message);
                 return {
                     isError: !isSuccessful,
                     content: [

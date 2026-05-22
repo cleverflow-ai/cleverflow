@@ -7,31 +7,41 @@ import _ from 'lodash';
 import Git from "./Git.js";
 import { Content } from "../Content.js";
 import GitFile from "./GitFile.js";
+import GitSettings from "./GitSettings.js";
 
 export default class Github extends Git {
 
     static readonly McpServerUrl = "https://api.githubcopilot.com/mcp/";
 
     private client: Client;
+    private gitSettings: GitSettings;
 
-    constructor(url: string, token: string) {
-        super(url, token);
+    constructor() {
+        super('', '');
+        this.gitSettings = new GitSettings();
     }
 
-    private async createClient() {
-        if (!this.client) {
-            console.log('>>>  create Github mcp client: token ', this.token);
-            this.client = await this.createMcpClient(
-                this.url,
-                '@copilot/github',
-                '1.0.0',
-                this.token,
-            );
+    private async createClient(token: string) {
+        console.log('>>>  create Github mcp client: token ', token);
+        this.client = await this.createMcpClient(
+            Github.McpServerUrl,
+            '@copilot/github',
+            '1.0.0',
+            token,
+        );
+    }
+
+    public async fetchFileContent(id: string, path: string): Promise<Content | Array<GitFile> | null> {
+        const setting = this.gitSettings.getSettingById(id);
+        if (!setting) {
+            console.error(`GitSetting with id "${id}" not found`);
+            return null;
         }
+
+        return this.fetchFileContentWithSettings(setting, path);
     }
 
-
-    public async fetchFileContent(branch: string, owner: string, repo: string, path: string): Promise<Content | Array<GitFile> | null> {
+    private async fetchFileContentWithSettings(setting: { url: string; token: string; owner: string; repo: string; branch: string }, path: string): Promise<Content | Array<GitFile> | null> {
         if (path.startsWith('/')) {
             path = path.slice(1);
         }
@@ -41,15 +51,15 @@ export default class Github extends Git {
             path = `${path}/`;
         }
 
-        await this.createClient();
+        await this.createClient(setting.token);
 
         const callToolResult = await this.client.callTool(
             {
                 name: "get_file_contents",
                 arguments: {
-                    branch,
-                    owner,
-                    repo,
+                    branch: setting.branch,
+                    owner: setting.owner,
+                    repo: setting.repo,
                     path,
                 }
             },
@@ -95,22 +105,31 @@ export default class Github extends Git {
         return null;
     }
 
-    public async saveFileContent(branch: string, owner: string, repo: string, path: string, fileContent: string, message: string | null): Promise<boolean> {
+    public async saveFileContent(id: string, path: string, fileContent: string, message: string = "Not given"): Promise<boolean> {
+        const setting = this.gitSettings.getSettingById(id);
+        if (!setting) {
+            console.error(`GitSetting with id "${id}" not found`);
+            return false;
+        }
 
+        return this.saveFileContentWithSettings(setting, path, fileContent, message);
+    }
+
+    private async saveFileContentWithSettings(setting: { url: string; token: string; owner: string; repo: string; branch: string }, path: string, fileContent: string, message: string): Promise<boolean> {
         if (path.startsWith('/')) {
             path = path.slice(1);
         }
 
         const isFile = this.isPathFile(path);
         if (!isFile) {
-            return null;
+            return false;
         }
 
         let folderPath = p.dirname(path);
         if (folderPath === '') {
             folderPath = '/';
         }
-        const folderContent = await this.fetchFileContent(branch, owner, repo, folderPath);
+        const folderContent = await this.fetchFileContentWithSettings(setting, folderPath);
         const foundFile: any = _.find(folderContent, (item: any) => {
             return item.type === 'file' &&
                 (
@@ -119,18 +138,18 @@ export default class Github extends Git {
                 );
         });
 
-        await this.createClient();
+        await this.createClient(setting.token);
 
         const callToolResult = await this.client.callTool(
             {
                 name: "create_or_update_file",
                 arguments: {
-                    branch,
-                    owner,
-                    repo,
+                    branch: setting.branch,
+                    owner: setting.owner,
+                    repo: setting.repo,
                     path,
                     content: fileContent,
-                    message: message ?? 'Not given',
+                    message: message,
                     sha: foundFile?.sha
                 },
             },
@@ -161,7 +180,7 @@ export default class Github extends Git {
 
         // Use the real MCP schema with correct typing
         client.setNotificationHandler<typeof LoggingMessageNotificationSchema>(
-        LoggingMessageNotificationSchema,
+            LoggingMessageNotificationSchema,
             (notification) => {
                 const { level, logger, data } = notification.params;
                 console.log(

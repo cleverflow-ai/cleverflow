@@ -19,6 +19,9 @@ RUN npm install
 # Copy source files
 COPY mcp/cleverflow.mcp.io/src ./src
 
+# Copy config files
+COPY mcp/cleverflow.mcp.io/GitSettings.yaml ./GitSettings.yaml
+
 # Expose the port (as defined in src/index.ts, ExpressMcpHost uses port 8032)
 EXPOSE 8032
 
