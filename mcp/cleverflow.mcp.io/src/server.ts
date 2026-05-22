@@ -1,14 +1,13 @@
 import { McpServer, ResourceTemplate } from "@modelcontextprotocol/sdk/server/mcp.js";
 import Outline from "./tools/Outline.js";
 import Gitea from "./tools/git/Gitea.js";
-import z from "zod/v3";
+import { z } from "zod/v3";
 import Github from "./tools/git/Github.js";
 import { Content, ContentEncoding } from "./tools/Content.js";
 import { loadWebComponentByMimeType } from "./common/Util.js";
 import Git from "./tools/git/Git.js";
 import GitFilesBrowser from "./tools/GitFilesBrowser.js";
 import { executeJS } from "./tools/ExecuteJS.js";
-import path from "path";
 
 export function createServer() {
     const server = new McpServer({
@@ -50,7 +49,11 @@ function registerTools(server: McpServer) {
                 path: z.string().describe("The path to the file within the repository.")
             }
         },
-        async ({ url, token, branch, owner, repo, path }, extra) => {
+        async (body, extra) => {
+
+            console.log('>>>> Received: ', body);
+
+            const { url, token, branch, owner, repo, path } = body;
             await extra.sendNotification({
                 method: "notifications/message",
                 params: {
@@ -72,6 +75,9 @@ function registerTools(server: McpServer) {
 
             try {
                 const result = await git.fetchFileContent(branch, owner, repo, path);
+
+                console.log('>>> result');
+                console.log(result);
 
                 if (!result) {
                     return {
@@ -118,6 +124,7 @@ function registerTools(server: McpServer) {
                     };
                 }
             } catch (exception: any) {
+                console.error(exception);
                 return {
                     isError: true,
                     content: [
@@ -157,7 +164,7 @@ function registerTools(server: McpServer) {
                         tool: "save_file_contents",
                         message: "Updating file content..."
                     }
-                    
+
                 }
             });
 
@@ -201,7 +208,7 @@ function registerTools(server: McpServer) {
         {
             title: "Fetch Outline File Content",
             description: "Fetches the content of an outline file from a specified URL using an API key for authentication.",
-            inputSchema:{
+            inputSchema: {
                 baseUrl: z.string().describe("The base URL of the outline service."),
                 apiKey: z.string().describe("API key for authentication with the outline service."),
                 fileId: z.string().describe("The ID of the file to fetch content for."),
