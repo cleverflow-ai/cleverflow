@@ -1,0 +1,27 @@
+# docker-compose.yml for cleverflow.mcp.io
+# Builds and hosts the MCP server application
+
+services:
+  cleverflow-mcp-io:
+    build:
+      context: ../..
+      dockerfile: mcp/cleverflow.mcp.io/Dockerfile
+    container_name: cleverflow-mcp-io
+    ports:
+      - "8032:8032"
+    environment:
+      - NODE_ENV=production
+      - PORT=8032
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:8032/mcp"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
+    networks:
+      - cleverflow-mcp-io-network
+
+networks:
+  cleverflow-mcp-io-network:
+    driver: bridge

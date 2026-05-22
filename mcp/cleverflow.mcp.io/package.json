@@ -16,9 +16,10 @@
     "typescript": "^5.9.2"
   },
   "dependencies": {
-    "@cleverflow-ai/cleverflow.mcp": "file:../cleverflow.mcp",
+    "@cleverflow-ai/cleverflow.mcp": "^1.0.13",
     "@modelcontextprotocol/sdk": "^1.17.4",
     "file-type": "^21.0.0",
+    "lodash": "^4.17.21",
     "uuid": "^11.1.0",
     "zod": "^3.25.76"
   }
