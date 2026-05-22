@@ -1,6 +1,0 @@
-- id: gitea-flott
-  url: https://gitea.clevernow.com/api/v1
-  token: 04f4b0dada8fa8632dc7541f2f2131c703693e7e
-  owner: flott
-  branch: main
-  repo: blueprint
