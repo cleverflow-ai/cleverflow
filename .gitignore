@@ -41,3 +41,4 @@ test/
 .venv
 __pycache__
 .vscode/settings.json
+mcp/cleverflow.mcp.io/GitSettings.yaml
