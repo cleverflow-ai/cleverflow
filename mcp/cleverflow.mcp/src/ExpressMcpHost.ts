@@ -52,9 +52,9 @@ export default class ExpressMcpHost extends McpHost {
 
         this.app.use(cors()); // This enables CORS for all origins
 
-        this.app.use(express.json({ limit: '10mb' }));
+        this.app.use(express.json({ limit: '1000mb' }));
 
-        console.log(`>>>> limit 10mb`);
+        console.log(`>>>> limit 1000mb`);
 
         // Handle POST requests for client-to-server communication
         this.app.post(this.defaultRoutePath, (req: express.Request, res: express.Response) => {
