@@ -96,12 +96,12 @@ function registerTools(server: McpServer) {
                     return {
                         content: [
                             {
-                                type: "resource",
-                                resource: {
+                                type: "text",
+                                text: JSON.stringify({
                                     mimeType: "text/plain",
                                     encoding: ContentEncoding.Utf8,
                                     blob: JSON.stringify(result),
-                                }
+                                })
                             }
                         ],
                     };
@@ -112,13 +112,13 @@ function registerTools(server: McpServer) {
                     return {
                         content: [
                             {
-                                type: "resource",
-                                resource: {
+                                type: "text",
+                                text: JSON.stringify({
                                     mimeType: content.mimeType,
                                     encoding: content.encoding,
                                     blob: content.data,
                                     dynamicComponent: dynamicComponent,
-                                }
+                                })
                             }
                         ],
                     };
