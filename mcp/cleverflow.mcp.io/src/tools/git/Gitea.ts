@@ -15,22 +15,23 @@ export default class Gitea extends Git {
         this.gitSettings = new GitSettings();
     }
 
-    public async fetchFileContent(id: string, path: string): Promise<Content | Array<GitFile> | null> {
+    public async fetchFileContent(id: string, path: string, branch?: string): Promise<Content | Array<GitFile> | null> {
         const setting = this.gitSettings.getSettingById(id);
         if (!setting) {
             console.error(`GitSetting with id "${id}" not found`);
             return null;
         }
 
-        return this.fetchFileContentWithSettings(setting, path);
+        const effectiveBranch = branch ?? setting.branch;
+        return this.fetchFileContentWithSettings(setting, path, effectiveBranch);
     }
 
-    private async fetchFileContentWithSettings(setting: { url: string; token: string; owner: string; repo: string; branch: string }, path: string): Promise<Content | Array<GitFile> | null> {
+    private async fetchFileContentWithSettings(setting: { url: string; token: string; owner: string; repo: string; branch: string }, path: string, branch: string): Promise<Content | Array<GitFile> | null> {
         try {
             if (path.startsWith('/')) {
                 path = path.slice(1);
             }
-            const result = await this.fetchFileWithSettings(setting, path);
+            const result = await this.fetchFileWithSettings(setting, path, branch);
 
             if (!result) {
                 return null;
@@ -72,7 +73,7 @@ export default class Gitea extends Git {
         if (path.startsWith('/')) {
             path = path.slice(1);
         }
-        const currentFile = await this.fetchFileWithSettings(setting, path);
+        const currentFile = await this.fetchFileWithSettings(setting, path, setting.branch);
         if (currentFile == null) {
             let url = `${setting.url}/repos/${setting.owner}/${setting.repo}/contents/${path}?token=${setting.token}`;
             if (setting.branch) {
@@ -149,10 +150,10 @@ export default class Gitea extends Git {
         return buffer.toString("base64");
     }
 
-    private async fetchFileWithSettings(setting: { url: string; token: string; owner: string; repo: string; branch: string }, path: string): Promise<any> {
+    private async fetchFileWithSettings(setting: { url: string; token: string; owner: string; repo: string; branch: string }, path: string, branch: string): Promise<any> {
         let url = `${setting.url}/repos/${setting.owner}/${setting.repo}/contents/${path}?token=${setting.token}`;
-        if (setting.branch) {
-            url += `&ref=${setting.branch}`;
+        if (branch) {
+            url += `&ref=${branch}`;
         }
         const response = await fetch(url, {
             method: "GET",

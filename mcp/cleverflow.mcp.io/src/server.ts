@@ -42,12 +42,13 @@ function registerTools(server: McpServer) {
             description: "Fetches the content of a file from either Github or Gitea, given the git setting id and file path.",
             inputSchema: {
                 id: z.string().describe("The id of the git setting from GitSettings.yaml."),
-                path: z.string().describe("The path to the file within the repository.")
+                path: z.string().describe("The path to the file within the repository."),
+                branch: z.string().optional().describe("Optional branch name to fetch the file from. If not provided, the branch configured in the git setting is used.")
             }
         },
-        async ({ id, path }, extra) => {
+        async ({ id, path, branch }: { id: string; path: string; branch?: string }, extra) => {
 
-            console.log('>>>> Received: ', { id, path });
+            console.log('>>>> Received: ', { id, path, branch });
 
             await extra.sendNotification({
                 method: "notifications/message",
@@ -63,7 +64,7 @@ function registerTools(server: McpServer) {
             const gitea = new Gitea();
 
             try {
-                const result = await gitea.fetchFileContent(id, path);
+                const result = await gitea.fetchFileContent(id, path, branch);
 
                 console.log('>>> result');
                 console.log(result);

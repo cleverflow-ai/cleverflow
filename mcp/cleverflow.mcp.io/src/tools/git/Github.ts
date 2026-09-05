@@ -31,17 +31,18 @@ export default class Github extends Git {
         );
     }
 
-    public async fetchFileContent(id: string, path: string): Promise<Content | Array<GitFile> | null> {
+    public async fetchFileContent(id: string, path: string, branch?: string): Promise<Content | Array<GitFile> | null> {
         const setting = this.gitSettings.getSettingById(id);
         if (!setting) {
             console.error(`GitSetting with id "${id}" not found`);
             return null;
         }
 
-        return this.fetchFileContentWithSettings(setting, path);
+        const effectiveBranch = branch ?? setting.branch;
+        return this.fetchFileContentWithSettings(setting, path, effectiveBranch);
     }
 
-    private async fetchFileContentWithSettings(setting: { url: string; token: string; owner: string; repo: string; branch: string }, path: string): Promise<Content | Array<GitFile> | null> {
+    private async fetchFileContentWithSettings(setting: { url: string; token: string; owner: string; repo: string; branch: string }, path: string, branch: string): Promise<Content | Array<GitFile> | null> {
         if (path.startsWith('/')) {
             path = path.slice(1);
         }
@@ -57,7 +58,7 @@ export default class Github extends Git {
             {
                 name: "get_file_contents",
                 arguments: {
-                    branch: setting.branch,
+                    branch: branch,
                     owner: setting.owner,
                     repo: setting.repo,
                     path,
@@ -129,7 +130,7 @@ export default class Github extends Git {
         if (folderPath === '') {
             folderPath = '/';
         }
-        const folderContent = await this.fetchFileContentWithSettings(setting, folderPath);
+        const folderContent = await this.fetchFileContentWithSettings(setting, folderPath, setting.branch);
         const foundFile: any = _.find(folderContent, (item: any) => {
             return item.type === 'file' &&
                 (
